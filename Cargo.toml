@@ -1,0 +1,23 @@
+[package]
+name = "qrespite"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bincode = { version = "2.0.1", features = ["serde"]}
+comrak = "0.37.0"
+pdfium-render = "0.8.29"
+rmp-serde = "1.3.0"
+rocket = { version = "0.5.1", features = ["uuid"]}
+rocket_dyn_templates = { version = "0.2.0", features = ["tera"] }
+serde = "1.0.219"
+serde_derive = "1.0.219"
+serde_json = "1.0.140"
+sled = "0.34.7"
+tera = "1.20.0"
+tokio = { version = "*", features = ["full"]}
+uuid = { version = "1.16.0", features = ["v4", "serde", "v7"]}
+walkdir = "2.5.0"
+rocket_oidc = { path = "../../libraries/rocket_oidc" }
+ron = "0.10.1"
+rayon = "1.10.0"

@@ -1,0 +1,59 @@
+.header_link {
+    text-decoration: none;
+}
+
+#header {
+    width: 100%;
+    display: flex;
+    background: linear-gradient(to right, aquamarine, lavender, plum);
+    justify-content: space-between;
+    text-align: center;
+    align-items: center;
+    height: 50px;
+}
+
+#content {
+    width: 75%;
+    margin-left: auto;
+    margin-right: auto;
+    height: 100%;
+    justify-content: center;
+    display: flex;
+    padding: 1%;
+}
+
+img.resize {
+    width:540px; /* you can use % */
+    height: auto;
+}
+
+#storylist {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    column-gap: 40px;
+    row-gap: 0px;
+}
+
+.storybrief {
+
+    text-decoration: none;
+    width: 100%;
+    color: black;
+    min-width: 10%;
+    line-height: 50px;
+    height: 50px;
+    flex: 0 1 calc(25% - 40px); /* 4 items per row, accounting for gap */
+    text-align: center;
+    border-radius: 40px;
+    background: linear-gradient(to right, lightpink, lavender, lightblue);
+}
+
+
+.storybrief {
+    line-height: 1.5;
+    display: inline-block;
+    vertical-align: middle;
+}

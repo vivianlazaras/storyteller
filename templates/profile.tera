@@ -1,0 +1,11 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+<div id="content">
+    <div id="profile">
+        <img width="300px" src={{picture}}/>
+        <h1>Welcome {{ info.given_name }} {{ info.family_name }}</h1>
+    </div>
+</div>
+</body>
