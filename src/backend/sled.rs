@@ -1,4 +1,4 @@
-use crate::resources::Resource;
+
 use crate::stories::Story;
 use crate::{Owner, Ownership, Record};
 use rmp_serde::encode;
@@ -14,7 +14,6 @@ use walkdir::WalkDir;
 /// default database backend
 pub struct Sled {
     pub stories: Tree,
-    pub resources: Tree,
     pub projects: Tree,
 }
 
@@ -70,8 +69,6 @@ impl Sled {
         let ownership = Ownership::public(user_id);
         let db: sled::Db = sled::open(db_path)?;
         let mut stories = db.open_tree("stories")?;
-        let mut projects = db.open_tree("projects")?;
-        let mut resources = db.open_tree("resources")?;
         if stories.len() == 0 {
             Self::load_stories(
                 path.as_ref().join("writings"),

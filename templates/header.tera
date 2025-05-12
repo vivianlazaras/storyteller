@@ -1,7 +1,6 @@
 <div id="header">
-    <a class="header_link" href="/resources">resources</a>
-    <a class="header_link" href="/communities">communities</a>
-    <a class="header_link" href="/stories">stories</a>
-    <a class="header_link" href="/projects">projects and activism</a>
+    <a class="header_link" href="/characters">Characters</a>
+    <a class="header_link" href="/places">Places</a>
+    <a class="header_link" href="/stories">Stories</a>
     <a class="header_link" href="/users/account">account</a>
 </div>
