@@ -4,6 +4,8 @@ use rocket::{
     routes,
 };
 
+use uuid::Uuid;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Relationship {
     identities: Vec<Uuid>,
@@ -12,12 +14,10 @@ pub struct Relationship {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Character {
-    id: Uuid,
+pub struct CreateCharacter {
     name: String,
     image: Option<String>,
     description: Option<String>,
-    age: u64,
 }
 
 pub fn get_routes() -> Vec<Route> {

@@ -1,0 +1,26 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+<div class="content" id="content">
+    <form action="/stories" method="POST">
+  <label for="name">Title:</label><br>
+  <input type="text" id="name" name="name" required><br><br>
+
+  <label for="description">Description:</label><br>
+  <input type="text" id="description" name="description"><br><br>
+
+  <label for="storycontent">Content:</label><br>
+  <textarea id="storycontent" name="storycontent" rows="10" cols="60" required></textarea><br><br>
+
+  <label for="format">Format:</label><br>
+  <select id="format" name="format" required>
+    <option value="text">Plain Text</option>
+    <option value="markdown">Markdown</option>
+    <option value="html">HTML</option>
+  </select><br><br>
+
+  <button type="submit">Submit Story</button>
+</form>
+</div>
+</body>

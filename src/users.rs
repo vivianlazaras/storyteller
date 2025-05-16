@@ -19,10 +19,10 @@ pub struct User {
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserGuard {
-    email: String,
-    sub: String,
-    picture: Option<String>,
-    email_verified: Option<bool>,
+    pub email: String,
+    pub sub: String,
+    pub picture: Option<String>,
+    pub email_verified: Option<bool>,
 }
 
 impl CoreClaims for UserGuard {
@@ -31,7 +31,7 @@ impl CoreClaims for UserGuard {
     }
 }
 
-type Guard = OIDCGuard<UserGuard>;
+pub(crate) type Guard = OIDCGuard<UserGuard>;
 
 #[get("/account")]
 async fn account() -> Redirect {

@@ -2,10 +2,14 @@
 extern crate serde_derive;
 #[macro_use]
 extern crate err_derive;
-pub mod backend;
+
+//pub mod backend;
 pub mod stories;
 pub mod users;
 pub mod render;
+pub mod characters;
+pub mod places;
+pub mod model;
 use comrak::{Options, markdown_to_html};
 use rmp_serde::encode;
 use rocket::{FromForm, FromFormField};
@@ -43,27 +47,4 @@ impl Ownership {
             access: AccessLevel::Public,
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct StoryMeta {
-    pub id: Uuid,
-    pub description: Option<String>,
-    pub owner: Ownership,
-    /// ids for different characters
-    pub characters: Vec<Uuid>,
-    /// ids for different locations / settings within the story
-    pub places: Vec<Uuid>,
-    pub tags: Vec<String>,
-    pub started: u64,
-    pub last_editted: u64,
-    /// link to other stories in either a timeline, or a universe etc
-    pub links: Vec<Uuid>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct StoryFragment {
-    pub meta: Uuid,
-    pub name: String,
-    pub content: Vec<u8>,
 }

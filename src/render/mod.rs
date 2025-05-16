@@ -1,7 +1,10 @@
 use rocket_dyn_templates::{Template};
 use rocket::response::content::RawHtml;
-use crate::StoryFragment;
+use crate::model::StoryFragment;
 use std::string::FromUtf8Error;
+use rocket::FromFormField;
+use std::fmt;
+
 pub trait Renderer {
     fn process(&self, content: &[u8]) -> Result<RawHtml<String>, RenderErr>;
 }
@@ -26,5 +29,19 @@ pub enum RenderErr {
 impl Renderable for StoryFragment {
     fn render<R: Renderer>(&self, renderer: &R) -> Result<RawHtml<String>, RenderErr> {
         Ok(renderer.process(&self.content)?)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Copy, FromFormField)]
+pub enum SupportedRender {
+    Markdown
+}
+
+impl fmt::Display for SupportedRender {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let strval = match self {
+            Self::Markdown => "Markdown"
+        };
+        write!(f, "{}", strval)
     }
 }
