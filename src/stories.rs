@@ -52,20 +52,9 @@ async fn create_story_html(user: Guard) -> RawHtml<Template> {
 }
 
 #[post("/", data="<story>")]
-async fn create_story(user: Guard, client: &State<reqwest::Client>, cookies: &CookieJar<'_>, story: Form<CreateStoryFragment>, config: &State<Config>) -> Redirect {
-    // either successful creation, or failure which results in redirect back
-    let access_token = match cookies.get("access_token") {
-        Some(cookie) => cookie.to_string(),
-        None => return Redirect::to("/")
-    };
+async fn create_story(user: Guard, client: &State<reqwest::Client>, cookies: &CookieJar<'_>, story: Form<CreateStoryFragment>, api: &State<ApiClient>) -> Redirect {
     
-    let res = client
-        .get(&config.api_url)
-        .bearer_auth(access_token)  // adds Authorization: Bearer <token>
-        .send()
-        .await
-        .unwrap();
-    
+    api.post(cookies, story.into_inner());
     Redirect::to("/")
 }
 
