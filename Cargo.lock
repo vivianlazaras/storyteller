@@ -3392,6 +3392,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "rocket-oidc"
+version = "0.1.0"
+source = "git+https://github.com/divinusdracodominus/rocket_oidc#0f9db92901af1b5beba20af47e8283b9b19b56c6"
+dependencies = [
+ "err-derive",
+ "jsonwebtoken",
+ "openidconnect",
+ "reqwest",
+ "rocket",
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
 name = "rocket_codegen"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3447,20 +3462,6 @@ dependencies = [
  "tokio",
  "uncased",
  "uuid",
-]
-
-[[package]]
-name = "rocket_oidc"
-version = "0.1.0"
-dependencies = [
- "err-derive",
- "jsonwebtoken",
- "openidconnect",
- "reqwest",
- "rocket",
- "serde",
- "serde_derive",
- "serde_json",
 ]
 
 [[package]]
@@ -4024,8 +4025,8 @@ dependencies = [
  "redis",
  "rmp-serde",
  "rocket",
+ "rocket-oidc",
  "rocket_dyn_templates",
- "rocket_oidc",
  "ron",
  "rustls",
  "rustls-platform-verifier",
