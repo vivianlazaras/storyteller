@@ -12,9 +12,9 @@ import (
 func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/stories", ListPubStories)
     r.GET("/stories/:id", GetStory)
-    r.POST("/stories", middleware.RequireOIDC(), CreateUser)
-    r.PUT("/stories/:id", middleware.RequireOIDC(), UpdateUser)
-    r.DELETE("/stories/:id", middleware.RequireOIDC(), DeleteUser)
+    r.POST("/stories", CreateStory)
+    r.PUT("/stories/:id", middleware.RequireOIDC(), UpdateStory)
+    r.DELETE("/stories/:id", middleware.RequireOIDC(), DeleteStory)
 	return r
 }
 
@@ -39,7 +39,7 @@ func GetStory(c *gin.Context) {
 }
 
 func CreateStory(c *gin.Context) {
-
+	
 }
 
 func UpdateStory(c *gin.Context) {

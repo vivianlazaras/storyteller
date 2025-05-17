@@ -24,7 +24,7 @@ func initOIDC() {
 	})
 }
 
-func OIDCAuthMiddleware() gin.HandlerFunc {
+func RequireOIDC() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
@@ -47,19 +47,6 @@ func OIDCAuthMiddleware() gin.HandlerFunc {
 		}
 
 		c.Set("claims", claims)
-		c.Next()
-	}
-}
-
-func RequireOIDC() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Check OIDC token here (mocked)
-		token := c.GetHeader("Authorization")
-		if token == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			c.Abort()
-			return
-		}
 		c.Next()
 	}
 }
