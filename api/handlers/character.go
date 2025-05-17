@@ -25,12 +25,13 @@ func ListCharacters(c *gin.Context) {
 }
 
 func GetCharacter(c *gin.Context) {
-	character, err := db.GetByID[model.Character](c, "characters")
+	character, err := db.GetByCtxID[model.Character](c, "characters")
 	if err != nil {
 		return
 	}
 
-	if character.Public != true {
+	metadata, err := db.GetByID[model.Metadatum]("metadata", character.Metadata)
+	if err != nil || metadata.Public != true {
 		c.JSON(http.StatusNotFound, model.Character{})
 		return
 	}

@@ -8,16 +8,13 @@ const TableNameCharacter = "characters"
 
 // Character mapped from table <characters>
 type Character struct {
-	ID          string `gorm:"column:id;primaryKey" json:"id"`
+	ID          string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
 	Timeline    string `gorm:"column:timeline" json:"timeline"`
 	Name        string `gorm:"column:name;not null" json:"name"`
 	Description string `gorm:"column:description" json:"description"`
+	Metadata    string `gorm:"column:metadata" json:"metadata"`
 	Created     int64  `gorm:"column:created" json:"created"`
 	LastEdited  int64  `gorm:"column:last_edited" json:"last_edited"`
-	Creator     string `gorm:"column:creator" json:"creator"`
-	License     string `gorm:"column:license" json:"license"`
-	Shared      string `gorm:"column:shared" json:"shared"`
-	Public      bool   `gorm:"column:public" json:"public"`
 }
 
 // TableName Character's table name

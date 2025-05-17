@@ -8,9 +8,9 @@ const TableNameGrouprel = "grouprel"
 
 // Grouprel mapped from table <grouprel>
 type Grouprel struct {
-	ID          string `gorm:"column:id;primaryKey" json:"id"`
-	GroupID     string `gorm:"column:group_id" json:"group_id"`
-	UserID      string `gorm:"column:user_id" json:"user_id"`
+	ID          string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
+	Groupid     string `gorm:"column:groupid" json:"groupid"`
+	Userid      string `gorm:"column:userid" json:"userid"`
 	Description string `gorm:"column:description" json:"description"`
 }
 

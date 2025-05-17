@@ -24,7 +24,7 @@ func ListUsers(c *gin.Context) {
 }
 
 func GetUser(c *gin.Context) {
-	db.GetByID[model.User](c, "users")
+	db.GetByCtxID[model.User](c, "users")
 }
 
 func CreateUser(c *gin.Context) {

@@ -6,7 +6,6 @@ import (
 	"gorm.io/driver/postgres"
 	"net/http"
 	"fmt"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -38,23 +37,29 @@ func GetID(c *gin.Context) (*uuid.UUID, error) {
 	return &userID, nil
 }
 
-func GetByID[T any](c *gin.Context, tableName string) (*T, error) {
+func GetByID[T any](tableName, id string) (*T, error) {
+
+	var result = new(T)
+	if err := DB.Table(tableName).First(&result, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+	// c.JSON(http.StatusOK, result)
+}
+
+func GetByCtxID[T any](c *gin.Context, tableName string) (*T, error) {
 	id, err := GetID(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return nil, err
 	}
 
-	var result = new(T)
-	if err := DB.Table(tableName).First(&result, "id = ?", id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("%s not found", tableName)})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		}
+	result, err := GetByID[T](tableName, id.String())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return nil, err
 	}
 
 	return result, nil
-	// c.JSON(http.StatusOK, result)
 }

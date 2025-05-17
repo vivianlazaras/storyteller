@@ -8,7 +8,7 @@ const TableNameTag = "tags"
 
 // Tag mapped from table <tags>
 type Tag struct {
-	ID    string `gorm:"column:id;primaryKey" json:"id"`
+	ID    string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
 	Story string `gorm:"column:story" json:"story"`
 	Value string `gorm:"column:value;not null" json:"value"`
 }

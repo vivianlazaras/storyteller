@@ -8,12 +8,10 @@ const TableNameTimeline = "timelines"
 
 // Timeline mapped from table <timelines>
 type Timeline struct {
-	ID         string `gorm:"column:id;primaryKey" json:"id"`
+	ID         string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
+	Metadata   string `gorm:"column:metadata" json:"metadata"`
 	Created    int64  `gorm:"column:created" json:"created"`
 	LastEdited int64  `gorm:"column:last_edited" json:"last_edited"`
-	Creator    string `gorm:"column:creator" json:"creator"`
-	License    string `gorm:"column:license" json:"license"`
-	Shared     string `gorm:"column:shared" json:"shared"`
 }
 
 // TableName Timeline's table name

@@ -1,0 +1,20 @@
+[
+    {
+        "name": "MIT",
+        "description": "MIT Open Source License",
+        "public": true,
+        "contentFile": "./licenses/MIT"
+    },
+    {
+        "name": "Apache",
+        "description": "Apache Open Source License",
+        "public": true,
+        "contentFile": "./licenses/apache2"
+    },
+    {
+        "name": "GNU general public license v3",
+        "description": "GNU's not unix (GNU OS) general public license, common for open source code including most linux projects",
+        "public": true,
+        "contentFile": "./licenses/gnuv3"
+    }
+]
