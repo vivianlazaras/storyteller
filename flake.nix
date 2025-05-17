@@ -10,7 +10,7 @@
   outputs = { self, nixpkgs, flake-utils, rust-overlay }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        overlays = [ rust-overlay.overlay ];
+        overlays = [ rust-overlay.outputs.overlays.default ];
         pkgs = import nixpkgs {
           inherit system overlays;
         };
@@ -30,7 +30,7 @@
           pname = "storyteller-api";
           version = "0.1.0";
           src = ./api; 
-          vendorSha256 = pkgs.lib.fakeSha256;
+          vendorHash = pkgs.lib.fakeHash;
         };
       in {
         packages.default = pkgs.symlinkJoin {
