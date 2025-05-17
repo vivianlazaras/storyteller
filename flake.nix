@@ -30,7 +30,7 @@
           pname = "storyteller-api";
           version = "0.1.0";
           src = ./api; 
-          vendorHash = pkgs.lib.fakeHash;
+          vendorHash = "sha256-YduyX9vfYX7cVVotCCxXnX4uYuaxVs5IpMFaRChBfdA=";
         };
       in {
         packages.default = pkgs.symlinkJoin {

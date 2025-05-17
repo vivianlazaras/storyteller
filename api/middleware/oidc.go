@@ -7,7 +7,6 @@ import (
 	
 	"github.com/coreos/go-oidc"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/oauth2"
 	
 )
 
