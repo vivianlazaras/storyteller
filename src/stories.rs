@@ -4,6 +4,7 @@ use comrak::{Options, markdown_to_html};
 use crate::*;
 use crate::model::StoryFragment;
 use rocket::form::Form;
+use rocket::http::CookieJar;
 use rocket::{
     Route, State, get, post, put,
     response::{Redirect, content::RawHtml},
@@ -51,12 +52,15 @@ async fn create_story_html(user: Guard) -> RawHtml<Template> {
 }
 
 #[post("/", data="<story>")]
-async fn create_story(user: Guard, cookies: &CookieJar<'_>, story: Form<CreateStoryFragment>) -> Redirect {
+async fn create_story(user: Guard, client: &State<reqwest::Client>, cookies: &CookieJar<'_>, story: Form<CreateStoryFragment>, config: &State<Config>) -> Redirect {
     // either successful creation, or failure which results in redirect back
-    let access_token = cookies.get("access_token");
+    let access_token = match cookies.get("access_token") {
+        Some(cookie) => cookie.to_string(),
+        None => return Redirect::to("/")
+    };
     
     let res = client
-        .get(api_url)
+        .get(&config.api_url)
         .bearer_auth(access_token)  // adds Authorization: Bearer <token>
         .send()
         .await

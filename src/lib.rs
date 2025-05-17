@@ -48,3 +48,7 @@ impl Ownership {
         }
     }
 }
+
+pub struct Config {
+    api_url: String,
+}

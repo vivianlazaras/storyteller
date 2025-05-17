@@ -4008,6 +4008,7 @@ dependencies = [
  "pdfium-render",
  "rayon",
  "redis",
+ "reqwest",
  "rmp-serde",
  "rocket",
  "rocket-oidc",
