@@ -51,7 +51,7 @@ type CreateStoryFragment struct {
 	Content     string          `json:"content"`
 }
 
-func CreateStoryFromFragment(fragment CreateStoryFragment, creatorID uuid.UUID) (model.Story, error) {
+func CreateStoryFromFragment(fragment *CreateStoryFragment, creatorID uuid.UUID) (model.Story, error) {
 	now := time.Now().Unix()
 	description := ""
 	if fragment.Description != nil {
@@ -92,8 +92,14 @@ func CreateStory(c *gin.Context) {
 		})
 		return
 	}
+	parsedUUID, err := uuid.Parse("e905907e-34b6-4a5e-90ec-ebe31eda4e95")
+	story, err := CreateStoryFromFragment(&fragment, parsedUUID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{ "error": "Internal Server Error: " + err.Error() })
+		return
+	}
 
-
+	c.JSON(http.StatusOK, story)
 }
 
 func UpdateStory(c *gin.Context) {

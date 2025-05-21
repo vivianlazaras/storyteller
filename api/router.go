@@ -9,7 +9,7 @@ func SetupRouter() *gin.Engine {
     r := gin.Default()
 
     handlers.RegisterUserRoutes(r)
-
+    handlers.RegisterStoryRoutes(r)
     // Repeat for other models
 
     return r

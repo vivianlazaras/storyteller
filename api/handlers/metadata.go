@@ -13,7 +13,6 @@ func defaultMetadata(creatorID uuid.UUID) model.Metadatum {
 		ID: uuid.New().String(),
 		Creator: creatorID.String(),
 		License: "",
-		Shared: "",
 		Public: false,
 	}
 }
