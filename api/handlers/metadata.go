@@ -2,19 +2,34 @@ package handlers
 
 import (
 	"github.com/vivianlazaras/storyteller/model"
+	// "github.com/vivianlazaras/storyteller/handlers"
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/google/uuid"
 )
 
-func CreateMetadata(creatorID, license uuid.UUID, public bool) (model.Metadatum, error) {
-	var metadata = model.Metadatum {
+func defaultMetadata(creatorID uuid.UUID) model.Metadatum {
+
+	return model.Metadatum {
 		ID: uuid.New().String(),
 		Creator: creatorID.String(),
-		License: license.String(),
+		License: "",
 		Shared: "",
-		Public: public,
+		Public: false,
 	}
+}
 
+func createMetadata(metadata *model.Metadatum) error {
 	err := db.DB.Create(&metadata).Error
-	return metadata, err
+	return err
+}
+
+func createDefaultMetadata(creatorID uuid.UUID) (model.Metadatum, error) {
+	var metadata = defaultMetadata(creatorID)
+	license, err := createDefaultLicense()
+	if err != nil {
+		return model.Metadatum{}, err
+	}
+	metadata.License = license.ID
+	merr := createMetadata(&metadata)
+	return metadata, merr
 }

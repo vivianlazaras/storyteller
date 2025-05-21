@@ -51,17 +51,27 @@ type CreateStoryFragment struct {
 	Content     string          `json:"content"`
 }
 
-func CreateStoryFromFragment(fragment CreateStoryFragment, creatorID) (model.Story, error) {
+func CreateStoryFromFragment(fragment CreateStoryFragment, creatorID uuid.UUID) (model.Story, error) {
 	now := time.Now().Unix()
 	description := ""
 	if fragment.Description != nil {
 		description = *fragment.Description
 	}
 
-	// have to create a timeline, and metadata
+	metadata, err := createDefaultMetadata(creatorID)
+	if err != nil {
+		return model.Story{}, err
+	}
+
+	timeline, err := createDefaultTimeline(metadata.ID)
+	if err != nil {
+		return model.Story{}, err
+	}
+
 	var story = model.Story{
 		ID:          uuid.New().String(),
-		Timeline:    timelineID,
+		Metadata:	 metadata.ID,
+		Timeline:    timeline.ID,
 		Name:        fragment.Name,
 		Description: description,
 		Content:     []byte(fragment.Content),
@@ -70,8 +80,8 @@ func CreateStoryFromFragment(fragment CreateStoryFragment, creatorID) (model.Sto
 		Renderer:    string(fragment.Render),
 	}
 
-	err := db.DB.Create(story).Error
-	return story, err
+	dberr := db.DB.Create(story).Error
+	return story, dberr
 }
 
 func CreateStory(c *gin.Context) {

@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/model"
 	"github.com/vivianlazaras/storyteller/db"
-	"github.com/google/uuid"
+	"github.com/google/uuid"	
 )
 
 func RegisterTimelineRoutes(r *gin.Engine) *gin.Engine {
@@ -36,17 +36,26 @@ func GetTimeline(c *gin.Context) {
 	c.JSON(http.StatusOK, timeline)
 }
 
-func CreateTimeline(metadataID uuid.UUID) (model.Timeline, error) {
+func defaultTimeline(metadata string) model.Timeline {
 	now := time.Now().Unix()
 
-	var timeline = model.Timeline{
+	return model.Timeline{
 		ID:         uuid.New().String(),
 		Created:    now,
 		LastEdited: now,
-		Metadata: metadataID.String(),
+		Metadata: metadata,
 	}
 
+}
+
+func createTimeline(timeline *model.Timeline) error {
 	err := db.DB.Create(timeline).Error
+	return err
+}
+
+func createDefaultTimeline(metadata string) (model.Timeline, error) {
+	var timeline = defaultTimeline(metadata)
+	err := createTimeline(&timeline)
 	return timeline, err
 }
 
