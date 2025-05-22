@@ -14,7 +14,7 @@ import (
 func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/stories", ListPubStories)
     r.GET("/stories/:id", GetStory)
-    r.POST("/stories", CreateStory)
+    r.POST("/stories", middleware.RequireOIDC(), CreateStory)
     r.PUT("/stories/:id", middleware.RequireOIDC(), UpdateStory)
     r.DELETE("/stories/:id", middleware.RequireOIDC(), DeleteStory)
 	return r
@@ -80,11 +80,16 @@ func CreateStoryFromFragment(fragment *CreateStoryFragment, creatorID uuid.UUID)
 		Renderer:    string(fragment.Render),
 	}
 
-	dberr := db.DB.Create(story).Error
+	dberr := db.DB.Create(&story).Error
 	return story, dberr
 }
 
 func CreateStory(c *gin.Context) {
+	var claims map[string]string = c.Get("claims")
+	// now I need to lookup user by email
+
+	userID, err := getUserByEmail(claims["email"])
+	
 	var fragment CreateStoryFragment
 	if err := c.ShouldBindJSON(&fragment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

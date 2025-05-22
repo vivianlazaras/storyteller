@@ -45,3 +45,13 @@ func DeleteUser(c *gin.Context) {
 	id := c.Param("id")
 	c.JSON(http.StatusOK, gin.H{"deleted": id})
 }
+
+
+func getUserByEmail(email string) (model.User, error) {
+	var result = new(model.User);
+	if err := db.DB.Table("users").First(&result, "email = ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

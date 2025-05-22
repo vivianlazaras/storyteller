@@ -19,7 +19,7 @@ func initOIDC() {
 	}
 
 	verifier = provider.Verifier(&oidc.Config{
-		ClientID: "your-client-id", // same as what Rust used to get token
+		ClientID: "storyteller-api", // same as what Rust used to get token
 	})
 }
 
