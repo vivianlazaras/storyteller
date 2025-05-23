@@ -31,7 +31,7 @@ func GetCharacter(c *gin.Context) {
 	}
 
 	metadata, err := db.GetByID[model.Metadatum]("metadata", character.Metadata)
-	if err != nil || metadata.Public != true {
+	if metadata.Public != true {
 		c.JSON(http.StatusNotFound, model.Character{})
 		return
 	}

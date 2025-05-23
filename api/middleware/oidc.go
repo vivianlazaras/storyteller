@@ -10,16 +10,33 @@ import (
 	
 )
 
-var verifier *oidc.IDTokenVerifier
+type Config struct {
+	issuer string
+	AutoCreateUser bool
+	clientID string
+	clientSecret string
+}
 
-func initOIDC() {
-	provider, err := oidc.NewProvider(context.Background(), "https://your-keycloak-domain/auth/realms/your-realm")
+func defaultConfig(clientSecret string) Config {
+	return Config {
+		issuer: "https://localhost/realms/master",
+		AutoCreateUser: true,
+		clientID: "storyteller",
+		clientSecret: clientSecret,
+	}
+}
+
+var verifier *oidc.IDTokenVerifier
+var CONFIG *Config
+
+func initOIDC(config *Config) {
+	provider, err := oidc.NewProvider(context.Background(), config.issuer)
 	if err != nil {
 		panic(err)
 	}
 
 	verifier = provider.Verifier(&oidc.Config{
-		ClientID: "storyteller-api", // same as what Rust used to get token
+		ClientID: config.clientID, // same as what Rust used to get token
 	})
 }
 

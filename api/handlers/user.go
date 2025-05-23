@@ -47,11 +47,15 @@ func DeleteUser(c *gin.Context) {
 }
 
 
-func getUserByEmail(email string) (model.User, error) {
+func getUserByEmail(email string, config *middleware.Config) (*model.User, error) {
 	var result = new(model.User);
-	if err := db.DB.Table("users").First(&result, "email = ?", id).Error; err != nil {
+	if err := db.DB.Table("users").First(&result, "email = ?", email).Error; err != nil {
 		return nil, err
 	}
 
+	if result == nil && config.AutoCreateUser {
+		// user should be created
+		
+	}
 	return result, nil
 }

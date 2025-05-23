@@ -1,5 +1,5 @@
 # Endpoint URL
-URL="http://localhost:8080/stories"
+URL="http://localhost:8000/stories"
 
 # Optional description (use null or a string)
 DESCRIPTION="\"This is an optional description\""

@@ -52,9 +52,10 @@ async fn create_story_html(user: Guard) -> RawHtml<Template> {
 }
 
 #[post("/", data="<story>")]
-async fn create_story(user: Guard, client: &State<reqwest::Client>, cookies: &CookieJar<'_>, story: Form<CreateStoryFragment>, api: &State<ApiClient>) -> Redirect {
-    
-    api.post(cookies, story.into_inner());
+async fn create_story(user: Guard, auth: &State<rocket_oidc::AuthState>, story: Form<CreateStoryFragment>, api: &State<ApiClient>) -> Redirect {
+    let token_response = auth.client.exchange_token_for_audience(&user.claims.sub, "storyteller-api").await.unwrap();
+
+    api.post("/stories/create", token_response.access_token(), story.into_inner()).await.unwrap();
     Redirect::to("/")
 }
 

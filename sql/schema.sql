@@ -1,78 +1,98 @@
+-- Create users table
 CREATE TABLE IF NOT EXISTS users (
-    id uuid primary key default gen_random_uuid(),
-    fname text not null,
-    lname text not null,
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    fname text NOT NULL,
+    lname text NOT NULL,
     subject uuid,
-    email text not null
+    email text NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS groups (
-    id uuid primary key default gen_random_uuid(),
+-- Create licenses table
+CREATE TABLE IF NOT EXISTS licenses (
+    id uuid PRIMARY KEY,
+    name text NOT NULL,
+    description text,
+    public boolean DEFAULT false,
+    content text
+);
+
+-- Create usergroups table
+CREATE TABLE IF NOT EXISTS usergroups (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     name text,
     description text
 );
 
-CREATE TABLE IF NOT EXISTS licenses (
-    id uuid primary key,
-    name text not null,
-    description text,
-    public boolean default false,
-    content text
-);
-
+-- Create metadata table
 CREATE TABLE IF NOT EXISTS metadata (
-    id uuid primary key,
-    created bigint,
-    last_edited bigint,
-    creator uuid references users(id),
-    license uuid references licenses(id),
-    shared uuid references groups(id)
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    creator uuid REFERENCES users(id),
+    license uuid REFERENCES licenses(id),
+    shared uuid REFERENCES usergroups(id),
+    public boolean DEFAULT false
 );
 
+-- Create grouprel table
 CREATE TABLE IF NOT EXISTS grouprel (
-    id uuid primary key,
-    group_id uuid references groups(id),
-    user_id uuid references users(id),
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    groupid uuid REFERENCES usergroups(id),
+    userid uuid REFERENCES users(id),
     description text
 );
 
+-- Create universe table
 CREATE TABLE IF NOT EXISTS universe (
-    id uuid primary key,
-    name text not null,
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    name text NOT NULL,
     description text,
+    metadata uuid REFERENCES metadata(id),
+    created bigint,
+    last_edited bigint
 );
 
+-- Create timelines table
 CREATE TABLE IF NOT EXISTS timelines (
-    id uuid primary key,
-    metadata uuid references metadata(id)
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    metadata uuid REFERENCES metadata(id),
+    created bigint,
+    last_edited bigint
 );
 
+-- Create characters table
 CREATE TABLE IF NOT EXISTS characters (
-    id uuid primary key,
-    metadata uuid references metadata(id),
-    timeline uuid references timelines(id),
-    name text not null,
-    description text
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    timeline uuid REFERENCES timelines(id),
+    name text NOT NULL,
+    description text,
+    metadata uuid REFERENCES metadata(id),
+    created bigint,
+    last_edited bigint
 );
 
+-- Create stories table
 CREATE TABLE IF NOT EXISTS stories (
-    id uuid primary key,
-    metadata uuid references metadata(id),
-    timeline uuid references timelines(id),
-    name text not null,
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    timeline uuid REFERENCES timelines(id),
+    name text NOT NULL,
     description text,
-    content bytea
+    renderer text,
+    content bytea,
+    metadata uuid REFERENCES metadata(id),
+    created bigint,
+    last_edited bigint
 );
 
+-- Create tags table
 CREATE TABLE IF NOT EXISTS tags (
-    id uuid primary key,
-    story uuid references stories(id),
-    value text not null
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    story uuid REFERENCES stories(id),
+    value text NOT NULL
 );
 
+-- Create characterrel table
 CREATE TABLE IF NOT EXISTS characterrel (
-    id uuid primary key,
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     description text,
-    character uuid references characters(id),
-    story uuid references stories(id)
+    character uuid REFERENCES characters(id),
+    story uuid REFERENCES stories(id)
 );

@@ -85,11 +85,20 @@ func CreateStoryFromFragment(fragment *CreateStoryFragment, creatorID uuid.UUID)
 }
 
 func CreateStory(c *gin.Context) {
-	var claims map[string]string = c.Get("claims")
-	// now I need to lookup user by email
+	claims, exists := c.Get("claims")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "No claims in context"})
+        return
+    }
 
-	userID, err := getUserByEmail(claims["email"])
-	
+    // Cast claims to appropriate type
+    claimsMap := claims.(map[string]interface{})
+    email := claimsMap["email"].(string)
+
+	// I do need to handle automatic user creation if user not found
+	// aka handle settings
+	user, err := getUserByEmail(email, middleware.CONFIG)
+
 	var fragment CreateStoryFragment
 	if err := c.ShouldBindJSON(&fragment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -97,7 +106,8 @@ func CreateStory(c *gin.Context) {
 		})
 		return
 	}
-	parsedUUID, err := uuid.Parse("e905907e-34b6-4a5e-90ec-ebe31eda4e95")
+
+	parsedUUID, err := uuid.Parse(user.ID)
 	story, err := CreateStoryFromFragment(&fragment, parsedUUID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{ "error": "Internal Server Error: " + err.Error() })
