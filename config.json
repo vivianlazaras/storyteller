@@ -2,8 +2,8 @@
     "server":
     {
         "port":8440,
-        "listen":"localhost",
-        "url":"localhost",
+        "listen":"0.0.0.0",
+        "url":"stories.qrespite.org",
         "ssl":false,
         "certFile":null,
         "keyFile":null,
@@ -11,8 +11,8 @@
         {
             "client_id":"storyteller",
             "client_secret":"./secret",
-            "issuer_url":"http://keycloak.com/realms/master",
-            "redirect":"http://localhost:8000/"
+            "issuer_url":"http://auth.qrespite.org/realms/qrespite.org",
+            "redirect":"http://stories.qrespite.org/"
         }
     },
     "api":
@@ -21,16 +21,16 @@
         {
             "port":8442,
             "listen":"localhost",
-            "url":"localhost",
+            "url":"api.stories.qrespite.org",
             "ssl":false,
             "certFile":null,
             "keyFile":null,
             "oidc":
             {
-                "client_id":"storyteller",
+                "client_id":"storyteller-api",
                 "client_secret":"./secret",
-                "issuer_url":"http://keycloak.com/realms/master",
-                "redirect":"http://localhost:8000/"
+                "issuer_url":"http://auth.qrespite.org/realms/qrespite.org",
+                "redirect":"http://api.stories.qrespite.org/"
             }
         },
         "db":

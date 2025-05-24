@@ -9,7 +9,10 @@ pub mod users;
 pub mod render;
 pub mod characters;
 pub mod places;
-pub mod model;
+mod model;
+pub mod config;
+pub use config::Config;
+
 use comrak::{Options, markdown_to_html};
 use rmp_serde::encode;
 use rocket::{FromForm, FromFormField};
@@ -24,113 +27,6 @@ use rocket::http::CookieJar;
 use reqwest::Url;
 use std::path::PathBuf;
 use rocket_oidc::OIDCConfig;
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DatabaseConfig {
-    backend: String,
-    name: String,
-    user: String,
-    host: String,
-    port: u16,
-    passwordFile: Option<PathBuf>,
-}
-
-impl Default for DatabaseConfig {
-    fn default() -> DatabaseConfig {
-        DatabaseConfig {
-            backend: "postgres".to_string(),
-            host: "localhost".to_string(),
-            user: "storyteller".to_string(),
-            port: 5432,
-            name: "storyteller".to_string(),
-            passwordFile: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ServerConfig {
-    port: u16,
-    listen: String,
-    url: String,
-    ssl: bool,
-    certFile: Option<PathBuf>,
-    keyFile: Option<PathBuf>,
-    oidc: OIDCConfig,
-}
-
-impl ServerConfig {
-    pub fn endpoint(&self) -> &str {
-        &self.url
-    }
-}
-
-impl Default for ServerConfig {
-    fn default() -> ServerConfig {
-        ServerConfig {
-            port: 8000,
-            listen: "localhost".to_string(),
-            url: "localhost".to_string(),
-            ssl: false,
-            certFile: None,
-            keyFile: None,
-            oidc: OIDCConfig::default(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct APIConfig {
-    server: ServerConfig,
-    db: DatabaseConfig,
-}
-
-impl APIConfig {
-    pub fn endpoint(&self) -> &str {
-        &self.server.endpoint()
-    }
-}
-
-impl Default for APIConfig {
-    fn default() -> APIConfig {
-        let mut server = ServerConfig::default();
-        server.port = 8442;
-        APIConfig {
-            server,
-            db: DatabaseConfig::default(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Config {
-    server: ServerConfig,
-    api: APIConfig,
-}
-
-impl Config {
-    pub fn port(&self) -> u16 {
-        self.server.port
-    }
-
-    pub fn listen(&self) -> &str {
-        &self.server.listen
-    }
-
-    pub fn api_endpoint(&self) -> &str {
-        &self.api.endpoint()
-    }
-}
-
-impl Default for Config {
-    fn default() -> Config {
-        let mut server = ServerConfig::default();
-        server.port = 8440;
-        Config {
-            server,
-            api: APIConfig::default(),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromFormField, Copy)]
 pub enum Owner {

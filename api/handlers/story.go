@@ -11,12 +11,12 @@ import (
 	"github.com/google/uuid"
 )
 
-func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
+func RegisterStoryRoutes(r *gin.Engine, oidc *middleware.OIDCMiddleware) *gin.Engine {
 	r.GET("/stories", ListPubStories)
     r.GET("/stories/:id", GetStory)
-    r.POST("/stories", middleware.RequireOIDC(), CreateStory)
-    r.PUT("/stories/:id", middleware.RequireOIDC(), UpdateStory)
-    r.DELETE("/stories/:id", middleware.RequireOIDC(), DeleteStory)
+    r.POST("/stories", oidc.RequireAuth(), CreateStory)
+    r.PUT("/stories/:id", oidc.RequireAuth(), UpdateStory)
+    r.DELETE("/stories/:id", oidc.RequireAuth(), DeleteStory)
 	return r
 }
 

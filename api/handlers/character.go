@@ -5,17 +5,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/model"
-	"github.com/vivianlazaras/storyteller/middleware"
 	"github.com/vivianlazaras/storyteller/db"
 )
 
 func RegisterUser(r *gin.Engine) *gin.Engine {
-	r.GET("/characters", ListCharacters)
+	/*r.GET("/characters", ListCharacters)
     r.GET("/characters/:id", GetCharacter)
     r.POST("/characters", middleware.RequireOIDC(), CreateCharacter)
     r.PUT("/characters/:id", middleware.RequireOIDC(), UpdateCharacter)
     r.DELETE("/characters/:id", middleware.RequireOIDC(), DeleteCharacter)
-	return r
+	*/return r
 }
 
 // for now this route can only fetch public characters

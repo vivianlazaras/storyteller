@@ -15,6 +15,13 @@ type DBConfig struct {
 	PasswordFile string	`json:"passwordFile"`
 }
 
+type OIDCConfig struct {
+	ClientID string		`json:"client_id"`
+	SecretFile string	`json:"client_secret"`
+	IssuerUrl string	`json:"issuer_url"`
+	Redirect string		`json:"redirect"`
+}
+
 type ServerConfig struct {
 	Listen string		`json:"listen"`
 	Port uint16			`json:"port"`
@@ -22,16 +29,16 @@ type ServerConfig struct {
 	Url string			`json:"url"`
 	CertFile *string	`json:"certFile"`
 	KeyFile	 *string	`json:"keyFile"`
+	Oidc	 *OIDCConfig `json:"oidc"`
+}
+
+type APISettings struct {
+	AutoAddUsers bool	`json:"auto_craete_users"`
 }
 
 type APIConfig struct {
 	Server ServerConfig	`json:"server"`
 	DB DBConfig			`json:"db"`
-}
-
-type OIDCConfig struct {
-	ClientID string		`json:"client_id"`
-	SecretFile
 }
 
 type Config struct {

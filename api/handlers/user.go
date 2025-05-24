@@ -10,11 +10,12 @@ import (
 )
 
 func RegisterUserRoutes(r *gin.Engine) *gin.Engine {
-	r.GET("/users", ListUsers)
+	/*r.GET("/users", ListUsers)
     r.GET("/users/:id", GetUser)
     r.POST("/users", middleware.RequireOIDC(), CreateUser)
     r.PUT("/users/:id", middleware.RequireOIDC(), UpdateUser)
     r.DELETE("/users/:id", middleware.RequireOIDC(), DeleteUser)
+	*/
 	return r
 }
 
