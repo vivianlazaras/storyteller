@@ -6,17 +6,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/model"
-	"github.com/vivianlazaras/storyteller/middleware"
+	"github.com/vivianlazaras/storyteller/auth"
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/google/uuid"
 )
 
-func RegisterStoryRoutes(r *gin.Engine, oidc *middleware.OIDCMiddleware) *gin.Engine {
+func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/stories", ListPubStories)
     r.GET("/stories/:id", GetStory)
-    r.POST("/stories", oidc.RequireAuth(), CreateStory)
-    r.PUT("/stories/:id", oidc.RequireAuth(), UpdateStory)
-    r.DELETE("/stories/:id", oidc.RequireAuth(), DeleteStory)
+    r.POST("/stories", auth.JWTMiddleware("storyteller"), CreateStory)
 	return r
 }
 
@@ -97,7 +95,7 @@ func CreateStory(c *gin.Context) {
 
 	// I do need to handle automatic user creation if user not found
 	// aka handle settings
-	user, err := getUserByEmail(email, middleware.CONFIG)
+	user, err := getUserByEmail(email)
 
 	var fragment CreateStoryFragment
 	if err := c.ShouldBindJSON(&fragment); err != nil {

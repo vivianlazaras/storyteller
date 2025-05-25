@@ -7,3 +7,6 @@ Towards this end, this project serves as a repository for decentralized open sou
 ## Database backends
 1. sled (lightweight pure rust key value store)
 2. redis (not implemented, but planned for higher availability)
+
+## Future Plans
+1. Complete token exchange allowing the API to be exposed to the WAN for homeserver federation.

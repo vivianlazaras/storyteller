@@ -34,13 +34,17 @@ impl Renderable for StoryFragment {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Copy, FromFormField)]
 pub enum SupportedRender {
-    Markdown
+    Markdown,
+    Text,
+    HTML,
 }
 
 impl fmt::Display for SupportedRender {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let strval = match self {
-            Self::Markdown => "Markdown"
+            Self::Markdown => "Markdown",
+            Self::Text => "Text",
+            Self::HTML => "HTML",
         };
         write!(f, "{}", strval)
     }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/model"
-	"github.com/vivianlazaras/storyteller/middleware"
 	"github.com/vivianlazaras/storyteller/db"
 )
 
@@ -48,13 +47,13 @@ func DeleteUser(c *gin.Context) {
 }
 
 
-func getUserByEmail(email string, config *middleware.Config) (*model.User, error) {
+func getUserByEmail(email string) (*model.User, error) {
 	var result = new(model.User);
 	if err := db.DB.Table("users").First(&result, "email = ?", email).Error; err != nil {
 		return nil, err
 	}
 
-	if result == nil && config.AutoCreateUser {
+	if result == nil {
 		// user should be created
 		
 	}

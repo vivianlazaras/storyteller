@@ -109,6 +109,10 @@ impl Config {
     pub fn api_endpoint(&self) -> &str {
         &self.api.endpoint()
     }
+
+    pub fn oidc(&self) -> &rocket_oidc::OIDCConfig {
+        &self.server.oidc
+    }
 }
 
 impl Default for Config {

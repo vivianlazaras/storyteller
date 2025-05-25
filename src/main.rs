@@ -74,7 +74,7 @@ async fn rocket() -> _ {
         .attach(Template::fairing())
         .mount("/static", FileServer::from("static"))
         .mount("/users", storyteller::users::get_routes());
-    rocket_oidc::setup(rocket, OIDCConfig::from_env().unwrap())
+    rocket_oidc::setup(rocket, config.oidc().clone())
         .await
         .unwrap()
 }

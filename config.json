@@ -12,7 +12,8 @@
             "client_id":"storyteller",
             "client_secret":"./secret",
             "issuer_url":"http://auth.qrespite.org/realms/qrespite.org",
-            "redirect":"http://stories.qrespite.org/"
+            "redirect":"http://stories.qrespite.org/",
+            "post_login":"/users/profile"
         }
     },
     "api":
