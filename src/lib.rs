@@ -12,6 +12,7 @@ pub mod places;
 mod model;
 pub mod config;
 pub use config::Config;
+pub mod search;
 
 use comrak::{Options, markdown_to_html};
 use rmp_serde::encode;
@@ -78,8 +79,7 @@ impl ApiClient {
         })
     }
     pub async fn post<T: Serialize>(&self, route: &str, access_token: &str, data: T) -> Result<String> {
-        
-        
+        println!("base url: {}", &self.url);
         let url = join_url(&self.url, route)?;
         let response = self.client
             .post(&url)
@@ -96,5 +96,17 @@ impl ApiClient {
             let error_body = response.text().await.unwrap_or_default();
             Err(anyhow::anyhow!("API error: {} - {}", status, error_body))
         }
+    }
+
+    pub async fn get<T: serde::de::DeserializeOwned>(&self, route: &str) -> Result<T> {
+        let url = join_url(&self.url, route)?;
+        let response = self.client
+            .get(url)
+            .send()
+            .await?
+            .error_for_status()?; // returns Err if not 2xx
+
+        let parsed = response.json::<T>().await?;
+        Ok(parsed)
     }
 }

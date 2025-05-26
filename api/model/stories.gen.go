@@ -8,15 +8,16 @@ const TableNameStory = "stories"
 
 // Story mapped from table <stories>
 type Story struct {
-	ID          string  `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
-	Timeline    string  `gorm:"column:timeline" json:"timeline"`
-	Name        string  `gorm:"column:name;not null" json:"name"`
-	Description string  `gorm:"column:description" json:"description"`
-	Renderer    string  `gorm:"column:renderer" json:"renderer"`
-	Content     []uint8 `gorm:"column:content" json:"content"`
-	Metadata    string  `gorm:"column:metadata" json:"metadata"`
-	Created     int64   `gorm:"column:created" json:"created"`
-	LastEdited  int64   `gorm:"column:last_edited" json:"last_edited"`
+	ID          string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
+	Timeline    string `gorm:"column:timeline" json:"timeline"`
+	Name        string `gorm:"column:name;not null" json:"name"`
+	Description string `gorm:"column:description" json:"description"`
+	Renderer    string `gorm:"column:renderer" json:"renderer"`
+	Metadata    string `gorm:"column:metadata" json:"metadata"`
+	Created     int64  `gorm:"column:created" json:"created"`
+	LastEdited  int64  `gorm:"column:last_edited" json:"last_edited"`
+	Content     string `gorm:"column:content" json:"content"`
+	Image       string `gorm:"column:image" json:"image"`
 }
 
 // TableName Story's table name

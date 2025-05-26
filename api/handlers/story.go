@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/model"
-	"github.com/vivianlazaras/storyteller/auth"
+	// "github.com/vivianlazaras/storyteller/auth"
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/google/uuid"
 )
@@ -14,14 +14,22 @@ import (
 func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/stories", ListPubStories)
     r.GET("/stories/:id", GetStory)
-    r.POST("/stories", auth.JWTMiddleware("storyteller"), CreateStory)
+    r.POST("/stories", CreateStory)
 	return r
 }
 
 func ListPubStories(c *gin.Context) {
 	// grab all stories where public = true
-	
-	c.JSON(http.StatusOK, []model.Story{})
+	var stories []model.Story
+    err := db.DB.
+        Where("metadata.public = ?", true).
+        Joins("JOIN metadata ON metadata.id = stories.metadata").
+        Find(&stories).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	c.JSON(http.StatusOK, stories)
 }
 
 func GetStory(c *gin.Context) {
@@ -72,7 +80,7 @@ func CreateStoryFromFragment(fragment *CreateStoryFragment, creatorID uuid.UUID)
 		Timeline:    timeline.ID,
 		Name:        fragment.Name,
 		Description: description,
-		Content:     []byte(fragment.Content),
+		Content:     fragment.Content,
 		Created:     now,
 		LastEdited:  now,
 		Renderer:    string(fragment.Render),
@@ -83,19 +91,10 @@ func CreateStoryFromFragment(fragment *CreateStoryFragment, creatorID uuid.UUID)
 }
 
 func CreateStory(c *gin.Context) {
-	claims, exists := c.Get("claims")
-    if !exists {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "No claims in context"})
-        return
-    }
-
-    // Cast claims to appropriate type
-    claimsMap := claims.(map[string]interface{})
-    email := claimsMap["email"].(string)
-
+	
 	// I do need to handle automatic user creation if user not found
 	// aka handle settings
-	user, err := getUserByEmail(email)
+	user, err := getUserByEmail("vivianlazaras@gmail.com")
 
 	var fragment CreateStoryFragment
 	if err := c.ShouldBindJSON(&fragment); err != nil {

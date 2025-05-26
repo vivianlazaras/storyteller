@@ -1,0 +1,42 @@
+<label for="itemInput">Add Tags:</label>
+<input list="items" id="itemInput" name="itemInput">
+<datalist id="items">
+  {% for option in options %}
+    <option value="{{ option }}">
+  {% endfor %}
+</datalist>
+<button onclick="addItem()">Add</button>
+
+<div id="selectedItems"></div>
+
+<script>
+  const selectedItemsDiv = document.getElementById("selectedItems");
+  const input = document.getElementById("itemInput");
+
+  function appendItem(value) {
+    if (!value) return;
+
+    const exists = Array.from(selectedItemsDiv.children)
+      .some(el => el.dataset.value === value);
+    if (exists) {
+      input.value = '';
+      return;
+    }
+
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.dataset.value = value;
+    tag.innerHTML = `${value} <span class="remove" onclick="this.parentElement.remove()">×</span>`;
+    selectedItemsDiv.appendChild(tag);
+    input.value = '';
+  }
+
+  function addItem() {
+    appendItem(input.value.trim());
+  }
+
+  // Pre-populate selected items
+  {% for item in selected %}
+    appendItem("{{ item }}");
+  {% endfor %}
+</script>

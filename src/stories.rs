@@ -36,11 +36,20 @@ pub struct CreateStoryFragment {
     content: String,
 }
 
+#[get("/<id>")]
+async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
+    //api.get("/stories/")
+    unimplemented!();
+}
+
 #[get("/")]
-async fn list_stories(user: Guard) -> RawHtml<Template> {
+async fn list_stories(api: &State<ApiClient>) -> RawHtml<Template> {
     //let user =;
     //let stories = StoryFragment::belonging_to(&user)
-    unimplemented!();
+    let resp: Vec<StoryFragment> = api.get("/stories").await.unwrap();
+    RawHtml(
+        Template::render("stories/index", context! { title: "published stories", stories: resp })
+    )
 }
 
 
@@ -52,15 +61,34 @@ async fn create_story_html() -> RawHtml<Template> {
 }
 
 #[post("/", data="<story>")]
-async fn create_story(user: Guard, auth: &State<rocket_oidc::AuthState>, story: Form<CreateStoryFragment>, api: &State<ApiClient>) -> Redirect {
+async fn create_story(user: Guard, jar: &CookieJar<'_>, auth: &State<rocket_oidc::AuthState>, story: Form<CreateStoryFragment>, api: &State<ApiClient>) -> Redirect {
     let story = story.into_inner();
-    println!("create story called: {}", serde_json::to_string(&story).unwrap());
-    let token_response = auth.client.exchange_token_for_audience(&user.claims.sub, "storyteller-api").await.unwrap();
+    let access_token = jar.get("access_token").unwrap().to_string();
+    //println!("create story called: {}", serde_json::to_string(&story).unwrap());
+    //let token_response = auth.client.exchange_token_for_audience(&access_token, "storyteller-api").await.unwrap();
 
-    api.post("/stories/create", token_response.access_token(), story).await.unwrap();
+    api.post("/stories", &access_token, story).await.unwrap();
     Redirect::to("/")
 }
-*/
+
+pub struct Edit {
+    id: Uuid,
+    date: i64,
+    comment: Option<String>,
+    addition: bool,
+    editor: Uuid,
+    value: String
+}
+
+pub struct StoryEdit {
+    edits: Vec<Edit>,
+}
+
+#[put("/")]
+async fn edit_story() {
+
+}
+
 pub fn get_routes() -> Vec<Route> {
-    routes![list_stories, create_story, create_story_html]
+    routes![list_stories, create_story, create_story_html, get_story]
 }

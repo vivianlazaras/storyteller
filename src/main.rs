@@ -15,6 +15,7 @@ use structopt::StructOpt;
 use std::path::PathBuf;
 use tokio::{fs::File, io::AsyncReadExt};
 use std::path::Path;
+use rocket::Request;
 
 #[derive(Debug, Clone, StructOpt)]
 pub struct Args {
@@ -27,6 +28,14 @@ pub struct Args {
 #[catch(401)]
 fn unauthorized() -> Redirect {
     Redirect::to("/")
+}
+
+#[catch(404)]
+fn notfound(req: &Request) -> RawHtml<Template> {
+    let requested_uri = req.uri().to_string();
+    RawHtml(
+        Template::render("/notfound", context! { title: "404 page not found", page: requested_uri })
+    )
 }
 
 #[get("/")]
@@ -65,15 +74,18 @@ async fn rocket() -> _ {
     };
 
     let url = config.api_endpoint();
+    println!("api endpoint: {}", url);
     let api = ApiClient::new(&url).await.unwrap();
     let mut rocket = rocket::custom(rocketconfig)
         .manage(api)
         .mount("/", routes![index])
         .mount("/stories", storyteller::stories::get_routes())
-        .register("/", catchers![unauthorized])
+        .mount("/characters", storyteller::characters::get_routes())
+        .register("/", catchers![unauthorized, notfound])
         .attach(Template::fairing())
         .mount("/static", FileServer::from("static"))
-        .mount("/users", storyteller::users::get_routes());
+        .mount("/users", storyteller::users::get_routes())
+        .mount("/search", storyteller::search::get_routes());
     rocket_oidc::setup(rocket, config.oidc().clone())
         .await
         .unwrap()

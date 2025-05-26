@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-#[derive(  Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Users {
     id: Uuid,
     fname: String,
@@ -10,7 +10,7 @@ pub struct Users {
 }
 
 
-#[derive(  Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Group {
     id: Uuid,
     name: Option<String>,
@@ -18,7 +18,7 @@ pub struct Group {
 }
 
 
-#[derive(  Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct License {
     id: Uuid,
     name: String,
@@ -27,7 +27,7 @@ pub struct License {
     content: String,
 }
 
-#[derive(  Serialize, Deserialize, Debug, Clone)]
+#[derive( Serialize, Deserialize, Debug, Clone)]
 pub struct Timeline {
     id: Uuid,
     created: i64,
@@ -37,21 +37,31 @@ pub struct Timeline {
     shared: Option<Uuid>,
 }
 
-#[derive(  Serialize, Deserialize, Debug, Clone)]
-pub struct StoryFragment {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Story {
+    pub id: Uuid,
     pub created: i64,
     pub last_edited: i64,
-    pub license: Uuid,
-    pub creator: Uuid,
-    pub shared: Option<Uuid>,
     pub name: String,
     pub description: Option<String>,
     pub timeline: Uuid,
     pub renderer: Option<String>,
-    pub content: Vec<u8>,
 }
 
-#[derive(  Serialize, Deserialize, Debug, Clone)]
+/// fragments represent chapters within a larger story
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Fragment {
+    pub id: Uuid,
+    pub story: Uuid,
+    pub name: String,
+    pub metadata: Uuid,
+    pub idx: i32,
+    pub content: String,
+}
+
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Character {
     id: Uuid,
     created: i64,
@@ -64,7 +74,7 @@ pub struct Character {
     description: Option<String>,
 }
 
-#[derive(  Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Relationship {
     id: Uuid,
     description: Option<String>,

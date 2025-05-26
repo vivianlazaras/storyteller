@@ -57,3 +57,42 @@ img.resize {
     display: inline-block;
     vertical-align: middle;
 }
+
+.tag {
+    display: inline-block;
+    background-color: #e0e0e0;
+    padding: 5px 10px;
+    border-radius: 15px;
+    margin: 5px;
+    font-family: sans-serif;
+  }
+.tag .remove {
+    margin-left: 8px;
+    cursor: pointer;
+    color: #ff4444;
+    font-weight: bold;
+}
+
+.diff-line {
+    white-space: pre-wrap;
+    font-family: monospace;
+    padding: 0.2em 0.5em;
+    margin: 0;
+    border-left: 4px solid transparent;
+}
+
+.diff-line.added {
+    background-color: #e6ffed;
+    color: #22863a;
+    border-left-color: #28a745;
+}
+
+.diff-line.removed {
+    background-color: #ffeef0;
+    color: #cb2431;
+    border-left-color: #d73a49;
+}
+
+.diff-line.unchanged {
+    color: #6a737d;
+}

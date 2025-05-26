@@ -1,0 +1,44 @@
+{% include "head" %}
+<body>
+{% include "header" %}
+<div id="content" class="content">
+    <form action="/search" method="post">
+        <label for="name">Name:</label>
+        <input id="name" type="text" placeholder="name"/>
+
+        <label for="universe">Universe:</label>
+        <input id="universe" type="text" placeholder="universe"/>
+
+        <label for="author">Story Author:</label>
+        <input id="author" type="text" placeholder="author"/>
+        
+        <label for="category">category:</label><br>
+        <select id="category" name="category">
+            <option value="Character" {% if category == "Character" %}selected{% endif %}>Character</option>
+            <option value="Story" {% if category == "Story" %}selected{% endif %}>Story</option>
+            <option value="Place" {% if category == "Place" %}selected{% endif %}>Place</option>
+        </select><br><br>
+        
+        {% include "components/tagselector" %}
+
+        <div id="created_range" class="rangeinput">
+            <h5>Created</h5>
+            <label for="start">Start:</label><br>
+            <input type="datetime-local" id="start" name="start"><br><br>
+
+            <label for="end">End:</label><br>
+            <input type="datetime-local" id="end" name="end"><br><br>
+        </div>
+
+        <div id="editted_range" class="rangeinput">
+            <h5>Last Edited</h5>
+            <label for="start">Start:</label><br>
+            <input type="datetime-local" id="start" name="start"><br><br>
+
+            <label for="end">End:</label><br>
+            <input type="datetime-local" id="end" name="end"><br><br>
+        </div>
+        <input type="submit" value="enter"/>
+    </form>
+</div>
+</body>

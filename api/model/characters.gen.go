@@ -15,6 +15,7 @@ type Character struct {
 	Metadata    string `gorm:"column:metadata" json:"metadata"`
 	Created     int64  `gorm:"column:created" json:"created"`
 	LastEdited  int64  `gorm:"column:last_edited" json:"last_edited"`
+	Image       string `gorm:"column:image" json:"image"`
 }
 
 // TableName Character's table name

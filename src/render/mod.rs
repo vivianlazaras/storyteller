@@ -6,7 +6,7 @@ use rocket::FromFormField;
 use std::fmt;
 
 pub trait Renderer {
-    fn process(&self, content: &[u8]) -> Result<RawHtml<String>, RenderErr>;
+    fn process(&self, content: &String) -> Result<RawHtml<String>, RenderErr>;
 }
 
 pub trait Renderable {
@@ -15,7 +15,7 @@ pub trait Renderable {
 
 impl Renderable for String {
     fn render<R: Renderer>(&self, renderer: &R) -> Result<RawHtml<String>, RenderErr> {
-        Ok(renderer.process(&self.as_bytes())?)
+        Ok(renderer.process(&self)?)
     }
 }
 

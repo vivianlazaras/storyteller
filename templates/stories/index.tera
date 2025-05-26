@@ -4,7 +4,13 @@
 
 <div id="content" class="content">
     <div id="storylist">
-    
+        <div id="searchbar" class="searchbar">
+            <form action="/stories/search" method="post">
+                <input type="text" name="search" placeholder="search"/>
+                <input type="submit" value="enter"/>
+                <a href="/search/advanced/stories">Advanced Search</a>
+            </form>
+        </div>
         {% for story in stories %}
             <a class="storybrief" href="/stories/{{ story.id }}">
             <h3>

@@ -1,0 +1,45 @@
+use rocket::{get, post, Route, routes, FromForm};
+use rocket::response::content::RawHtml;
+use rocket_dyn_templates::{Template, context};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Category {
+    Character,
+    Story,
+    Place,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Copy, PartialEq, Eq)]
+pub struct TimeRange {
+    start: u64,
+    end: u64
+}
+
+
+#[get("/advanced/<category>")]
+async fn advanced_search_html(category: String) -> RawHtml<Template> {
+    let selected: Vec<String> = Vec::new();
+    // fetch most popular tags
+    RawHtml(
+        Template::render("search/advanced", context! { title: "advanced search", category: category, selected, options } )
+    )
+}
+
+/*#[derive(Debug, Clone, Serialize, Deserialize, FromForm)]
+pub struct AdvancedSearch {
+    name: Option<String>,
+    tags: Vec<String>,
+    category: Option<Category>,
+    //created: Option<TimeRange>,
+    //last_edited: Option<TimeRange>,
+    owner: Option<String>,
+}
+
+#[post("/search/advanced")]
+async fn advanced_search() -> RawHtml<Template> {
+    unimplemented!();
+}*/
+
+pub fn get_routes() -> Vec<Route> {
+    routes![advanced_search_html]
+}

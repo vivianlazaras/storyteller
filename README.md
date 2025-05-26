@@ -10,3 +10,6 @@ Towards this end, this project serves as a repository for decentralized open sou
 
 ## Future Plans
 1. Complete token exchange allowing the API to be exposed to the WAN for homeserver federation.
+
+## Would Be Coll One Day
+1. Have an AI generate tag suggestions based on story content.

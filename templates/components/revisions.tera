@@ -1,0 +1,16 @@
+<div id="revisions" class="revisions">
+    {% for revision in revisions %}
+        <div class="edit">
+            {% if revision.change == "+" %}
+                <pre class="diff-line added">+{{ revision.value | escape }}</pre>
+            {% elif revision.change == "-" %}
+                <pre class="diff-line removed">-{{ revision.prevvalue | escape }}</pre>
+            {% elif revision.change == "-+" %}
+                <pre class="diff-line added">+{{ revision.value | escape }}</pre>
+                <pre class="diff-line removed">-{{ revision.prevvalue | escape }}</pre>
+            {% else %}
+                <pre class="diff-line unchanged"> {{ revision.value | escape }}</pre>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>

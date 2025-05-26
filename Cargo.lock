@@ -3435,7 +3435,7 @@ dependencies = [
 [[package]]
 name = "rocket-oidc"
 version = "0.1.2"
-source = "git+https://github.com/divinusdracodominus/rocket_oidc#7047f2f53ce186621201c83332085716e4c1c825"
+source = "git+https://github.com/divinusdracodominus/rocket_oidc#3760e8fbdddbdbc206dcd0d4ba52e5aacbba7e71"
 dependencies = [
  "err-derive",
  "jsonwebtoken",

@@ -22,7 +22,7 @@
         {
             "port":8442,
             "listen":"localhost",
-            "url":"api.stories.qrespite.org",
+            "url":"http://localhost:8442",
             "ssl":false,
             "certFile":null,
             "keyFile":null,
