@@ -2,7 +2,7 @@
 use serde::{ser::Serialize, de::Deserialize};
 use comrak::{Options, markdown_to_html};
 use crate::*;
-use crate::model::StoryFragment;
+use crate::model::{StoryFragment, Story};
 use rocket::form::Form;
 use rocket::http::CookieJar;
 use rocket::{
@@ -46,7 +46,7 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
 async fn list_stories(api: &State<ApiClient>) -> RawHtml<Template> {
     //let user =;
     //let stories = StoryFragment::belonging_to(&user)
-    let resp: Vec<StoryFragment> = api.get("/stories").await.unwrap();
+    let resp: Vec<Story> = api.get("/stories", None).await.unwrap();
     RawHtml(
         Template::render("stories/index", context! { title: "published stories", stories: resp })
     )

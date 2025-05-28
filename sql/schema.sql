@@ -65,7 +65,7 @@ CREATE TABLE public.characterrel (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     description text,
     "character" uuid,
-    story uuid
+    fragment uuid
 );
 
 
@@ -113,10 +113,11 @@ ALTER TABLE public.edits OWNER TO storyteller;
 CREATE TABLE public.fragments (
     id uuid NOT NULL,
     story uuid,
-    name text NOT NULL,
     metadata uuid,
     idx integer NOT NULL,
-    content text NOT NULL
+    content text NOT NULL,
+    name text NOT NULL,
+    timeline uuid
 );
 
 
@@ -391,11 +392,11 @@ ALTER TABLE ONLY public.characterrel
 
 
 --
--- Name: characterrel characterrel_story_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+-- Name: characterrel characterrel_fragment_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
 --
 
 ALTER TABLE ONLY public.characterrel
-    ADD CONSTRAINT characterrel_story_fkey FOREIGN KEY (story) REFERENCES public.stories(id);
+    ADD CONSTRAINT characterrel_fragment_fkey FOREIGN KEY (fragment) REFERENCES public.fragments(id);
 
 
 --
@@ -444,6 +445,14 @@ ALTER TABLE ONLY public.fragments
 
 ALTER TABLE ONLY public.fragments
     ADD CONSTRAINT fragments_story_fkey FOREIGN KEY (story) REFERENCES public.stories(id);
+
+
+--
+-- Name: fragments fragments_timeline_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+--
+
+ALTER TABLE ONLY public.fragments
+    ADD CONSTRAINT fragments_timeline_fkey FOREIGN KEY (timeline) REFERENCES public.timelines(id);
 
 
 --

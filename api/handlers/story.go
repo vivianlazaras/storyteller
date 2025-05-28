@@ -55,39 +55,62 @@ type CreateStoryFragment struct {
 	Description *string         `json:"description,omitempty"`
 	Render      string 			`json:"render"`
 	Content     string          `json:"content"`
+	Image		*string			`json:"image"`
 }
 
-func CreateStoryFromFragment(fragment *CreateStoryFragment, creatorID uuid.UUID) (model.Story, error) {
+func CreateStoryFromFragment(fragment *CreateStoryFragment, creatorID uuid.UUID) (model.Fragment, error) {
 	now := time.Now().Unix()
 	description := ""
+	image		:= ""
 	if fragment.Description != nil {
 		description = *fragment.Description
+	}
+	if fragment.Image != nil {
+		image = *fragment.Image
 	}
 
 	metadata, err := createDefaultMetadata(creatorID)
 	if err != nil {
-		return model.Story{}, err
+		return model.Fragment{}, err
 	}
 
 	timeline, err := createDefaultTimeline(metadata.ID)
 	if err != nil {
-		return model.Story{}, err
+		return model.Fragment{}, err
 	}
 
-	var story = model.Story{
-		ID:          uuid.New().String(),
+	var storyid = uuid.New().String();
+
+	var story = model.Story {
+		ID:          storyid,
 		Metadata:	 metadata.ID,
 		Timeline:    timeline.ID,
 		Name:        fragment.Name,
 		Description: description,
-		Content:     fragment.Content,
+		Image:		 image,
 		Created:     now,
 		LastEdited:  now,
 		Renderer:    string(fragment.Render),
 	}
 
 	dberr := db.DB.Create(&story).Error
-	return story, dberr
+	if dberr != nil {
+		return model.Fragment{}, dberr
+	}
+
+	var newfragment = model.Fragment {
+		ID: 		uuid.New().String(),
+		Story: 		storyid,
+		Metadata:	metadata.ID,
+		Content:	fragment.Content,
+		Name:		fragment.Name,
+		Image:		image,
+		LastEdited:	now,
+		Created:	now,
+	}
+
+	fragmentdberr := db.DB.Create(&newfragment).Error
+	return newfragment, fragmentdberr
 }
 
 func CreateStory(c *gin.Context) {

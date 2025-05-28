@@ -13,6 +13,7 @@ mod model;
 pub mod config;
 pub use config::Config;
 pub mod search;
+use std::collections::HashMap;
 
 use comrak::{Options, markdown_to_html};
 use rmp_serde::encode;
@@ -98,14 +99,19 @@ impl ApiClient {
         }
     }
 
-    pub async fn get<T: serde::de::DeserializeOwned>(&self, route: &str) -> Result<T> {
+    pub async fn get<T: serde::de::DeserializeOwned>(&self, route: &str, params: Option<HashMap<&'static str, &str>>) -> Result<T> {
         let url = join_url(&self.url, route)?;
-        let response = self.client
-            .get(url)
-            .send()
-            .await?
-            .error_for_status()?; // returns Err if not 2xx
+        
+        let mut builder = self.client
+            .get(url);
 
+        if let Some(params) = params {
+            builder = builder.query(&params);
+        }
+        
+        let response = builder.send()
+            .await?
+            .error_for_status()?;
         let parsed = response.json::<T>().await?;
         Ok(parsed)
     }

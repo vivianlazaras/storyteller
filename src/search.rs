@@ -1,6 +1,8 @@
-use rocket::{get, post, Route, routes, FromForm};
+use rocket::{get, State, post, Route, routes, FromForm};
 use rocket::response::content::RawHtml;
 use rocket_dyn_templates::{Template, context};
+use std::collections::HashMap;
+use crate::ApiClient;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Category {
@@ -15,10 +17,24 @@ pub struct TimeRange {
     end: u64
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct TagCount {
+    value: String,
+    count: i32,
+}
 
 #[get("/advanced/<category>")]
-async fn advanced_search_html(category: String) -> RawHtml<Template> {
+async fn advanced_search_html(category: String, api: &State<ApiClient>) -> RawHtml<Template> {
     let selected: Vec<String> = Vec::new();
+    let mut params = HashMap::new();
+    params.insert("limit", "10");
+    params.insert("min_count", "0");
+
+    let options_opt: Option<Vec<TagCount>> = api.get("/analytics/populartags", Some(params)).await.unwrap();
+    let options = match options_opt {
+        Some(options) => options,
+        None => Vec::new(),
+    };
     // fetch most popular tags
     RawHtml(
         Template::render("search/advanced", context! { title: "advanced search", category: category, selected, options } )

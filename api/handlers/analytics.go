@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"net/http"
-
+	"strconv"
 	"github.com/gin-gonic/gin"
+	
 	"github.com/vivianlazaras/storyteller/db"
 )
 
@@ -12,8 +13,9 @@ type TagCount struct {
     Count int    `json:"count"`
 }
 
-func RegisterAnalyticsRoutes() {
-	
+func RegisterAnalyticsRoutes(r *gin.Engine) *gin.Engine {
+	r.GET("/analytics/populartags", GetTopTags)
+	return r
 }
 
 func GetTopTags(c *gin.Context) {
@@ -46,11 +48,11 @@ func GetTopTags(c *gin.Context) {
 		return
 	}
 
-	err := db.
+	err := db.DB.
 		Table("tags").
 		Select("value, COUNT(*) as count").
 		Group("value").
-		Having("count >= ?", min_count).
+		Having("COUNT(*) >= ?", minCount).
 		Order("count DESC").
 		Limit(limit).
 		Scan(&results).Error

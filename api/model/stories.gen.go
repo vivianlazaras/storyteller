@@ -16,7 +16,6 @@ type Story struct {
 	Metadata    string `gorm:"column:metadata" json:"metadata"`
 	Created     int64  `gorm:"column:created" json:"created"`
 	LastEdited  int64  `gorm:"column:last_edited" json:"last_edited"`
-	Content     string `gorm:"column:content" json:"content"`
 	Image       string `gorm:"column:image" json:"image"`
 }
 

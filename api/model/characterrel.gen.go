@@ -11,7 +11,7 @@ type Characterrel struct {
 	ID          string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
 	Description string `gorm:"column:description" json:"description"`
 	Character   string `gorm:"column:character" json:"character"`
-	Story       string `gorm:"column:story" json:"story"`
+	Fragment    string `gorm:"column:fragment" json:"fragment"`
 }
 
 // TableName Characterrel's table name

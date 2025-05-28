@@ -21,6 +21,7 @@ func SetupRouter(config *Config) (*gin.Engine, error) {
 
     handlers.RegisterUserRoutes(r)
     handlers.RegisterStoryRoutes(r)
+    handlers.RegisterAnalyticsRoutes(r)
     // Repeat for other models
 
     return r, nil

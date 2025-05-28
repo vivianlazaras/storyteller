@@ -2,7 +2,7 @@
 <input list="items" id="itemInput" name="itemInput">
 <datalist id="items">
   {% for option in options %}
-    <option value="{{ option }}">
+    <option value="{{ option.value }}">
   {% endfor %}
 </datalist>
 <button onclick="addItem()">Add</button>

@@ -46,17 +46,21 @@ pub struct Story {
     pub description: Option<String>,
     pub timeline: Uuid,
     pub renderer: Option<String>,
+    pub image: Option<String>,
 }
 
 /// fragments represent chapters within a larger story
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Fragment {
+pub struct StoryFragment {
     pub id: Uuid,
     pub story: Uuid,
     pub name: String,
     pub metadata: Uuid,
     pub idx: i32,
     pub content: String,
+    pub image: Option<String>,
+    pub last_edited: i64,
+    pub created: i64
 }
 
 
