@@ -95,6 +95,8 @@ impl Default for APIConfig {
 pub struct Config {
     server: ServerConfig,
     api: APIConfig,
+    /// the directory in which to store image files
+    images: PathBuf,
 }
 
 impl Config {

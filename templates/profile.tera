@@ -6,6 +6,12 @@
     <div id="profile">
         <img width="300px" src={{picture}}/>
         <h1>Welcome {{ info.given_name }} {{ info.family_name }}</h1>
+        <div id="operations">
+            <a href="/stories/create">create story</a>
+            <a href="/stories/fragments/create">create fragment</a>
+            <a href="/characters/create">create character</a>
+            <a href="/places/create">create setting</a>
+        </div>
     </div>
 </div>
 </body>

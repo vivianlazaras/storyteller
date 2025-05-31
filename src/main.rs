@@ -34,7 +34,7 @@ fn unauthorized() -> Redirect {
 fn notfound(req: &Request) -> RawHtml<Template> {
     let requested_uri = req.uri().to_string();
     RawHtml(
-        Template::render("/notfound", context! { title: "404 page not found", page: requested_uri })
+        Template::render("notfound", context! { title: "404 page not found", page: requested_uri })
     )
 }
 

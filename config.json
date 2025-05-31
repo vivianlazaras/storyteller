@@ -1,4 +1,5 @@
 {
+    "images": "./images/",
     "server":
     {
         "port":8440,

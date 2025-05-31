@@ -1,0 +1,21 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+<div class="content" id="content">
+    <form action="/stories" method="POST">
+  <label for="name">Title:</label><br>
+  <input type="text" id="name" name="name" required><br><br>
+
+  <label for="description">Description:</label><br>
+  <input type="text" id="description" name="description"><br><br>
+
+  <label for="storycontent">Content:</label><br>
+  <textarea id="storycontent" name="content" rows="10" cols="60" required></textarea><br><br>
+
+
+
+  <button type="submit">Submit Story</button>
+</form>
+</div>
+</body>

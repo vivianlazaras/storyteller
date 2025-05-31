@@ -2,4 +2,9 @@
 
 <body>
 {% include "header" %}
+<h1>Story Teller</h1>
+<h3>An Open Source Decentralized Story Creation Tool</h3>
+<p>
+This project was built to create a tool that authors, playrights, anyone who tells stories can use to organize their characters, story components, and locations
+</p>
 </body>

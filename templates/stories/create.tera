@@ -10,9 +10,6 @@
   <label for="description">Description:</label><br>
   <input type="text" id="description" name="description"><br><br>
 
-  <label for="storycontent">Content:</label><br>
-  <textarea id="storycontent" name="content" rows="10" cols="60" required></textarea><br><br>
-
   <label for="format">Format:</label><br>
   <select id="format" name="renderer" required>
     <option value="Text">Plain Text</option>
@@ -21,6 +18,10 @@
   </select><br><br>
 
   <button type="submit">Submit Story</button>
+
+  <label for="storycontent">Content:</label><br>
+  <textarea id="storycontent" class="dynamic-size" name="content" rows="10" cols="60" required></textarea><br><br>
+
 </form>
 </div>
 </body>

@@ -12,6 +12,16 @@
     height: 50px;
 }
 
+textarea.dynamic-size {
+    width: 40vw;            /* 80% of viewport width */
+    min-height: calc(1.2em * 40); /* Approx. height for 40 rows (1.2em per row for padding) */
+    box-sizing: border-box;
+    resize: vertical;       /* Allow vertical resize */
+    padding: 0.5em;
+    font-family: inherit;
+    font-size: 1em;
+  }
+
 #content {
     width: 75%;
     margin-left: auto;
