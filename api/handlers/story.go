@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 	"time"
-
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/model"
 	// "github.com/vivianlazaras/storyteller/auth"
@@ -14,6 +14,7 @@ import (
 func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/stories", ListPubStories)
     r.GET("/stories/:id", GetStory)
+	r.GET("/stories/fragments", GetFragmentsByStory)
     r.POST("/stories", CreateStory)
 	return r
 }
@@ -32,6 +33,24 @@ func ListPubStories(c *gin.Context) {
 	c.JSON(http.StatusOK, stories)
 }
 
+func GetFragmentsByStory(c *gin.Context) {
+	IDString := c.Query("story")
+	storyID, iderr := uuid.Parse(IDString)
+	if iderr != nil {
+		fmt.Printf("failed to parse UUID: %s", IDString)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse story as UUID"})
+		return
+	}
+
+	var fragments []model.Fragment
+	if err := db.DB.Where("story = ?", storyID).Find(&fragments).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, fragments)
+}
+
 func GetStory(c *gin.Context) {
 	story, err := db.GetByCtxID[model.Story](c, "stories");
 	if err != nil {
@@ -47,6 +66,7 @@ func GetStory(c *gin.Context) {
 		return
 	}
 
+	// get fragments, characters, places
 	c.JSON(http.StatusOK, story)
 }
 

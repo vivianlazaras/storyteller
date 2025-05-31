@@ -2,7 +2,7 @@
 use serde::{ser::Serialize, de::Deserialize};
 use comrak::{Options, markdown_to_html};
 use crate::*;
-use crate::model::{StoryFragment, Story};
+use crate::model::{StoryFragment, Character, Story};
 use rocket::form::Form;
 use rocket::http::CookieJar;
 use rocket::{
@@ -38,8 +38,20 @@ pub struct CreateStoryFragment {
 
 #[get("/<id>")]
 async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
-    //api.get("/stories/")
-    unimplemented!();
+    let url = format!("/stories/{}", id);
+    let id_string = id.to_string();
+    let story: Story = api.get(&url, None).await.unwrap();
+    let mut params = HashMap::new();
+    params.insert("story", id_string.as_str());
+    let fragments: Option<Vec<StoryFragment>> = api.get("/stories/fragments", Some(params.clone())).await.unwrap();
+    
+    /// may need to be implemented later, for now don't worry about it
+    /// I have to grab each character for each fragment and assembly them.
+    // let characters: Option<Vec<Character>> = api.get("/characters/filter", Some(params)).await.unwrap();
+    let characters: Vec<Character> = Vec::new();
+    RawHtml(
+        Template::render("/stories/story", context! { story, fragments, characters })
+    )
 }
 
 #[get("/")]

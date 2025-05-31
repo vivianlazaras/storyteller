@@ -1,0 +1,38 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+<div class="content" id="content">
+    <div class="stories">
+
+    <div class="title">
+        <h1>{{ story.name }}</h1>
+        <input type="submit" value="save"/>
+        <input type="button" value="publish"/>
+    </div>
+    <div class="description" id="description">
+        {{ story.description }}
+    </div>
+    <div id="storyfragments" class="storyfragments">
+        {% for fragment in fragments %}
+            <div class="storyfragment">
+                <a href="/fragments/{{fragment.id}}">{{fragment.name}}</a>
+                <input type="button" class="deletebtn" value="delete"/>
+            </div>
+        {% endfor %}
+    </div>
+    <div id="storychars" class="storychars">
+        {% for character in characters %}
+            <div class="storychar">
+                <a href="/characters/{{character.id}}">{{character.name}}</a>
+                <input type="button" value="unlink" title="remove this character from the story but don't delete it"/>
+                <input type="button" class="deletebtn" value="delete"/>
+            </div>
+        {% endfor %}
+        
+    </div>
+    {% include "/components/tagselector" %}
+    
+    </div>
+</div>
+</body>

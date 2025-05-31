@@ -3,16 +3,18 @@ package handlers
 import (
 	"net/http"
 	"time"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/model"
 	"github.com/vivianlazaras/storyteller/db"
 )
 
-func RegisterUser(r *gin.Engine) *gin.Engine {
+func RegisterCharacterRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/characters", ListPubCharacters)
     r.GET("/characters/:id", GetCharacter)
     r.POST("/characters", CreateCharacter)
+	r.GET("/characters/filter", FilterCharacters)
     /*r.PUT("/characters/:id", middleware.RequireOIDC(), UpdateCharacter)
     r.DELETE("/characters/:id", middleware.RequireOIDC(), DeleteCharacter)
 	*/return r
@@ -122,4 +124,22 @@ func UpdateCharacter(c *gin.Context) {
 
 func DeleteCharacter(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Character{})
+}
+
+func FilterCharacters(c *gin.Context) {
+	IDString := c.Query("story")
+	storyID, iderr := uuid.Parse(IDString)
+	if iderr != nil {
+		fmt.Printf("failed to parse UUID: %s", IDString)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse story as UUID"})
+		return
+	}
+
+	var characters []model.Character
+	if err := db.DB.Where("story = ?", storyID).Find(&characters).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, characters)
 }
