@@ -81,6 +81,7 @@ async fn rocket() -> _ {
         .mount("/", routes![index])
         .mount("/stories", storyteller::stories::get_routes())
         .mount("/characters", storyteller::characters::get_routes())
+        .mount("/places", storyteller::places::get_routes())
         .register("/", catchers![unauthorized, notfound])
         .attach(Template::fairing())
         .mount("/static", FileServer::from("static"))

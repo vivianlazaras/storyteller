@@ -1,3 +1,11 @@
 .header_link {
     width: 24%;
 }
+
+#content {
+    width: 75%;
+}
+
+.brief {
+    flex: 0 1 calc(25% - 40px); /* 4 items per row, accounting for gap */
+}

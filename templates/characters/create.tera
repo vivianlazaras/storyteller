@@ -3,19 +3,16 @@
 <body>
 {% include "header" %}
 <div class="content" id="content">
-    <form action="/stories" method="POST">
+    <form action="/characters" method="POST">
   <label for="name">Title:</label><br>
-  <input type="text" id="name" name="name" required><br><br>
+  <input class="forminput" type="text" id="name" name="name" required><br><br>
 
-  <label for="description">Description:</label><br>
-  <input type="text" id="description" name="description"><br><br>
+  <label for="chardesc">Description:</label><br>
+  <textarea id="chardesc" name="description" rows="10" cols="60" required></textarea><br><br>
 
-  <label for="storycontent">Content:</label><br>
-  <textarea id="storycontent" name="content" rows="10" cols="60" required></textarea><br><br>
+  <input type="file" name="image" />
 
-
-
-  <button type="submit">Submit Story</button>
+  <button type="submit">Submit Character</button>
 </form>
 </div>
 </body>

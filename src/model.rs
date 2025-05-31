@@ -63,15 +63,11 @@ pub struct StoryFragment {
     pub created: i64
 }
 
-
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Character {
     id: Uuid,
     created: i64,
     last_edited: i64,
-    license: Uuid,
-    creator: Uuid,
     shared: Option<Uuid>,
     timeline: Uuid,
     name: String,

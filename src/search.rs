@@ -4,6 +4,20 @@ use rocket_dyn_templates::{Template, context};
 use std::collections::HashMap;
 use crate::ApiClient;
 
+pub struct SearchCriteria {
+    name: Option<String>,
+    tags: Option<Vec<String>>,
+}
+
+impl SearchCriteria {
+    pub fn with_name(name: String) -> Self {
+        Self {
+            name: Some(name),
+            tags: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Category {
     Character,

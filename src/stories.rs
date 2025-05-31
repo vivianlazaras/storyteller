@@ -6,7 +6,7 @@ use crate::model::{StoryFragment, Character, Story};
 use rocket::form::Form;
 use rocket::http::CookieJar;
 use rocket::{
-    Route, State, get, post, put,
+    Route, State, get, post, put, delete,
     response::{Redirect, content::RawHtml},
     routes
 };
@@ -96,11 +96,21 @@ pub struct StoryEdit {
     edits: Vec<Edit>,
 }
 
-#[put("/")]
-async fn edit_story() {
+#[put("/<id>")]
+async fn edit_story(id: Uuid) {
+    unimplemented!();
+}
 
+#[delete("/<id>")]
+async fn delete_story(id: Uuid) {
+    unimplemented!();
+}
+
+#[post("/search", data = "<term>")]
+async fn search(term: Form<>, api: &State<ApiClient>) -> RawHtml<Template> {
+    
 }
 
 pub fn get_routes() -> Vec<Route> {
-    routes![list_stories, create_story, create_story_html, get_story]
+    routes![list_stories, create_story, create_story_html, get_story, edit_story, delete_story]
 }

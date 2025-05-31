@@ -121,9 +121,12 @@ impl Default for Config {
     fn default() -> Config {
         let mut server = ServerConfig::default();
         server.port = 8440;
+        let mut images = PathBuf::new();
+        images.push("/images");
         Config {
             server,
             api: APIConfig::default(),
+            images
         }
     }
 }

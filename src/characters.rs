@@ -1,7 +1,7 @@
 use rocket::{
     Route, State, get,
     response::{Redirect, content::RawHtml},
-    routes,
+    routes, FromForm, Data, form::Form
 };
 use crate::ApiClient;
 use rocket::{post};
@@ -17,12 +17,6 @@ pub struct Relationship {
     description: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateCharacter {
-    name: String,
-    image: Option<String>,
-    description: Option<String>,
-}
 
 #[get("/<id>")]
 async fn get_character(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
@@ -44,9 +38,17 @@ async fn list_characters(api: &State<ApiClient>) -> RawHtml<Template> {
     )
 }
 
-#[post("/")]
-async fn create_character() {
-    unimplemented!();
+#[derive(FromForm, Serialize, Deserialize, Debug, Clone)]
+pub struct CreateCharacter {
+    name: String,
+    description: String,
+}
+
+#[post("/", data = "<form>")]
+async fn create_character(api: &State<ApiClient>, form: Form<CreateCharacter>) -> Redirect {
+    let character = form.into_inner();
+    api.post("/characters/", "", character).await.unwrap();
+    Redirect::to("/characters/")
 }
 
 pub fn get_routes() -> Vec<Route> {

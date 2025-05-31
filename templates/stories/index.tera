@@ -1,27 +1,22 @@
+{% import "components/searchbar" as searchbar %}
 {% include "head" %}
+
 <body>
-{% include "header" %}
+    {% include "header" %}
 
-<div id="content" class="content">
-    <div id="storylist">
-        <div id="searchbar" class="searchbar">
-            <form action="/stories/search" method="post">
-                <input type="text" name="search" placeholder="search"/>
-                <input type="submit" value="enter"/>
-                <a href="/search/advanced/stories">Advanced Search</a>
-            </form>
+    <div id="content" class="content">
+    {{ searchbar::searchbar(category="stories") }}
+    <br/>
+        <div id="list" class="story-list">
+
+            {% for story in stories %}
+                <a class="brief" href="/stories/{{ story.id }}">
+                    <div class="story-card">
+                        <h3 class="story-title">{{ story.name }}</h3>
+                        <p class="description">{{ story.description }}</p>
+                    </div>
+                </a>
+            {% endfor %}
         </div>
-        {% for story in stories %}
-            <a class="storybrief" href="/stories/{{ story.id }}">
-            <h3>
-                {{ story.name }}
-            </h3>
-            <p class="description">
-                {{ story.description }}
-            </p>
-            </a>
-        {% endfor %}
     </div>
-</div>
-
 </body>
