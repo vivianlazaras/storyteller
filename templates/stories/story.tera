@@ -4,8 +4,11 @@
 {% include "header" %}
 <div class="content" id="content">
     <div class="stories">
+    <h1>
+        {{ story.name }}
+    </h1>
     <div class="description" id="description">
-        {{ description }}
+        {{ story.description }}
     </div>
     <div id="storyfragments" class="storyfragments">
         {% for fragment in fragments %}

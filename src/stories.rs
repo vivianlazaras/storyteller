@@ -50,7 +50,7 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     // let characters: Option<Vec<Character>> = api.get("/characters/filter", Some(params)).await.unwrap();
     let characters: Vec<Character> = Vec::new();
     RawHtml(
-        Template::render("/stories/story", context! { story, fragments, characters })
+        Template::render("stories/story", context! { title: story.name.clone(), story, fragments, characters })
     )
 }
 
