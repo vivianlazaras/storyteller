@@ -4,7 +4,8 @@
 {% include "header" %}
 <div class="content" id="content">
     <form action="/characters" method="POST">
-  <label for="name">Title:</label><br>
+    <h1 class="create_banner">Create A New Character</h1>
+  <label for="name">Name:</label><br>
   <input class="forminput" type="text" id="name" name="name" required><br><br>
 
   <label for="chardesc">Description:</label><br>

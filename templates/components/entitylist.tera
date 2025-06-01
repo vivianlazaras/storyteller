@@ -1,0 +1,9 @@
+{% macro entitylist(category, entities) %}
+<div class="entitylist">
+    {% for entity in entities %}
+        <div class="entity">
+            <a class="entitylink" href="/{{category}}/{{entity.id}}">{{entity.name}}</a>
+        </div>
+    {% endfor %}
+</div>
+{% endmacro entitylist %} 

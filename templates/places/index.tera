@@ -5,14 +5,15 @@
     {% include "header" %}
 
     <div id="content" class="content">
-    {{ searchbar::searchbar(category="stories") }}
+    {{ searchbar::searchbar(category="places") }}
     <br/>
-        <div id="list" class="story-list">
-            {% for story in stories %}
+        <div id="list" class="list">
+
+            {% for place in places %}
                 <a class="brief" href="/stories/{{ story.id }}">
-                    <div class="story-card">
-                        <h3 class="story-title">{{ story.name }}</h3>
-                        <p class="description">{{ story.description }}</p>
+                    <div class="place-card card">
+                        <h3 class="name">{{ place.name }}</h3>
+                        <p class="description">{{ place.description }}</p>
                     </div>
                 </a>
             {% endfor %}

@@ -72,6 +72,22 @@ async fn create_story_html() -> RawHtml<Template> {
     )
 }
 
+#[get("/fragments/create?id=<id>&category=<category>")]
+async fn create_fragment_html(story: Uuid, category: String) -> RawHtml<Template> {
+    // id (the entity to link with)
+    // category (the type of entity)
+
+}
+
+#[get("/fragments/<id>")]
+async fn get_fragment(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
+    let url = format!("/stories/fragments/{}", id);
+    let fragment = api.get(&url, None).await.unwrap();
+    RawHtml(
+        Template::render("stories/fragment", context!{ title: fragment.name.clone(), fragment })
+    )
+}
+
 #[post("/", data="<story>")]
 async fn create_story(user: Guard, jar: &CookieJar<'_>, auth: &State<rocket_oidc::AuthState>, story: Form<CreateStoryFragment>, api: &State<ApiClient>) -> Redirect {
     let story = story.into_inner();
@@ -106,10 +122,10 @@ async fn delete_story(id: Uuid) {
     unimplemented!();
 }
 
-#[post("/search", data = "<term>")]
+/*#[post("/search", data = "<term>")]
 async fn search(term: Form<>, api: &State<ApiClient>) -> RawHtml<Template> {
     
-}
+}*/
 
 pub fn get_routes() -> Vec<Route> {
     routes![list_stories, create_story, create_story_html, get_story, edit_story, delete_story]

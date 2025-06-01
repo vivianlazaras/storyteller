@@ -29,12 +29,12 @@ pub struct License {
 
 #[derive( Serialize, Deserialize, Debug, Clone)]
 pub struct Timeline {
-    id: Uuid,
-    created: i64,
-    last_edited: i64,
-    license: Uuid,
-    creator: Uuid,
-    shared: Option<Uuid>,
+    pub id: Uuid,
+    pub created: i64,
+    pub last_edited: i64,
+    pub license: Uuid,
+    pub creator: Uuid,
+    pub shared: Option<Uuid>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -65,13 +65,13 @@ pub struct StoryFragment {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Character {
-    id: Uuid,
-    created: i64,
-    last_edited: i64,
-    shared: Option<Uuid>,
-    timeline: Uuid,
-    name: String,
-    description: Option<String>,
+    pub id: Uuid,
+    pub created: i64,
+    pub last_edited: i64,
+    pub shared: Option<Uuid>,
+    pub timeline: Uuid,
+    pub name: String,
+    pub description: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

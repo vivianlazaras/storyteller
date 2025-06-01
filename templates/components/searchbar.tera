@@ -3,7 +3,8 @@
     <form action="/{{ category }}/search/" method="post">
         <input type="text" name="search" placeholder="Search crates…" />
         <button type="submit">Search</button>
-        <a class="advanced" href="/search/advanced/stories">Advanced</a>
+        <a class="advanced" href="/search/advanced/stories">Advanced Search</a>
+        <a class="advanced" href="/{{ category }}/create">Create</a>
     </form>
 </div>
 <br/>

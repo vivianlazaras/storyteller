@@ -20,7 +20,11 @@ pub struct Relationship {
 
 #[get("/<id>")]
 async fn get_character(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
-    unimplemented!();
+    let url = format!("/characters/{}", id);
+    let character: Character = api.get(&url, None).await.unwrap();
+    RawHtml(
+        Template::render("characters/character", context!{ title: character.name.clone(), character })
+    )
 }
 
 #[get("/create")]

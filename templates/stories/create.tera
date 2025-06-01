@@ -4,6 +4,7 @@
 {% include "header" %}
 <div class="content" id="content">
     <form action="/stories" method="POST">
+    <h1 class="create_banner">Create A New Story</h1>
   <label for="name">Title:</label><br>
   <input type="text" id="name" name="name" required><br><br>
 
@@ -17,10 +18,10 @@
     <option value="HTML">HTML</option>
   </select><br><br>
 
-  <button type="submit">Submit Story</button>
-
   <label for="storycontent">Content:</label><br>
   <textarea id="storycontent" class="dynamic-size" name="content" rows="10" cols="60" required></textarea><br><br>
+
+  <button type="submit">Submit Story</button>
 
 </form>
 </div>

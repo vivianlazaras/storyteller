@@ -1,0 +1,15 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+<div class="content" id="content">
+    <div class="stories">
+    <h1>
+        {{ character.name }}
+    </h1>
+    <div class="description" id="description">
+        {{ character.description }}
+    </div>
+    
+</div>
+</body>

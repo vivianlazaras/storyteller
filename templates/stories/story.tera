@@ -10,17 +10,18 @@
     <div class="description" id="description">
         {{ story.description }}
     </div>
-    <div id="storyfragments" class="storyfragments">
+    <div id="storyfragments" class="storyfragments entitylist">
         {% for fragment in fragments %}
-            <div class="storyfragment">
-                <a href="/fragments/{{fragment.id}}">{{fragment.name}}</a>
+            <div class="storyfragment entity">
+                <a class="entitylink" href="/fragments/{{fragment.id}}">{{fragment.name}}</a>
             </div>
         {% endfor %}
     </div>
-    <div id="storychars" class="storychars">
+    <a class="actionlink" href="/stories/fragments/{{ story.id }}">Add Fragment</a>
+    <div id="storychars" class="storychars entitylist">
         {% for character in characters %}
-            <div class="storychar">
-                <a href="/characters/{{character.id}}">{{character.name}}</a>
+            <div class="storychar entity">
+                <a class="entitylink" href="/characters/{{character.id}}">{{character.name}}</a>
             </div>
         {% endfor %}
     </div>
