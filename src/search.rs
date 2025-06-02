@@ -1,8 +1,8 @@
-use rocket::{get, State, post, Route, routes, FromForm};
+use crate::ApiClient;
 use rocket::response::content::RawHtml;
+use rocket::{FromForm, Route, State, get, post, routes};
 use rocket_dyn_templates::{Template, context};
 use std::collections::HashMap;
-use crate::ApiClient;
 
 pub struct SearchCriteria {
     name: Option<String>,
@@ -28,7 +28,7 @@ pub enum Category {
 #[derive(Debug, Clone, Serialize, Deserialize, Copy, PartialEq, Eq)]
 pub struct TimeRange {
     start: u64,
-    end: u64
+    end: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -44,15 +44,19 @@ async fn advanced_search_html(category: String, api: &State<ApiClient>) -> RawHt
     params.insert("limit", "10");
     params.insert("min_count", "0");
 
-    let options_opt: Option<Vec<TagCount>> = api.get("/analytics/populartags", Some(params)).await.unwrap();
+    let options_opt: Option<Vec<TagCount>> = api
+        .get("/analytics/populartags", Some(params))
+        .await
+        .unwrap();
     let options = match options_opt {
         Some(options) => options,
         None => Vec::new(),
     };
     // fetch most popular tags
-    RawHtml(
-        Template::render("search/advanced", context! { title: "advanced search", category: category, selected, options } )
-    )
+    RawHtml(Template::render(
+        "search/advanced",
+        context! { title: "advanced search", category: category, selected, options },
+    ))
 }
 
 /*#[derive(Debug, Clone, Serialize, Deserialize, FromForm)]

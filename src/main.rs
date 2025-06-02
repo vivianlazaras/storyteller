@@ -1,21 +1,21 @@
 #[macro_use]
 extern crate rocket;
-use storyteller::stories::{AccountBtn, StoryTitle};
-use storyteller::ApiClient;
+use rocket::Request;
 use rocket::State;
 use rocket::fs::FileServer;
 use rocket::response::{Redirect, content::RawHtml};
 use rocket_dyn_templates::{Template, context};
 use rocket_oidc::OIDCConfig;
 use sled::Tree;
-use storyteller::Config;
-use std::str::FromStr;
-use uuid::Uuid;
-use structopt::StructOpt;
-use std::path::PathBuf;
-use tokio::{fs::File, io::AsyncReadExt};
 use std::path::Path;
-use rocket::Request;
+use std::path::PathBuf;
+use std::str::FromStr;
+use storyteller::ApiClient;
+use storyteller::Config;
+use storyteller::stories::{AccountBtn, StoryTitle};
+use structopt::StructOpt;
+use tokio::{fs::File, io::AsyncReadExt};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, StructOpt)]
 pub struct Args {
@@ -33,9 +33,10 @@ fn unauthorized() -> Redirect {
 #[catch(404)]
 fn notfound(req: &Request) -> RawHtml<Template> {
     let requested_uri = req.uri().to_string();
-    RawHtml(
-        Template::render("notfound", context! { title: "404 page not found", page: requested_uri })
-    )
+    RawHtml(Template::render(
+        "notfound",
+        context! { title: "404 page not found", page: requested_uri },
+    ))
 }
 
 #[get("/")]
@@ -59,11 +60,11 @@ async fn rocket() -> _ {
 
     let config = if let Some(config_file) = args.config_file {
         load_config(&config_file).await.unwrap()
-    }else if args.generate_config {
+    } else if args.generate_config {
         let config = Config::default();
         println!("{}", serde_json::to_string(&config).unwrap());
         std::process::exit(-1);
-    }else{
+    } else {
         panic!("unable to fetch config");
     };
 

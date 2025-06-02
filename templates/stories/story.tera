@@ -2,29 +2,67 @@
 
 <body>
 {% include "header" %}
+
+<style>
+  .listitem {
+    display: none;
+    transition: all 0.3s ease;
+  }
+
+  .listitem.visible {
+    display: block;
+  }
+</style>
+
+<script>
+function list_toggle(id) {
+  const item = document.getElementById(id);
+  if (!item) return;
+
+  const isVisible = window.getComputedStyle(item).display !== "none";
+  if (isVisible) {
+    item.classList.remove("visible");
+  } else {
+    item.classList.add("visible");
+  }
+}
+</script>
+
 <div class="content" id="content">
-    <div class="stories">
-    <h1>
-        {{ story.name }}
-    </h1>
+  <div class="stories">
+    <h1>{{ story.name }}</h1>
+
     <div class="description" id="description">
-        {{ story.description }}
+      {{ story.description }}
     </div>
+
     <div id="storyfragments" class="storyfragments entitylist">
-        {% for fragment in fragments %}
-            <div class="storyfragment entity">
-                <a class="entitylink" href="/fragments/{{fragment.id}}">{{fragment.name}}</a>
-            </div>
-        {% endfor %}
+      {% for fragment in fragments %}
+        <div class="storyfragment">
+          <button onclick="list_toggle('{{ fragment.id }}')" class="entitylink">
+            {{ fragment.name }}
+          </button>
+          <div class="listitem" id="{{ fragment.id }}">
+            {{ fragment.content }}
+          </div>
+        </div>
+      {% endfor %}
     </div>
-    <a class="actionlink" href="/stories/fragments/{{ story.id }}">Add Fragment</a>
+
+    <a class="actionlink" href="/stories/fragments/create?category=story&id={{ story.id }}">
+      Add Fragment
+    </a>
+
     <div id="storychars" class="storychars entitylist">
-        {% for character in characters %}
-            <div class="storychar entity">
-                <a class="entitylink" href="/characters/{{character.id}}">{{character.name}}</a>
-            </div>
-        {% endfor %}
+      {% for character in characters %}
+        <div class="storychar entity">
+          <a class="entitylink" href="/characters/{{ character.id }}">
+            {{ character.name }}
+          </a>
+        </div>
+      {% endfor %}
     </div>
-    </div>
+  </div>
 </div>
+
 </body>

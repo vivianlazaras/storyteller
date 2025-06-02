@@ -9,14 +9,12 @@ pub struct Users {
     email: String,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Group {
     id: Uuid,
     name: Option<String>,
     description: Option<String>,
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct License {
@@ -27,7 +25,7 @@ pub struct License {
     content: String,
 }
 
-#[derive( Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Timeline {
     pub id: Uuid,
     pub created: i64,
@@ -60,7 +58,7 @@ pub struct StoryFragment {
     pub content: String,
     pub image: Option<String>,
     pub last_edited: i64,
-    pub created: i64
+    pub created: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

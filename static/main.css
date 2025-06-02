@@ -27,9 +27,11 @@
 .entitylink {
     text-decoration: none;
     width: 100%;
-    height: 100%;
     padding: 10px;
     display: inline-block;
+    border: 0px;
+    background-color: #f4f8fb;
+    font-size: large;
 }
 
 .entity {
@@ -188,4 +190,9 @@ button[type="submit"]:hover, .actionlink:hover {
 
 .textfield {
     margin: 20px;
+}
+
+.listitem {
+    display: none;
+    margin: 10px;
 }

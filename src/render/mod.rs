@@ -1,9 +1,9 @@
-use rocket_dyn_templates::{Template};
-use rocket::response::content::RawHtml;
 use crate::model::StoryFragment;
-use std::string::FromUtf8Error;
 use rocket::FromFormField;
+use rocket::response::content::RawHtml;
+use rocket_dyn_templates::Template;
 use std::fmt;
+use std::string::FromUtf8Error;
 
 pub trait Renderer {
     fn process(&self, content: &String) -> Result<RawHtml<String>, RenderErr>;

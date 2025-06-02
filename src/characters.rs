@@ -1,11 +1,13 @@
-use rocket::{
-    Route, State, get,
-    response::{Redirect, content::RawHtml},
-    routes, FromForm, Data, form::Form
-};
 use crate::ApiClient;
-use rocket::{post};
 use crate::model::Character;
+use rocket::post;
+use rocket::{
+    Data, FromForm, Route, State,
+    form::Form,
+    get,
+    response::{Redirect, content::RawHtml},
+    routes,
+};
 
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
@@ -17,29 +19,31 @@ pub struct Relationship {
     description: String,
 }
 
-
 #[get("/<id>")]
 async fn get_character(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let url = format!("/characters/{}", id);
     let character: Character = api.get(&url, None).await.unwrap();
-    RawHtml(
-        Template::render("characters/character", context!{ title: character.name.clone(), character })
-    )
+    RawHtml(Template::render(
+        "characters/character",
+        context! { title: character.name.clone(), character },
+    ))
 }
 
 #[get("/create")]
 async fn create_character_html() -> RawHtml<Template> {
-    RawHtml(
-        Template::render("characters/create", context!{ title: "create new character" })
-    )
+    RawHtml(Template::render(
+        "characters/create",
+        context! { title: "create new character" },
+    ))
 }
 
 #[get("/")]
 async fn list_characters(api: &State<ApiClient>) -> RawHtml<Template> {
     let characters: Option<Vec<Character>> = api.get("/characters", None).await.unwrap();
-    RawHtml(
-        Template::render("characters/index", context! { title: "characters", characters })
-    )
+    RawHtml(Template::render(
+        "characters/index",
+        context! { title: "characters", characters },
+    ))
 }
 
 #[derive(FromForm, Serialize, Deserialize, Debug, Clone)]
@@ -56,5 +60,10 @@ async fn create_character(api: &State<ApiClient>, form: Form<CreateCharacter>) -
 }
 
 pub fn get_routes() -> Vec<Route> {
-    routes![create_character_html, list_characters, get_character, create_character]
+    routes![
+        create_character_html,
+        list_characters,
+        get_character,
+        create_character
+    ]
 }

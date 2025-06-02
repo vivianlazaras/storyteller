@@ -3,7 +3,11 @@ use rocket_oidc::{CoreClaims, OIDCGuard};
 use uuid::Uuid;
 
 use rocket::response::{Redirect, content::RawHtml};
-use rocket::{Route, get, routes, http::{Cookie, CookieJar}};
+use rocket::{
+    Route, get,
+    http::{Cookie, CookieJar},
+    routes,
+};
 
 pub fn default_profile_url() -> String {
     String::from("/static/profile.jpg")

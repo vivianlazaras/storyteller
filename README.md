@@ -10,6 +10,8 @@ Towards this end, this project serves as a repository for decentralized open sou
 
 ## Future Plans
 1. Complete token exchange allowing the API to be exposed to the WAN for homeserver federation.
+2. import timelines from immich.
 
-## Would Be Coll One Day
+
+## Would Be Cool One Day
 1. Have an AI generate tag suggestions based on story content.

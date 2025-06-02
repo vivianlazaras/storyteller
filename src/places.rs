@@ -1,10 +1,10 @@
+use crate::ApiClient;
 use rocket::{
-    Route, State, get, post, put, delete,
+    Route, State, delete, get, post, put,
     response::{Redirect, content::RawHtml},
     routes,
 };
-use crate::ApiClient;
-use rocket_dyn_templates::{context, Template};
+use rocket_dyn_templates::{Template, context};
 
 use uuid::Uuid;
 
@@ -19,11 +19,12 @@ pub struct Place {
 async fn list_places(api: &State<ApiClient>) -> RawHtml<Template> {
     let places: Vec<Place> = match api.get("/places/", None).await.unwrap() {
         Some(places) => places,
-        None => Vec::new()
+        None => Vec::new(),
     };
-    RawHtml (
-        Template::render("places/index", context!{ title: "settings", places })
-    )
+    RawHtml(Template::render(
+        "places/index",
+        context! { title: "settings", places },
+    ))
 }
 
 #[get("/<id>")]
@@ -52,5 +53,12 @@ async fn delete_place(id: Uuid) {
 }
 
 pub fn get_routes() -> Vec<Route> {
-    routes![list_places, get_place, create_place_html, create_place, update_place, delete_place]
+    routes![
+        list_places,
+        get_place,
+        create_place_html,
+        create_place,
+        update_place,
+        delete_place
+    ]
 }

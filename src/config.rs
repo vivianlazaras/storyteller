@@ -126,7 +126,7 @@ impl Default for Config {
         Config {
             server,
             api: APIConfig::default(),
-            images
+            images,
         }
     }
 }

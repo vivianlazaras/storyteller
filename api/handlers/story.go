@@ -13,6 +13,7 @@ import (
 
 func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/stories", ListPubStories)
+	r.GET("/stories/fragments/:id", GetFragmentById)
     r.GET("/stories/:id", GetStory)
 	r.GET("/stories/fragments", GetFragmentsByStory)
     r.POST("/stories", CreateStory)
@@ -49,6 +50,16 @@ func GetFragmentsByStory(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, fragments)
+}
+
+func GetFragmentById(c *gin.Context) {
+	fragment, err := db.GetByCtxID[model.Fragment](c, "fragments");
+	if err != nil {
+		return
+	}
+
+	// get fragments, characters, places
+	c.JSON(http.StatusOK, fragment)
 }
 
 func GetStory(c *gin.Context) {
