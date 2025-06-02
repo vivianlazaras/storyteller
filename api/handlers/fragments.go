@@ -30,34 +30,16 @@ func RegisterFragmentRoutes(r *gin.Engine) *gin.Engine {
 
 func linkFragment(fragment *CreateStoryFragment, id uuid.UUID) error {
 	if fragment.Category != nil && fragment.Parent != nil {
-		switch *fragment.Category {
-		case "character":
-			link := model.CharacterFragment{
-				Character: *fragment.Parent,
-				Fragment:  id.String(), // Assuming fragment.ID is already set
-			}
-			if err := db.DB.Create(&link).Error; err != nil {
-				return fmt.Errorf("failed to link character fragment: %w", err)
-			}
-		case "location":
-			link := model.LocationFragment{
-				Location:  *fragment.Parent,
-				Fragment:  id.String(),
-			}
-			if err := db.DB.Create(&link).Error; err != nil {
-				return fmt.Errorf("failed to link location fragment: %w", err)
-			}
-		case "story":
-			link := model.StoryFragment{
-				Story:    *fragment.Parent,
-				Fragment: id.String(),
-			}
-			if err := db.DB.Create(&link).Error; err != nil {
-				return fmt.Errorf("failed to link story fragment: %w", err)
-			}
-		
-		default:
-			return fmt.Errorf("unsupported fragment category: %s", *fragment.Category)
+		relation := model.Relation{
+			Parent:         *fragment.Parent,
+			Child:          id.String(),
+			ParentCategory: *fragment.Category,
+			ChildCategory:  "fragment", // assuming child is always a fragment
+			Description:    "",        // or you can add logic to populate this if needed
+		}
+
+		if err := db.DB.Create(&relation).Error; err != nil {
+			return fmt.Errorf("failed to create relation: %w", err)
 		}
 	}
 	return nil
@@ -66,18 +48,17 @@ func linkFragment(fragment *CreateStoryFragment, id uuid.UUID) error {
 func GetFragmentsByStory(c *gin.Context) {
 	IDString := c.Query("story")
 	storyID, iderr := uuid.Parse(IDString)
-	var fragments []model.Fragment
 	if iderr != nil {
 		fmt.Printf("failed to parse UUID: %s", IDString)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse story as UUID"})
 		return
 	}
 
+	var fragments []model.Fragment
 	err := db.DB.
 		Model(&model.Fragment{}).
-		Joins("JOIN story_fragments ON story_fragments.fragment = fragments.id").
-		Joins("JOIN stories ON stories.id = story_fragments.story").
-		Where("stories.id = ?", storyID).
+		Joins("JOIN relations ON relations.child = fragments.id").
+		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", storyID, "story", "fragment").
 		Find(&fragments).Error
 
 	if err != nil {
