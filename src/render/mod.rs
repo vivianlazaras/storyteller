@@ -1,7 +1,6 @@
 use crate::model::StoryFragment;
 use rocket::FromFormField;
 use rocket::response::content::RawHtml;
-use rocket_dyn_templates::Template;
 use std::fmt;
 use std::string::FromUtf8Error;
 

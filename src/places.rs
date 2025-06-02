@@ -1,7 +1,7 @@
 use crate::ApiClient;
 use rocket::{
     Route, State, delete, get, post, put,
-    response::{Redirect, content::RawHtml},
+    response::content::RawHtml,
     routes,
 };
 use rocket_dyn_templates::{Template, context};
@@ -17,7 +17,7 @@ pub struct Place {
 
 #[get("/")]
 async fn list_places(api: &State<ApiClient>) -> RawHtml<Template> {
-    let places: Vec<Place> = match api.get("/places/", None).await.unwrap() {
+    let places: Vec<Place> = match api.get("/locations/", None).await.unwrap() {
         Some(places) => places,
         None => Vec::new(),
     };

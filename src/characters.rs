@@ -2,7 +2,7 @@ use crate::ApiClient;
 use crate::model::Character;
 use rocket::post;
 use rocket::{
-    Data, FromForm, Route, State,
+    FromForm, Route, State,
     form::Form,
     get,
     response::{Redirect, content::RawHtml},

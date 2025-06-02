@@ -1,21 +1,15 @@
 #[macro_use]
 extern crate rocket;
 use rocket::Request;
-use rocket::State;
 use rocket::fs::FileServer;
 use rocket::response::{Redirect, content::RawHtml};
 use rocket_dyn_templates::{Template, context};
-use rocket_oidc::OIDCConfig;
-use sled::Tree;
 use std::path::Path;
 use std::path::PathBuf;
-use std::str::FromStr;
 use storyteller::ApiClient;
 use storyteller::Config;
-use storyteller::stories::{AccountBtn, StoryTitle};
 use structopt::StructOpt;
 use tokio::{fs::File, io::AsyncReadExt};
-use uuid::Uuid;
 
 #[derive(Debug, Clone, StructOpt)]
 pub struct Args {
@@ -77,7 +71,7 @@ async fn rocket() -> _ {
     let url = config.api_endpoint();
     println!("api endpoint: {}", url);
     let api = ApiClient::new(&url).await.unwrap();
-    let mut rocket = rocket::custom(rocketconfig)
+    let rocket = rocket::custom(rocketconfig)
         .manage(api)
         .mount("/", routes![index])
         .mount("/stories", storyteller::stories::get_routes())

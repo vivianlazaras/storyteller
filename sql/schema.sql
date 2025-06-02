@@ -53,6 +53,23 @@ $$;
 
 ALTER FUNCTION public.diesel_set_updated_at() OWNER TO storyteller;
 
+--
+-- Name: insert_into_entities(); Type: FUNCTION; Schema: public; Owner: storyteller
+--
+
+CREATE FUNCTION public.insert_into_entities() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO public.entities(id) VALUES (NEW.id)
+    ON CONFLICT DO NOTHING; -- Prevents duplicate insert if id already exists
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.insert_into_entities() OWNER TO storyteller;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -83,7 +100,7 @@ CREATE TABLE public.characters (
     metadata uuid,
     created bigint,
     last_edited bigint,
-    image uuid
+    image text
 );
 
 
@@ -107,6 +124,17 @@ CREATE TABLE public.edits (
 ALTER TABLE public.edits OWNER TO storyteller;
 
 --
+-- Name: entities; Type: TABLE; Schema: public; Owner: storyteller
+--
+
+CREATE TABLE public.entities (
+    id uuid NOT NULL
+);
+
+
+ALTER TABLE public.entities OWNER TO storyteller;
+
+--
 -- Name: fragments; Type: TABLE; Schema: public; Owner: storyteller
 --
 
@@ -117,7 +145,9 @@ CREATE TABLE public.fragments (
     idx integer NOT NULL,
     content text NOT NULL,
     name text NOT NULL,
-    timeline uuid
+    last_edited bigint,
+    created bigint,
+    image text
 );
 
 
@@ -152,6 +182,20 @@ CREATE TABLE public.images (
 ALTER TABLE public.images OWNER TO storyteller;
 
 --
+-- Name: imagetags; Type: TABLE; Schema: public; Owner: storyteller
+--
+
+CREATE TABLE public.imagetags (
+    id uuid NOT NULL,
+    image uuid,
+    tag integer,
+    value bytea
+);
+
+
+ALTER TABLE public.imagetags OWNER TO storyteller;
+
+--
 -- Name: licenses; Type: TABLE; Schema: public; Owner: storyteller
 --
 
@@ -165,6 +209,21 @@ CREATE TABLE public.licenses (
 
 
 ALTER TABLE public.licenses OWNER TO storyteller;
+
+--
+-- Name: locations; Type: TABLE; Schema: public; Owner: storyteller
+--
+
+CREATE TABLE public.locations (
+    id uuid NOT NULL,
+    timeline uuid,
+    name text NOT NULL,
+    description text,
+    metadata uuid
+);
+
+
+ALTER TABLE public.locations OWNER TO storyteller;
 
 --
 -- Name: metadata; Type: TABLE; Schema: public; Owner: storyteller
@@ -194,7 +253,7 @@ CREATE TABLE public.stories (
     metadata uuid,
     created bigint,
     last_edited bigint,
-    image uuid
+    image text
 );
 
 
@@ -206,8 +265,8 @@ ALTER TABLE public.stories OWNER TO storyteller;
 
 CREATE TABLE public.tags (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    story uuid,
-    value text NOT NULL
+    value text NOT NULL,
+    entity uuid
 );
 
 
@@ -296,6 +355,14 @@ ALTER TABLE ONLY public.edits
 
 
 --
+-- Name: entities entities_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
+--
+
+ALTER TABLE ONLY public.entities
+    ADD CONSTRAINT entities_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: fragments fragments_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
 --
 
@@ -320,11 +387,27 @@ ALTER TABLE ONLY public.images
 
 
 --
+-- Name: imagetags imagetags_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
+--
+
+ALTER TABLE ONLY public.imagetags
+    ADD CONSTRAINT imagetags_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: licenses licenses_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
 --
 
 ALTER TABLE ONLY public.licenses
     ADD CONSTRAINT licenses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: locations locations_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
+--
+
+ALTER TABLE ONLY public.locations
+    ADD CONSTRAINT locations_pkey PRIMARY KEY (id);
 
 
 --
@@ -384,6 +467,34 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: characters characters_insert_entity; Type: TRIGGER; Schema: public; Owner: storyteller
+--
+
+CREATE TRIGGER characters_insert_entity BEFORE INSERT ON public.characters FOR EACH ROW EXECUTE FUNCTION public.insert_into_entities();
+
+
+--
+-- Name: fragments fragments_insert_entity; Type: TRIGGER; Schema: public; Owner: storyteller
+--
+
+CREATE TRIGGER fragments_insert_entity BEFORE INSERT ON public.fragments FOR EACH ROW EXECUTE FUNCTION public.insert_into_entities();
+
+
+--
+-- Name: locations locations_insert_entity; Type: TRIGGER; Schema: public; Owner: storyteller
+--
+
+CREATE TRIGGER locations_insert_entity BEFORE INSERT ON public.locations FOR EACH ROW EXECUTE FUNCTION public.insert_into_entities();
+
+
+--
+-- Name: stories stories_insert_entity; Type: TRIGGER; Schema: public; Owner: storyteller
+--
+
+CREATE TRIGGER stories_insert_entity BEFORE INSERT ON public.stories FOR EACH ROW EXECUTE FUNCTION public.insert_into_entities();
+
+
+--
 -- Name: characterrel characterrel_character_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
 --
 
@@ -400,11 +511,11 @@ ALTER TABLE ONLY public.characterrel
 
 
 --
--- Name: characters characters_image_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+-- Name: characters characters_entity_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
 --
 
 ALTER TABLE ONLY public.characters
-    ADD CONSTRAINT characters_image_fkey FOREIGN KEY (image) REFERENCES public.images(id);
+    ADD CONSTRAINT characters_entity_fkey FOREIGN KEY (id) REFERENCES public.entities(id);
 
 
 --
@@ -432,6 +543,14 @@ ALTER TABLE ONLY public.edits
 
 
 --
+-- Name: fragments fragments_entity_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+--
+
+ALTER TABLE ONLY public.fragments
+    ADD CONSTRAINT fragments_entity_fkey FOREIGN KEY (id) REFERENCES public.entities(id);
+
+
+--
 -- Name: fragments fragments_metadata_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
 --
 
@@ -445,14 +564,6 @@ ALTER TABLE ONLY public.fragments
 
 ALTER TABLE ONLY public.fragments
     ADD CONSTRAINT fragments_story_fkey FOREIGN KEY (story) REFERENCES public.stories(id);
-
-
---
--- Name: fragments fragments_timeline_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.fragments
-    ADD CONSTRAINT fragments_timeline_fkey FOREIGN KEY (timeline) REFERENCES public.timelines(id);
 
 
 --
@@ -480,6 +591,38 @@ ALTER TABLE ONLY public.images
 
 
 --
+-- Name: imagetags imagetags_image_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+--
+
+ALTER TABLE ONLY public.imagetags
+    ADD CONSTRAINT imagetags_image_fkey FOREIGN KEY (image) REFERENCES public.images(id);
+
+
+--
+-- Name: locations locations_entity_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+--
+
+ALTER TABLE ONLY public.locations
+    ADD CONSTRAINT locations_entity_fkey FOREIGN KEY (id) REFERENCES public.entities(id);
+
+
+--
+-- Name: locations locations_metadata_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+--
+
+ALTER TABLE ONLY public.locations
+    ADD CONSTRAINT locations_metadata_fkey FOREIGN KEY (metadata) REFERENCES public.metadata(id);
+
+
+--
+-- Name: locations locations_timeline_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+--
+
+ALTER TABLE ONLY public.locations
+    ADD CONSTRAINT locations_timeline_fkey FOREIGN KEY (timeline) REFERENCES public.timelines(id);
+
+
+--
 -- Name: metadata metadata_creator_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
 --
 
@@ -504,11 +647,11 @@ ALTER TABLE ONLY public.metadata
 
 
 --
--- Name: stories stories_image_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+-- Name: stories stories_entity_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
 --
 
 ALTER TABLE ONLY public.stories
-    ADD CONSTRAINT stories_image_fkey FOREIGN KEY (image) REFERENCES public.images(id);
+    ADD CONSTRAINT stories_entity_fkey FOREIGN KEY (id) REFERENCES public.entities(id);
 
 
 --
@@ -528,11 +671,11 @@ ALTER TABLE ONLY public.stories
 
 
 --
--- Name: tags tags_story_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+-- Name: tags tags_entity_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
 --
 
 ALTER TABLE ONLY public.tags
-    ADD CONSTRAINT tags_story_fkey FOREIGN KEY (story) REFERENCES public.stories(id);
+    ADD CONSTRAINT tags_entity_fkey FOREIGN KEY (entity) REFERENCES public.entities(id);
 
 
 --

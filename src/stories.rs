@@ -1,17 +1,13 @@
 use crate::model::{Character, Story, StoryFragment};
 use crate::*;
-use comrak::{Options, markdown_to_html};
 use rocket::form::Form;
-use rocket::http::CookieJar;
 use rocket::{
     Route, State, delete, get, post, put,
     response::{Redirect, content::RawHtml},
     routes,
 };
-use serde::{de::Deserialize, ser::Serialize};
 
 use crate::render::SupportedRender;
-use crate::users::Guard;
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
 
@@ -121,12 +117,12 @@ async fn create_story(
 }
 
 pub struct Edit {
-    id: Uuid,
-    date: i64,
-    comment: Option<String>,
-    addition: bool,
-    editor: Uuid,
-    value: String,
+    pub id: Uuid,
+    pub date: i64,
+    pub comment: Option<String>,
+    pub addition: bool,
+    pub editor: Uuid,
+    pub value: String,
 }
 
 pub struct StoryEdit {

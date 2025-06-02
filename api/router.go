@@ -23,6 +23,7 @@ func SetupRouter(config *Config) (*gin.Engine, error) {
     handlers.RegisterStoryRoutes(r)
     handlers.RegisterAnalyticsRoutes(r)
     handlers.RegisterCharacterRoutes(r)
+    handlers.RegisterLocationRoutes(r)
     // Repeat for other models
 
     return r, nil
