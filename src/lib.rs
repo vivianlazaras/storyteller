@@ -13,6 +13,7 @@ pub mod stories;
 pub mod users;
 pub use config::Config;
 pub mod search;
+pub mod fragments;
 use std::collections::HashMap;
 
 use anyhow::Result;
@@ -49,6 +50,12 @@ impl Ownership {
             access: AccessLevel::Public,
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct TagCount {
+    value: String,
+    count: i32,
 }
 
 pub struct ApiClient {
@@ -112,6 +119,22 @@ impl ApiClient {
         let response = builder.send().await?.error_for_status()?;
         let parsed = response.json::<T>().await?;
         Ok(parsed)
+    }
+
+    pub async fn get_top_tags(&self, limit: i32, min_count: i32) -> Result<Vec<TagCount>> {
+        let mut params = HashMap::new();
+        let limit_str = limit.to_string();
+        let min_count_str = min_count.to_string();
+        params.insert("limit", limit_str.as_str());
+        params.insert("min_count", min_count_str.as_str());
+
+        let options_opt: Option<Vec<TagCount>> =
+            self.get("/analytics/populartags", Some(params)).await?;
+        let options = match options_opt {
+            Some(options) => options,
+            None => Vec::new(),
+        };
+        Ok(options)
     }
 }
 

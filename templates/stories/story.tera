@@ -36,6 +36,11 @@ function list_toggle(id) {
       {{ story.description }}
     </div>
 
+    <div id="selectedItems" class="tagholder">
+      {% for tag in tags %}
+        <span class="tag">{{ tag.value }}</span>
+      {% endfor %}
+    </div>
     <div id="storyfragments" class="storyfragments entitylist">
       {% for fragment in fragments %}
         <div class="storyfragment">
@@ -49,7 +54,7 @@ function list_toggle(id) {
       {% endfor %}
     </div>
 
-    <a class="actionlink" href="/stories/fragments/create?category=story&id={{ story.id }}">
+    <a class="actionlink" href="/fragments/create?category=story&id={{ story.id }}">
       Add Fragment
     </a>
 

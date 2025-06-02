@@ -1,4 +1,4 @@
-use crate::model::{Character, Story, StoryFragment};
+use crate::model::{Character, Tag, Story, StoryFragment};
 use crate::*;
 use rocket::form::Form;
 use rocket::{
@@ -24,11 +24,12 @@ pub struct StoryTitle {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromForm)]
-pub struct CreateStoryFragment {
-    name: String,
+pub struct CreateStory {
+    title: String,
     description: Option<String>,
     renderer: SupportedRender,
-    content: String,
+    #[field(name = "tags")]
+    pub tags: Vec<String>,
 }
 
 #[get("/<id>")]
@@ -38,8 +39,11 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let story: Story = api.get(&url, None).await.unwrap();
     let mut params = HashMap::new();
     params.insert("story", id_string.as_str());
+    let tagurl = format!("/tags/{}", story.id);
+    let tags: Vec<Tag> = api.get(&tagurl, None).await.unwrap();
+
     let fragments: Option<Vec<StoryFragment>> = api
-        .get("/stories/fragments", Some(params.clone()))
+        .get("/fragments", Some(params.clone()))
         .await
         .unwrap();
 
@@ -49,7 +53,7 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let characters: Vec<Character> = Vec::new();
     RawHtml(Template::render(
         "stories/story",
-        context! { title: story.name.clone(), story, fragments, characters },
+        context! { title: story.name.clone(), story, fragments, characters, tags },
     ))
 }
 
@@ -65,46 +69,22 @@ async fn list_stories(api: &State<ApiClient>) -> RawHtml<Template> {
 }
 
 #[get("/create")]
-async fn create_story_html() -> RawHtml<Template> {
+async fn create_story_html(api: &State<ApiClient>) -> RawHtml<Template> {
+    let selected: Vec<String> = Vec::new();
+    let options = api.get_top_tags(10, 0).await.unwrap();
     RawHtml(Template::render(
         "stories/create",
-        context! { title: "create story" },
+        context! { title: "create story", selected, options },
     ))
 }
 
-// id and category can be used to generate a redirect, and link automatically
-#[get("/fragments/create?<id>&<category>")]
-async fn create_fragment_html(id: Option<Uuid>, category: Option<String>) -> RawHtml<Template> {
-    // id (the entity to link with)
-    // category (the type of entity)
-    let mut redirect = None;
-    if let Some(id) = id {
-        if let Some(category) = category {
-            redirect = Some(format!("?{}&{}", category, id));
-        }
-    }
-    RawHtml(Template::render(
-        "stories/fragments/create",
-        context! { title: "create new fragment", redirect },
-    ))
-}
-
-#[get("/fragments/<id>")]
-async fn get_fragment(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
-    let url = format!("/stories/fragments/{}", id);
-    let fragment: StoryFragment = api.get(&url, None).await.unwrap();
-    RawHtml(Template::render(
-        "stories/fragment",
-        context! { title: fragment.name.clone(), fragment },
-    ))
-}
 
 #[post("/", data = "<story>")]
 async fn create_story(
     //guard: Guard,
     //jar: &CookieJar<'_>,
     //auth: &State<rocket_oidc::AuthState>,
-    story: Form<CreateStoryFragment>,
+    story: Form<CreateStory>,
     api: &State<ApiClient>,
 ) -> Redirect {
     let story = story.into_inner();
@@ -151,8 +131,6 @@ pub fn get_routes() -> Vec<Route> {
         create_story_html,
         get_story,
         edit_story,
-        delete_story,
-        get_fragment,
-        create_fragment_html
+        delete_story
     ]
 }

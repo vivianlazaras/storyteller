@@ -9,7 +9,6 @@ const TableNameFragment = "fragments"
 // Fragment mapped from table <fragments>
 type Fragment struct {
 	ID         string `gorm:"column:id;primaryKey" json:"id"`
-	Story      string `gorm:"column:story" json:"story"`
 	Metadata   string `gorm:"column:metadata" json:"metadata"`
 	Idx        int32  `gorm:"column:idx;not null" json:"idx"`
 	Content    string `gorm:"column:content;not null" json:"content"`

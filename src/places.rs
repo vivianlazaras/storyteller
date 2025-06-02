@@ -1,9 +1,5 @@
 use crate::ApiClient;
-use rocket::{
-    Route, State, delete, get, post, put,
-    response::content::RawHtml,
-    routes,
-};
+use rocket::{Route, State, delete, get, post, put, response::content::RawHtml, routes};
 use rocket_dyn_templates::{Template, context};
 
 use uuid::Uuid;

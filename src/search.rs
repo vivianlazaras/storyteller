@@ -31,27 +31,10 @@ pub struct TimeRange {
     end: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct TagCount {
-    value: String,
-    count: i32,
-}
-
 #[get("/advanced/<category>")]
 async fn advanced_search_html(category: String, api: &State<ApiClient>) -> RawHtml<Template> {
     let selected: Vec<String> = Vec::new();
-    let mut params = HashMap::new();
-    params.insert("limit", "10");
-    params.insert("min_count", "0");
-
-    let options_opt: Option<Vec<TagCount>> = api
-        .get("/analytics/populartags", Some(params))
-        .await
-        .unwrap();
-    let options = match options_opt {
-        Some(options) => options,
-        None => Vec::new(),
-    };
+    let options = api.get_top_tags(10, 0).await.unwrap();
     // fetch most popular tags
     RawHtml(Template::render(
         "search/advanced",

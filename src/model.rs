@@ -51,7 +51,6 @@ pub struct Story {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StoryFragment {
     pub id: Uuid,
-    pub story: Uuid,
     pub name: String,
     pub metadata: Uuid,
     pub idx: i32,
@@ -78,4 +77,11 @@ pub struct Relationship {
     description: Option<String>,
     character: Uuid,
     story: Uuid,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Tag {
+    id: Uuid,
+    entity: Uuid,
+    value: String,
 }

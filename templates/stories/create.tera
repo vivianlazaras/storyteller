@@ -6,7 +6,7 @@
     <form action="/stories" method="POST">
     <h1 class="create_banner">Create A New Story</h1>
   <label for="name">Title:</label><br>
-  <input type="text" id="name" name="name" required><br><br>
+  <input type="text" id="title" name="title" required><br><br>
 
   <label for="description">Description:</label><br>
   <input type="text" id="description" name="description"><br><br>
@@ -17,10 +17,7 @@
     <option value="Markdown">Markdown</option>
     <option value="HTML">HTML</option>
   </select><br><br>
-
-  <label for="storycontent">Content:</label><br>
-  <textarea id="storycontent" class="dynamic-size" name="content" rows="10" cols="60" required></textarea><br><br>
-
+  {% include "components/tagselector" %}
   <button type="submit">Submit Story</button>
 
 </form>

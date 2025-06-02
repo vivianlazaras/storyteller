@@ -1,0 +1,8 @@
+<label for="name">Chapter Name: </label><br>
+<input type="text" id="name" name="name" required><br><br>
+<input type="hidden" id="parent" name="parent" value="{{parent}}"/>
+<input type="hidden" id="category" name="category" value="{{category}}"/>
+{% include "components/tagselector" %}
+
+<label for="storycontent">Content:</label><br>
+<textarea id="storycontent" class="dynamic-size" name="content" rows="10" cols="60" required></textarea><br><br>
