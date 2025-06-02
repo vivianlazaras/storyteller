@@ -14,6 +14,7 @@ func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/stories", ListPubStories)
     r.GET("/stories/:id", GetStory)
     r.POST("/stories", CreateStory)
+	r.DELETE("/stories/:id", DeleteStory)
 	return r
 }
 
@@ -21,7 +22,7 @@ func ListPubStories(c *gin.Context) {
 	// grab all stories where public = true
 	var stories []model.Story
     err := db.DB.
-        Where("metadata.public = ?", true).
+        Where("metadata.public = ? and metadata.active = ?", true, true).
         Joins("JOIN metadata ON metadata.id = stories.metadata").
         Find(&stories).Error
 	if err != nil {
@@ -39,9 +40,9 @@ func GetStory(c *gin.Context) {
 
 	metadata, err := db.GetByID[model.Metadatum]("metadata", story.Metadata)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch metadata"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "failed to fetch metadata"})
 	}
-	if metadata.Public != true {
+	if metadata.Public != true || metadata.Active == false {
 		c.JSON(http.StatusNotFound, model.Story{})
 		return
 	}
@@ -129,5 +130,21 @@ func UpdateStory(c *gin.Context) {
 }
 
 func DeleteStory(c *gin.Context) {
-	
+	id := c.Param("id")
+
+	var story model.Story
+	if err := db.DB.First(&story, "id = ?", id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Story not found"})
+		return
+	}
+
+	// Update metadata.active = false
+	if err := db.DB.Model(&model.Metadatum{}).
+		Where("id = ?", story.Metadata).
+		Update("active", false).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to deactivate story"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Story deactivated successfully"})
 }

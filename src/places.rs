@@ -30,9 +30,10 @@ async fn get_place(api: &State<ApiClient>, id: Uuid) -> RawHtml<Template> {
 
 #[get("/create")]
 async fn create_place_html() -> RawHtml<Template> {
-    RawHtml(
-        Template::render("locations/create", context! { title: "create a setting" })
-    )
+    RawHtml(Template::render(
+        "locations/create",
+        context! { title: "create a setting" },
+    ))
 }
 
 #[post("/")]

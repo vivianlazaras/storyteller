@@ -30,6 +30,12 @@ function list_toggle(id) {
 
 <div class="content" id="content">
   <div class="stories">
+    <div id="actionbtns">
+      
+        <input type="hidden" name="id" value="{{ story.id }}"/>
+        <button type="button" onclick="delete_entity('{{ story.id }}')" class="submitbtn">Delete</button>
+
+    </div>
     <h1>{{ story.name }}</h1>
 
     <div class="description" id="description">

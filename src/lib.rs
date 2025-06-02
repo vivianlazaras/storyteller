@@ -12,10 +12,10 @@ pub mod render;
 pub mod stories;
 pub mod users;
 pub use config::Config;
-pub mod search;
 pub mod fragments;
-use std::collections::HashMap;
+pub mod search;
 use serde::de::DeserializeOwned;
+use std::collections::HashMap;
 
 use anyhow::Result;
 use reqwest::Url;
@@ -136,6 +136,20 @@ impl ApiClient {
             None => Vec::new(),
         };
         Ok(options)
+    }
+
+    pub async fn delete(&self, baseurl: &str, id: Uuid) -> Result<()> {
+        let baseurl = join_url(&self.url, baseurl).unwrap();
+        let url = join_url(&baseurl, id.to_string().as_str())?;
+        let response = self.client.delete(&url).send().await?;
+
+        if response.status().is_success() {
+            println!("Resource deleted successfully.");
+        } else {
+            println!("Failed to delete resource. Status: {}", response.status());
+        }
+
+        Ok(())
     }
 }
 

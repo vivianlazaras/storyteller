@@ -196,3 +196,10 @@ button[type="submit"]:hover, .actionlink:hover {
     display: none;
     margin: 10px;
 }
+
+.profile_image {
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    margin-left: auto; /* Pushes the image to the far right */
+}

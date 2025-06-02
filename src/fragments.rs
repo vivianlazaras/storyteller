@@ -1,10 +1,10 @@
-use rocket::{get, post, put, delete, routes, Route, form::Form, State, FromForm};
-use rocket::response::content::RawHtml;
-use rocket::response::Redirect;
 use crate::ApiClient;
-use rocket_dyn_templates::{context, Template};
-use uuid::Uuid;
 use crate::model::*;
+use rocket::response::Redirect;
+use rocket::response::content::RawHtml;
+use rocket::{FromForm, Route, State, delete, form::Form, get, post, put, routes};
+use rocket_dyn_templates::{Template, context};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromForm)]
 pub struct CreateFragment {
@@ -17,20 +17,17 @@ pub struct CreateFragment {
 }
 
 #[post("/", data = "<fragment>")]
-async fn create_fragment(
-    fragment: Form<CreateFragment>,
-    api: &State<ApiClient>,
-) -> Redirect {
+async fn create_fragment(fragment: Form<CreateFragment>, api: &State<ApiClient>) -> Redirect {
     let fragment = fragment.into_inner();
 
     let newfragment: StoryFragment = api.post("/fragments/", "", &fragment).await.unwrap();
     let redirect = if let Some(parent) = fragment.parent {
         let category = match &fragment.category {
             Some(category) => category,
-            None => "stories"
+            None => "stories",
         };
         format!("/{}/{}", category, parent)
-    }else {
+    } else {
         format!("/fragments/{}", newfragment.id)
     };
     Redirect::to(redirect)
@@ -38,10 +35,14 @@ async fn create_fragment(
 
 // id and category can be used to generate a redirect, and link automatically
 #[get("/create?<id>&<category>")]
-async fn create_fragment_html(api: &State<ApiClient>, id: Uuid, category: String) -> RawHtml<Template> {
+async fn create_fragment_html(
+    api: &State<ApiClient>,
+    id: Uuid,
+    category: String,
+) -> RawHtml<Template> {
     // id (the entity to link with)
     // category (the type of entity)
-    
+
     let selected: Vec<String> = Vec::new();
     let options = api.get_top_tags(10, 0).await.unwrap();
     RawHtml(Template::render(
@@ -61,9 +62,5 @@ async fn get_fragment(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
 }
 
 pub fn get_routes() -> Vec<Route> {
-    routes![
-        get_fragment,
-        create_fragment_html,
-        create_fragment
-    ]
+    routes![get_fragment, create_fragment_html, create_fragment]
 }

@@ -3,4 +3,8 @@
     <a class="header_link" href="/places">Places</a>
     <a class="header_link" href="/stories">Stories</a>
     <a class="header_link" href="/users/account">account</a>
+    <img
+        class="profile_image"
+        src="{{ profile | default(value="/static/profile.jpg") }}"
+    />
 </div>

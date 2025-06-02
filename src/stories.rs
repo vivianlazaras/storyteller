@@ -1,4 +1,4 @@
-use crate::model::{Character, Tag, Story, StoryFragment};
+use crate::model::{Character, Story, StoryFragment, Tag};
 use crate::*;
 use rocket::form::Form;
 use rocket::{
@@ -42,10 +42,8 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let tagurl = format!("/tags/{}", story.id);
     let tags: Vec<Tag> = api.get(&tagurl, None).await.unwrap();
 
-    let fragments: Option<Vec<StoryFragment>> = api
-        .get("/fragments", Some(params.clone()))
-        .await
-        .unwrap();
+    let fragments: Option<Vec<StoryFragment>> =
+        api.get("/fragments", Some(params.clone())).await.unwrap();
 
     /// may need to be implemented later, for now don't worry about it
     /// I have to grab each character for each fragment and assembly them.
@@ -77,7 +75,6 @@ async fn create_story_html(api: &State<ApiClient>) -> RawHtml<Template> {
         context! { title: "create story", selected, options },
     ))
 }
-
 
 #[post("/", data = "<story>")]
 async fn create_story(
@@ -116,8 +113,9 @@ async fn edit_story(id: Uuid) {
 }
 
 #[delete("/<id>")]
-async fn delete_story(id: Uuid) {
-    unimplemented!();
+async fn delete_story(id: Uuid, api: &State<ApiClient>) -> Redirect {
+    api.delete("/stories/", id).await.unwrap();
+    Redirect::to("/stories")
 }
 
 /*#[post("/search", data = "<term>")]
