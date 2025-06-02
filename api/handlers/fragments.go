@@ -34,7 +34,7 @@ func linkFragment(fragment *CreateStoryFragment, id uuid.UUID) error {
 			Parent:         *fragment.Parent,
 			Child:          id.String(),
 			ParentCategory: *fragment.Category,
-			ChildCategory:  "fragment", // assuming child is always a fragment
+			ChildCategory:  "fragments", // assuming child is always a fragment
 			Description:    "",        // or you can add logic to populate this if needed
 		}
 
@@ -58,7 +58,7 @@ func GetFragmentsByStory(c *gin.Context) {
 	err := db.DB.
 		Model(&model.Fragment{}).
 		Joins("JOIN relations ON relations.child = fragments.id").
-		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", storyID, "story", "fragment").
+		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", storyID, "stories", "fragments").
 		Find(&fragments).Error
 
 	if err != nil {

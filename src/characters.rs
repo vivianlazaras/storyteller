@@ -55,7 +55,7 @@ pub struct CreateCharacter {
 #[post("/", data = "<form>")]
 async fn create_character(api: &State<ApiClient>, form: Form<CreateCharacter>) -> Redirect {
     let character = form.into_inner();
-    api.post("/characters/", "", character).await.unwrap();
+    let _: Character = api.post("/characters/", "", character).await.unwrap();
     Redirect::to("/characters/")
 }
 

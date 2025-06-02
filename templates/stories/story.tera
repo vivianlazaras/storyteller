@@ -54,7 +54,7 @@ function list_toggle(id) {
       {% endfor %}
     </div>
 
-    <a class="actionlink" href="/fragments/create?category=story&id={{ story.id }}">
+    <a class="actionlink" href="/fragments/create?category=stories&id={{ story.id }}">
       Add Fragment
     </a>
 

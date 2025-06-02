@@ -1,0 +1,7 @@
+{% include "head" %}
+<body>
+{% include "header" %}
+<div id="content">
+    <h1>Create A New Setting</h1>
+</div>
+</body>

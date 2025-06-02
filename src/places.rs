@@ -18,7 +18,7 @@ async fn list_places(api: &State<ApiClient>) -> RawHtml<Template> {
         None => Vec::new(),
     };
     RawHtml(Template::render(
-        "places/index",
+        "locations/index",
         context! { title: "settings", places },
     ))
 }
@@ -30,7 +30,9 @@ async fn get_place(api: &State<ApiClient>, id: Uuid) -> RawHtml<Template> {
 
 #[get("/create")]
 async fn create_place_html() -> RawHtml<Template> {
-    unimplemented!();
+    RawHtml(
+        Template::render("locations/create", context! { title: "create a setting" })
+    )
 }
 
 #[post("/")]

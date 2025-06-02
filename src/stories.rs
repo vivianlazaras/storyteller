@@ -92,8 +92,9 @@ async fn create_story(
     //println!("create story called: {}", serde_json::to_string(&story).unwrap());
     //let token_response = auth.client.exchange_token_for_audience(&access_token, "storyteller-api").await.unwrap();
 
-    api.post("/stories", "", story).await.unwrap();
-    Redirect::to("/")
+    let result: Story = api.post("/stories", "", &story).await.unwrap();
+
+    Redirect::to(format!("/stories/{}", result.id))
 }
 
 pub struct Edit {

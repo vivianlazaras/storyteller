@@ -15,6 +15,7 @@ pub use config::Config;
 pub mod search;
 pub mod fragments;
 use std::collections::HashMap;
+use serde::de::DeserializeOwned;
 
 use anyhow::Result;
 use reqwest::Url;
@@ -77,12 +78,12 @@ impl ApiClient {
             url: url.to_string(),
         })
     }
-    pub async fn post<T: Serialize>(
+    pub async fn post<T: Serialize, R: DeserializeOwned>(
         &self,
         route: &str,
         access_token: &str,
         data: T,
-    ) -> Result<String> {
+    ) -> Result<R> {
         println!("base url: {}", &self.url);
         let url = join_url(&self.url, route)?;
         let response = self
@@ -95,7 +96,7 @@ impl ApiClient {
 
         if response.status().is_success() {
             let body = response.text().await?;
-            Ok(body)
+            Ok(serde_json::from_str(&body)?)
         } else {
             let status = response.status();
             let error_body = response.text().await.unwrap_or_default();

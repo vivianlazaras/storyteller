@@ -23,8 +23,17 @@ async fn create_fragment(
 ) -> Redirect {
     let fragment = fragment.into_inner();
 
-    api.post("/fragments/", "", fragment).await.unwrap();
-    Redirect::to("/")
+    let newfragment: StoryFragment = api.post("/fragments/", "", &fragment).await.unwrap();
+    let redirect = if let Some(parent) = fragment.parent {
+        let category = match &fragment.category {
+            Some(category) => category,
+            None => "stories"
+        };
+        format!("/{}/{}", category, parent)
+    }else {
+        format!("/fragments/{}", newfragment.id)
+    };
+    Redirect::to(redirect)
 }
 
 // id and category can be used to generate a redirect, and link automatically
