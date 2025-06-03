@@ -46,8 +46,8 @@ func linkFragment(fragment *CreateStoryFragment, id uuid.UUID) error {
 }
 
 func GetFragmentsByStory(c *gin.Context) {
-	IDString := c.Query("story")
-	storyID, iderr := uuid.Parse(IDString)
+	IDString := c.Query("parent")
+	parentID, iderr := uuid.Parse(IDString)
 	if iderr != nil {
 		fmt.Printf("failed to parse UUID: %s", IDString)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse story as UUID"})
@@ -58,7 +58,7 @@ func GetFragmentsByStory(c *gin.Context) {
 	err := db.DB.
 		Model(&model.Fragment{}).
 		Joins("JOIN relations ON relations.child = fragments.id").
-		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", storyID, "stories", "fragments").
+		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", parentID, "stories", "fragments").
 		Find(&fragments).Error
 
 	if err != nil {

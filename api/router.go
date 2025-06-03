@@ -26,6 +26,7 @@ func SetupRouter(config *Config) (*gin.Engine, error) {
     handlers.RegisterLocationRoutes(r)
     handlers.RegisterTagRoutes(r)
     handlers.RegisterFragmentRoutes(r)
+    handlers.RegisterEntityRoutes(r)
     // Repeat for other models
 
     return r, nil

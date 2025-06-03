@@ -14,7 +14,7 @@ func RegisterCharacterRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/characters", ListPubCharacters)
     r.GET("/characters/:id", GetCharacter)
     r.POST("/characters", CreateCharacter)
-	r.GET("/characters/filter", FilterCharacters)
+	r.GET("/characters/filter", GetCharactersByStory)
     /*r.PUT("/characters/:id", middleware.RequireOIDC(), UpdateCharacter)
     r.DELETE("/characters/:id", middleware.RequireOIDC(), DeleteCharacter)
 	*/return r
@@ -126,17 +126,23 @@ func DeleteCharacter(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Character{})
 }
 
-func FilterCharacters(c *gin.Context) {
-	IDString := c.Query("story")
-	storyID, iderr := uuid.Parse(IDString)
+func GetCharactersByStory(c *gin.Context) {
+	IDString := c.Query("parent")
+	parentID, iderr := uuid.Parse(IDString)
 	if iderr != nil {
 		fmt.Printf("failed to parse UUID: %s", IDString)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse story as UUID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse parent as UUID"})
 		return
 	}
 
 	var characters []model.Character
-	if err := db.DB.Where("story = ?", storyID).Find(&characters).Error; err != nil {
+	err := db.DB.
+		Model(&model.Character{}).
+		Joins("JOIN relations ON relations.child = characters.id").
+		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", parentID, "stories", "characters").
+		Find(&characters).Error
+
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

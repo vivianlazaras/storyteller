@@ -1,0 +1,24 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+
+<div id="content">
+    <form action="/links/" method="post">
+        <h1>Add {{category}}</h1>
+        <label for="category" value="{{category}}"/>
+        <select id="child" name="child">
+        {% for item in items %}
+            <option value="{{item.id}}">{{item.name}}</option>
+        {% endfor %}  
+        </select>
+        <input type="hidden" name="parent" value="{{parent}}"/>
+        <input type="hidden" name="child_category" value="{{category}}"/>
+        <input type="hidden" name="parent_category" value="{{parent_category}}"/>
+        
+        <label for="linkdescription">Description</label><br>
+        <textarea id="linkdescription" class="dynamic-size" name="description" rows="10" cols="60" required></textarea><br><br>
+        <button type="submit">Add</button>
+    </form>
+</div>
+</body>

@@ -60,9 +60,14 @@ function list_toggle(id) {
       {% endfor %}
     </div>
 
-    <a class="actionlink" href="/fragments/create?category=stories&id={{ story.id }}">
-      Add Fragment
-    </a>
+    <div class="actionitem">
+      <a class="actionlink" href="/fragments/create?category=stories&id={{ story.id }}">
+        Create Fragment
+      </a>
+      <a class="actionlink" href="/links/create?parent=stories&child=fragments&id={{ story.id }}">
+        Add Existing Fragment
+      </a>
+    </div>
 
     <div id="storychars" class="storychars entitylist">
       {% for character in characters %}
@@ -72,6 +77,14 @@ function list_toggle(id) {
           </a>
         </div>
       {% endfor %}
+    </div>
+    <div class="actionitem">
+      <a class="actionlink" href="/characters/create?category=stories&id={{ story.id }}">
+        Create Character
+      </a>
+      <a class="actionlink" href="/links/create?parent=stories&child=characters&id={{ story.id }}">
+        Add Existing Character
+      </a>
     </div>
   </div>
 </div>

@@ -13,6 +13,7 @@ pub mod stories;
 pub mod users;
 pub use config::Config;
 pub mod fragments;
+pub mod links;
 pub mod search;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;

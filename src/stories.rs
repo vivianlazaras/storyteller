@@ -38,7 +38,7 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let id_string = id.to_string();
     let story: Story = api.get(&url, None).await.unwrap();
     let mut params = HashMap::new();
-    params.insert("story", id_string.as_str());
+    params.insert("parent", id_string.as_str());
     let tagurl = format!("/tags/{}", story.id);
     let tags: Vec<Tag> = api.get(&tagurl, None).await.unwrap();
 
@@ -47,8 +47,8 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
 
     /// may need to be implemented later, for now don't worry about it
     /// I have to grab each character for each fragment and assembly them.
-    // let characters: Option<Vec<Character>> = api.get("/characters/filter", Some(params)).await.unwrap();
-    let characters: Vec<Character> = Vec::new();
+    let characters: Option<Vec<Character>> = api.get("/characters/filter", Some(params)).await.unwrap();
+    
     RawHtml(Template::render(
         "stories/story",
         context! { title: story.name.clone(), story, fragments, characters, tags },
