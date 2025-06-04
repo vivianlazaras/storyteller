@@ -21,6 +21,7 @@ func RegisterTaskRoutes(r *gin.Engine) *gin.Engine {
 type CreateTaskParts struct {
 	Name		string	`json:"name"`
 	Description *string	`json:"description"`
+	Deadline	*int64	`json:"deadline"`
 }
 
 func CreateTaskFromParts(task CreateTaskParts) (model.Task, error) {
@@ -131,4 +132,5 @@ func ListTasks(c *gin.Context) {
 
 	c.JSON(http.StatusOK, tasks)
 }
+
 func DeleteTask(c *gin.Context) {}

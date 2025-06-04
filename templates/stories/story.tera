@@ -1,3 +1,4 @@
+{% import "components/tasks/create.tera" as tasks %}
 {% include "head" %}
 
 <body>
@@ -86,6 +87,7 @@ function list_toggle(id) {
         Add Existing Character
       </a>
     </div>
+    {{ tasks::taskform(parent=story.id, category="stories") }}
   </div>
 </div>
 

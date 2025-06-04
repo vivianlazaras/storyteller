@@ -7,12 +7,14 @@ pub struct Task {
     description: Option<String>,
     created: i64,
     completed: Option<i64>,
+    deadline: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromForm)]
 pub struct CreateTask {
     name: String,
     description: Option<String>,
+    deadline: Option<i64>,
 }
 
 #[post("/", data = "<task>")]
