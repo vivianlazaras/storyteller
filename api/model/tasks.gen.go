@@ -4,20 +4,18 @@
 
 package model
 
-const TableNameLocation = "locations"
+const TableNameTask = "tasks"
 
-// Location mapped from table <locations>
-type Location struct {
+// Task mapped from table <tasks>
+type Task struct {
 	ID          string `gorm:"column:id;primaryKey" json:"id"`
-	Timeline    string `gorm:"column:timeline" json:"timeline"`
 	Name        string `gorm:"column:name;not null" json:"name"`
 	Description string `gorm:"column:description" json:"description"`
-	Metadata    string `gorm:"column:metadata" json:"metadata"`
 	Created     int64  `gorm:"column:created;default:unix_now()" json:"created"`
-	LastEdited  int64  `gorm:"column:last_edited;default:unix_now()" json:"last_edited"`
+	Completed   int64  `gorm:"column:completed" json:"completed"`
 }
 
-// TableName Location's table name
-func (*Location) TableName() string {
-	return TableNameLocation
+// TableName Task's table name
+func (*Task) TableName() string {
+	return TableNameTask
 }

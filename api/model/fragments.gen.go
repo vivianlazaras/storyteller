@@ -13,8 +13,8 @@ type Fragment struct {
 	Idx        int32  `gorm:"column:idx;not null" json:"idx"`
 	Content    string `gorm:"column:content;not null" json:"content"`
 	Name       string `gorm:"column:name;not null" json:"name"`
-	LastEdited int64  `gorm:"column:last_edited" json:"last_edited"`
-	Created    int64  `gorm:"column:created" json:"created"`
+	LastEdited int64  `gorm:"column:last_edited;default:unix_now()" json:"last_edited"`
+	Created    int64  `gorm:"column:created;default:unix_now()" json:"created"`
 	Image      string `gorm:"column:image" json:"image"`
 }
 
