@@ -3,7 +3,6 @@ extern crate serde_derive;
 #[macro_use]
 extern crate err_derive;
 
-//pub mod backend;
 pub mod characters;
 pub mod config;
 mod model;
@@ -15,6 +14,7 @@ pub use config::Config;
 pub mod fragments;
 pub mod links;
 pub mod search;
+pub mod themes;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 

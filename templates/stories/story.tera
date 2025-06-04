@@ -1,4 +1,4 @@
-{% import "components/tasks/create.tera" as tasks %}
+{% import "components/tasks/create" as tasks %}
 {% include "head" %}
 
 <body>
