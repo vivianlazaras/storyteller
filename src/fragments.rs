@@ -18,8 +18,8 @@ pub struct CreateFragment {
 
 #[post("/", data = "<fragment>")]
 async fn create_fragment(fragment: Form<CreateFragment>, api: &State<ApiClient>) -> Redirect {
-    let fragment = fragment.into_inner();
-
+    let mut fragment = fragment.into_inner();
+    fragment.content = crate::normalize_newlines(&fragment.content);
     let newfragment: StoryFragment = api.post("/fragments/", "", &fragment).await.unwrap();
     let redirect = if let Some(parent) = fragment.parent {
         let category = match &fragment.category {

@@ -152,6 +152,7 @@ impl ApiClient {
 
         Ok(())
     }
+
 }
 
 pub enum Category {
@@ -159,4 +160,8 @@ pub enum Category {
     Character,
     Location,
     Timeline,
+}
+
+pub fn normalize_newlines(input: &str) -> String {
+    input.replace("\r\n", "\n").replace('\r', "\n")
 }

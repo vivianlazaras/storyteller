@@ -195,6 +195,7 @@ button[type="submit"]:hover, .actionlink:hover {
 .listitem {
     display: none;
     margin: 10px;
+    white-space: pre-wrap;
 }
 
 .profile_image {

@@ -44,6 +44,7 @@
             pkgs.go
             pkgs.pkg-config
             pkgs.openssl
+            pkgs.gorm-gentool
           ];
 
           shellHook = ''

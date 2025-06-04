@@ -24,6 +24,7 @@ func ListPubStories(c *gin.Context) {
     err := db.DB.
         Where("metadata.public = ? and metadata.active = ?", true, true).
         Joins("JOIN metadata ON metadata.id = stories.metadata").
+		Order("stories.last_edited DESC").
         Find(&stories).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})

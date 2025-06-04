@@ -59,6 +59,7 @@ func GetFragmentsByStory(c *gin.Context) {
 		Model(&model.Fragment{}).
 		Joins("JOIN relations ON relations.child = fragments.id").
 		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", parentID, "stories", "fragments").
+		Order("fragments.last_edited ASC").
 		Find(&fragments).Error
 
 	if err != nil {

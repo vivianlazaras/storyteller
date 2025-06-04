@@ -54,7 +54,7 @@ function list_toggle(id) {
             {{ fragment.name }}
           </button>
           <div class="listitem" id="{{ fragment.id }}">
-            {{ fragment.content }}
+            <p>{{ fragment.content }}</p>
           </div>
         </div>
       {% endfor %}
