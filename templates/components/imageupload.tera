@@ -1,0 +1,24 @@
+<div class="form-group">
+    <label for="image">Upload Image</label>
+    <input type="file" id="image" name="image" accept="image/*" />
+
+    {# Optional preview container, usable with JS if desired #}
+    <div id="image-preview" style="margin-top: 1em;">
+        <img id="image-preview-img" src="" alt="Image preview" style="max-width: 100%; display: none;" />
+    </div>
+</div>
+<script>
+    document.getElementById('image')?.addEventListener('change', function (event) {
+        const file = event.target.files[0];
+        const previewImg = document.getElementById('image-preview-img');
+    
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>

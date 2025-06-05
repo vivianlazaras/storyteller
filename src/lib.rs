@@ -6,14 +6,16 @@ extern crate err_derive;
 pub mod characters;
 pub mod config;
 mod model;
-pub mod places;
+pub mod locations;
 pub mod render;
 pub mod stories;
 pub mod users;
 pub use config::Config;
 pub mod fragments;
+pub mod images;
 pub mod links;
 pub mod search;
+pub mod tasks;
 pub mod themes;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
@@ -83,13 +85,19 @@ impl ApiClient {
         &self,
         route: &str,
         access_token: &str,
+        params: Option<HashMap<&str, &str>>,
         data: T,
     ) -> Result<R> {
         println!("base url: {}", &self.url);
         let url = join_url(&self.url, route)?;
-        let response = self
-            .client
-            .post(&url)
+
+        let mut builder = self.client.post(&url);
+
+        if let Some(params) = params {
+            builder = builder.query(&params);
+        }
+
+        let response = builder
             .bearer_auth(access_token) // adds Authorization: Bearer <token>
             .json(&data)
             .send()
@@ -152,7 +160,6 @@ impl ApiClient {
 
         Ok(())
     }
-
 }
 
 pub enum Category {

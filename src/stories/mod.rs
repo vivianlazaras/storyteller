@@ -1,3 +1,5 @@
+use crate::characters::frontend::CharacterRender;
+use crate::model::Task;
 use crate::model::{Character, Story, StoryFragment, Tag};
 use crate::*;
 use rocket::form::Form;
@@ -15,12 +17,6 @@ use uuid::Uuid;
 pub struct AccountBtn {
     pub text: &'static str,
     pub link: &'static str,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct StoryTitle {
-    pub id: Uuid,
-    pub name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromForm)]
@@ -47,11 +43,24 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
 
     /// may need to be implemented later, for now don't worry about it
     /// I have to grab each character for each fragment and assembly them.
-    let characters: Option<Vec<Character>> = api.get("/characters/filter", Some(params)).await.unwrap();
-    
+    let characters: Option<Vec<CharacterRender>> = match api
+        .get::<Option<Vec<Character>>>("/characters/filter", Some(params.clone()))
+        .await
+        .unwrap()
+    {
+        Some(characters) => Some(
+            characters
+                .into_iter()
+                .map(|c| c.render(Some(String::from("/images/debe1a6f-5f7f-4cf4-84ef-e913efaa8dcd")), Vec::new()))
+                .collect::<Vec<CharacterRender>>(),
+        ),
+        None => None,
+    };
+
+    let tasks: Option<Vec<Task>> = api.get("/tasks/", Some(params)).await.unwrap();
     RawHtml(Template::render(
         "stories/story",
-        context! { title: story.name.clone(), story, fragments, characters, tags },
+        context! { title: story.name.clone(), tasks, story, fragments, characters, tags },
     ))
 }
 
@@ -89,7 +98,7 @@ async fn create_story(
     //println!("create story called: {}", serde_json::to_string(&story).unwrap());
     //let token_response = auth.client.exchange_token_for_audience(&access_token, "storyteller-api").await.unwrap();
 
-    let result: Story = api.post("/stories", "", &story).await.unwrap();
+    let result: Story = api.post("/stories", "", None, &story).await.unwrap();
 
     Redirect::to(format!("/stories/{}", result.id))
 }

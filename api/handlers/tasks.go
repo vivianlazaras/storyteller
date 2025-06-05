@@ -112,7 +112,7 @@ func EditTask(c *gin.Context) {
 
 /// list tasks by entity id
 func ListTasks(c *gin.Context) {
-	entityID, result := GetIDParam(c.Query("entity"))
+	entityID, result := GetIDParam(c.Query("parent"))
 	if result.IsError() {
 		result.GinResult(c)
 		return

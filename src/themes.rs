@@ -1,9 +1,8 @@
-use rocket::{routes, Route};
+use rocket::{Route, routes};
 
-use crate::places::Place;
-use tokio::fs::File;
-use tokio::io::{AsyncReadExt};
 use std::path::{Path, PathBuf};
+use tokio::fs::File;
+use tokio::io::AsyncReadExt;
 
 /// for now a structure of having main, desktop, and mobile will work
 /// in future versions I will likely want to clean this up to provide default media
@@ -25,7 +24,7 @@ impl ThemeLoader {
             name,
             main,
             desktop,
-            mobile
+            mobile,
         }
     }
 
@@ -42,7 +41,12 @@ impl ThemeLoader {
         mobile_file.read_to_string(&mut mobile_contents).await?;
         main_file.read_to_string(&mut mobile_contents).await?;
 
-        Ok(Theme::from_parts(self.name, main_contents, mobile_contents, desktop_contents))
+        Ok(Theme::from_parts(
+            self.name,
+            main_contents,
+            mobile_contents,
+            desktop_contents,
+        ))
     }
 }
 
@@ -51,7 +55,7 @@ pub struct Theme {
     name: String,
     main: String,
     mobile: String,
-    desktop: String
+    desktop: String,
 }
 
 impl Theme {
@@ -60,7 +64,7 @@ impl Theme {
             name,
             mobile,
             main,
-            desktop
+            desktop,
         }
     }
 }

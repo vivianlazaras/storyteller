@@ -1,0 +1,14 @@
+{% macro character(character) %}
+<div class="character">
+    <h1>
+        {{ character.name }}
+    </h1>
+    {% if character.image != "" %}
+        <img src="{{character.image}}" class="entityimage" width="400"/>
+    {% endif %}
+    <div class="description" id="description">
+        {{ character.description }}
+    </div>
+
+</div>
+{% endmacro character %}

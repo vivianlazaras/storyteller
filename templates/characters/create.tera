@@ -3,7 +3,7 @@
 <body>
 {% include "header" %}
 <div class="content" id="content">
-    <form action="/characters" method="POST">
+    <form action="/characters" method="POST" enctype="multipart/form-data">
     <h1 class="create_banner">Create A New Character</h1>
   <label for="name">Name:</label><br>
   <input class="forminput" type="text" id="name" name="name" required><br><br>
@@ -11,8 +11,8 @@
   <label for="chardesc">Description:</label><br>
   <textarea id="chardesc" name="description" rows="10" cols="60" required></textarea><br><br>
 
-  <input type="file" name="image" />
-
+  {% include "components/imageupload" %}
+  
   <button type="submit">Submit Character</button>
 </form>
 </div>

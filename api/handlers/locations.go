@@ -10,6 +10,7 @@ import (
 func RegisterLocationRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/locations/", GetLocations)
 	r.GET("/locations/:id", GetLocation)
+	r.POST("/locations/", CreateLocation)
 	return r
 }
 
@@ -20,6 +21,7 @@ func GetLocations(c *gin.Context) {
         Where("metadata.public = ?", true).
         Joins("JOIN metadata ON metadata.id = locations.metadata").
         Find(&locations).Error
+	
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
@@ -30,3 +32,12 @@ func GetLocations(c *gin.Context) {
 func GetLocation(c *gin.Context) {
 
 }
+
+type CreateLocationParts struct {
+	Name			string	`json:"name"`
+	Description		*string	`json:"description"`
+}
+
+func CreateNewLocation() {}
+
+func CreateLocation(c *gin.Context) {}

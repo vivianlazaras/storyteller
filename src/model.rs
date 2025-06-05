@@ -85,3 +85,19 @@ pub struct Tag {
     entity: Uuid,
     value: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Task {
+    id: Uuid,
+    name: String,
+    description: Option<String>,
+    created: i64,
+    completed: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Image {
+    pub id: Uuid,
+    pub url: String,
+    pub description: Option<String>,
+}

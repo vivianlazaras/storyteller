@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate rocket;
 use rocket::Request;
+use rocket::data::Limits;
 use rocket::fs::FileServer;
 use rocket::response::{Redirect, content::RawHtml};
 use rocket_dyn_templates::{Template, context};
@@ -62,9 +63,20 @@ async fn rocket() -> _ {
         panic!("unable to fetch config");
     };
 
+    let current_dir = std::env::current_dir().unwrap();
+    let processor = storyteller::images::ImageProcessor::new(
+        String::from("stories.qrespite.org"),
+        current_dir.join("./images/"),
+    )
+    .await;
     let rocketconfig = rocket::Config {
         address: config.listen().parse().unwrap(),
         port: config.port(),
+        limits: Limits::new()
+            .limit("default", "5GiB".parse().unwrap())
+            .limit("form", "5GiB".parse().unwrap())
+            .limit("data-form", "5GiB".parse().unwrap())
+            .limit("file", "5GiB".parse().unwrap()),
         ..rocket::Config::default()
     };
 
@@ -74,15 +86,18 @@ async fn rocket() -> _ {
     let rocket = rocket::custom(rocketconfig)
         .manage(api)
         .mount("/", routes![index])
+        .manage(processor)
         .mount("/stories", storyteller::stories::get_routes())
         .mount("/characters", storyteller::characters::get_routes())
-        .mount("/places", storyteller::places::get_routes())
+        .mount("/locations", storyteller::locations::get_routes())
         .mount("/links", storyteller::links::get_routes())
         .mount("/fragments", storyteller::fragments::get_routes())
         .register("/", catchers![unauthorized, notfound])
         .attach(Template::fairing())
         .mount("/static", FileServer::from("static"))
         .mount("/users", storyteller::users::get_routes())
+        .mount("/tasks/", storyteller::tasks::get_routes())
+        .mount("/images/", storyteller::images::get_routes())
         .mount("/search", storyteller::search::get_routes());
     rocket_oidc::setup(rocket, config.oidc().clone())
         .await

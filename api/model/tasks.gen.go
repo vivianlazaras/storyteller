@@ -13,6 +13,7 @@ type Task struct {
 	Description string `gorm:"column:description" json:"description"`
 	Created     int64  `gorm:"column:created;default:unix_now()" json:"created"`
 	Completed   int64  `gorm:"column:completed" json:"completed"`
+	Deadline    int64  `gorm:"column:deadline" json:"deadline"`
 }
 
 // TableName Task's table name

@@ -1,5 +1,11 @@
-use rocket::{State, get, post, put, delete, form::Form, FromForm, routes, Route};
+use crate::ApiClient;
+use rocket::{
+    FromForm, Route, State, delete, form::Form, get, post, put, response::Redirect, routes,
+};
+use std::collections::HashMap;
+
 use rocket_dyn_templates::{Template, context};
+use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {
     id: Uuid,
@@ -17,9 +23,23 @@ pub struct CreateTask {
     deadline: Option<i64>,
 }
 
-#[post("/", data = "<task>")]
-async fn create_task(task: Form<CreateTask>) {}
+#[post("/?<parent>&<category>", data = "<taskform>")]
+async fn create_task(
+    parent: Uuid,
+    category: String,
+    taskform: Form<CreateTask>,
+    api: &State<ApiClient>,
+) -> Redirect {
+    let task = taskform.into_inner();
+    let mut params = HashMap::new();
+    let parent_str = parent.to_string();
+    params.insert("entity", parent_str.as_str());
+    params.insert("category", category.as_str());
+    let _: Task = api.post("/tasks/", "", Some(params), task).await.unwrap();
+    let redirect = format!("/{}/{}", category, parent);
+    Redirect::to(redirect)
+}
 
 pub fn get_routes() -> Vec<Route> {
-    routes![]
+    routes![create_task]
 }

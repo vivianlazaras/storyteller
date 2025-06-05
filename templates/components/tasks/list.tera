@@ -1,0 +1,16 @@
+{% import "components/tasks/create" as tasks %}
+{% macro tasklist(tasks, edit=false, parent, category) %}
+    <div class="tasklist">
+        {% for task in tasks %}
+            <div class="taskentry"
+                 style="{% if task.completed != 0 %}background-color: lightgreen; color: green;{% endif %}">
+                <h3 class="taskname">{{ task.name }}</h3>
+                <button>Complete</button>
+            </div>
+        {% endfor %}
+
+        {% if edit %}
+            {{ tasks::taskform(parent=parent, category=category) }}
+        {% endif %}
+    </div>
+{% endmacro tasklist %}

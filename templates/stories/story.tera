@@ -1,4 +1,5 @@
-{% import "components/tasks/create" as tasks %}
+{% import "components/tasks/list" as tasks %}
+{% import "components/characters/character" as macros %}
 {% include "head" %}
 
 <body>
@@ -73,9 +74,7 @@ function list_toggle(id) {
     <div id="storychars" class="storychars entitylist">
       {% for character in characters %}
         <div class="storychar entity">
-          <a class="entitylink" href="/characters/{{ character.id }}">
-            {{ character.name }}
-          </a>
+          {{ macros::character(character=character) }}
         </div>
       {% endfor %}
     </div>
@@ -87,7 +86,7 @@ function list_toggle(id) {
         Add Existing Character
       </a>
     </div>
-    {{ tasks::taskform(parent=story.id, category="stories") }}
+    {{ tasks::tasklist(tasks=tasks, edit=true, parent=story.id, category="stories") }}
   </div>
 </div>
 

@@ -70,35 +70,24 @@ $$;
 
 ALTER FUNCTION public.insert_into_entities() OWNER TO storyteller;
 
+--
+-- Name: unix_now(); Type: FUNCTION; Schema: public; Owner: storyteller
+--
+
+CREATE FUNCTION public.unix_now() RETURNS bigint
+    LANGUAGE plpgsql IMMUTABLE
+    AS $$
+BEGIN
+    RETURN EXTRACT(EPOCH FROM now())::BIGINT;
+END;
+$$;
+
+
+ALTER FUNCTION public.unix_now() OWNER TO storyteller;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
-
---
--- Name: character_fragments; Type: TABLE; Schema: public; Owner: storyteller
---
-
-CREATE TABLE public.character_fragments (
-    "character" uuid NOT NULL,
-    fragment uuid NOT NULL
-);
-
-
-ALTER TABLE public.character_fragments OWNER TO storyteller;
-
---
--- Name: characterrel; Type: TABLE; Schema: public; Owner: storyteller
---
-
-CREATE TABLE public.characterrel (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    description text,
-    "character" uuid,
-    fragment uuid
-);
-
-
-ALTER TABLE public.characterrel OWNER TO storyteller;
 
 --
 -- Name: characters; Type: TABLE; Schema: public; Owner: storyteller
@@ -110,8 +99,8 @@ CREATE TABLE public.characters (
     name text NOT NULL,
     description text,
     metadata uuid,
-    created bigint,
-    last_edited bigint,
+    created bigint DEFAULT public.unix_now(),
+    last_edited bigint DEFAULT public.unix_now(),
     image text
 );
 
@@ -140,23 +129,25 @@ ALTER TABLE public.edits OWNER TO storyteller;
 --
 
 CREATE TABLE public.entities (
-    id uuid NOT NULL
+    id uuid NOT NULL,
+    active boolean DEFAULT true
 );
 
 
 ALTER TABLE public.entities OWNER TO storyteller;
 
 --
--- Name: fragment_images; Type: TABLE; Schema: public; Owner: storyteller
+-- Name: exif_tags; Type: TABLE; Schema: public; Owner: storyteller
 --
 
-CREATE TABLE public.fragment_images (
-    fragment uuid NOT NULL,
-    image uuid NOT NULL
+CREATE TABLE public.exif_tags (
+    image uuid NOT NULL,
+    tag text NOT NULL,
+    value text NOT NULL
 );
 
 
-ALTER TABLE public.fragment_images OWNER TO storyteller;
+ALTER TABLE public.exif_tags OWNER TO storyteller;
 
 --
 -- Name: fragments; Type: TABLE; Schema: public; Owner: storyteller
@@ -168,8 +159,8 @@ CREATE TABLE public.fragments (
     idx integer NOT NULL,
     content text NOT NULL,
     name text NOT NULL,
-    last_edited bigint,
-    created bigint,
+    last_edited bigint DEFAULT public.unix_now(),
+    created bigint DEFAULT public.unix_now(),
     image text
 );
 
@@ -205,20 +196,6 @@ CREATE TABLE public.images (
 ALTER TABLE public.images OWNER TO storyteller;
 
 --
--- Name: imagetags; Type: TABLE; Schema: public; Owner: storyteller
---
-
-CREATE TABLE public.imagetags (
-    id uuid NOT NULL,
-    image uuid,
-    tag integer,
-    value bytea
-);
-
-
-ALTER TABLE public.imagetags OWNER TO storyteller;
-
---
 -- Name: licenses; Type: TABLE; Schema: public; Owner: storyteller
 --
 
@@ -234,18 +211,6 @@ CREATE TABLE public.licenses (
 ALTER TABLE public.licenses OWNER TO storyteller;
 
 --
--- Name: location_fragments; Type: TABLE; Schema: public; Owner: storyteller
---
-
-CREATE TABLE public.location_fragments (
-    location uuid NOT NULL,
-    fragment uuid NOT NULL
-);
-
-
-ALTER TABLE public.location_fragments OWNER TO storyteller;
-
---
 -- Name: locations; Type: TABLE; Schema: public; Owner: storyteller
 --
 
@@ -254,7 +219,9 @@ CREATE TABLE public.locations (
     timeline uuid,
     name text NOT NULL,
     description text,
-    metadata uuid
+    metadata uuid,
+    created bigint DEFAULT public.unix_now(),
+    last_edited bigint DEFAULT public.unix_now()
 );
 
 
@@ -269,7 +236,8 @@ CREATE TABLE public.metadata (
     creator uuid,
     license uuid,
     shared uuid,
-    public boolean DEFAULT false
+    public boolean DEFAULT false,
+    active boolean DEFAULT true
 );
 
 
@@ -301,25 +269,13 @@ CREATE TABLE public.stories (
     description text,
     renderer text,
     metadata uuid,
-    created bigint,
-    last_edited bigint,
+    created bigint DEFAULT public.unix_now(),
+    last_edited bigint DEFAULT public.unix_now(),
     image text
 );
 
 
 ALTER TABLE public.stories OWNER TO storyteller;
-
---
--- Name: story_fragments; Type: TABLE; Schema: public; Owner: storyteller
---
-
-CREATE TABLE public.story_fragments (
-    story uuid NOT NULL,
-    fragment uuid NOT NULL
-);
-
-
-ALTER TABLE public.story_fragments OWNER TO storyteller;
 
 --
 -- Name: tags; Type: TABLE; Schema: public; Owner: storyteller
@@ -333,6 +289,22 @@ CREATE TABLE public.tags (
 
 
 ALTER TABLE public.tags OWNER TO storyteller;
+
+--
+-- Name: tasks; Type: TABLE; Schema: public; Owner: storyteller
+--
+
+CREATE TABLE public.tasks (
+    id uuid NOT NULL,
+    name text NOT NULL,
+    description text,
+    created bigint DEFAULT public.unix_now(),
+    completed bigint,
+    deadline bigint
+);
+
+
+ALTER TABLE public.tasks OWNER TO storyteller;
 
 --
 -- Name: timelines; Type: TABLE; Schema: public; Owner: storyteller
@@ -393,22 +365,6 @@ CREATE TABLE public.users (
 ALTER TABLE public.users OWNER TO storyteller;
 
 --
--- Name: character_fragments characterfragments_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.character_fragments
-    ADD CONSTRAINT characterfragments_pkey PRIMARY KEY ("character", fragment);
-
-
---
--- Name: characterrel characterrel_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.characterrel
-    ADD CONSTRAINT characterrel_pkey PRIMARY KEY (id);
-
-
---
 -- Name: characters characters_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
 --
 
@@ -433,11 +389,11 @@ ALTER TABLE ONLY public.entities
 
 
 --
--- Name: fragment_images fragment_images_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
+-- Name: exif_tags exif_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
 --
 
-ALTER TABLE ONLY public.fragment_images
-    ADD CONSTRAINT fragment_images_pkey PRIMARY KEY (fragment, image);
+ALTER TABLE ONLY public.exif_tags
+    ADD CONSTRAINT exif_tags_pkey PRIMARY KEY (image, tag);
 
 
 --
@@ -481,14 +437,6 @@ ALTER TABLE ONLY public.licenses
 
 
 --
--- Name: location_fragments locationfragments_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.location_fragments
-    ADD CONSTRAINT locationfragments_pkey PRIMARY KEY (location, fragment);
-
-
---
 -- Name: locations locations_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
 --
 
@@ -521,19 +469,19 @@ ALTER TABLE ONLY public.stories
 
 
 --
--- Name: story_fragments storyfragments_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.story_fragments
-    ADD CONSTRAINT storyfragments_pkey PRIMARY KEY (story, fragment);
-
-
---
 -- Name: tags tags_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
 --
 
 ALTER TABLE ONLY public.tags
     ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tasks tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: storyteller
+--
+
+ALTER TABLE ONLY public.tasks
+    ADD CONSTRAINT tasks_pkey PRIMARY KEY (id);
 
 
 --
@@ -597,35 +545,10 @@ CREATE TRIGGER stories_insert_entity BEFORE INSERT ON public.stories FOR EACH RO
 
 
 --
--- Name: character_fragments characterfragments_character_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+-- Name: tasks tasks_insert_entity; Type: TRIGGER; Schema: public; Owner: storyteller
 --
 
-ALTER TABLE ONLY public.character_fragments
-    ADD CONSTRAINT characterfragments_character_fkey FOREIGN KEY ("character") REFERENCES public.characters(id) ON DELETE CASCADE;
-
-
---
--- Name: character_fragments characterfragments_fragment_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.character_fragments
-    ADD CONSTRAINT characterfragments_fragment_fkey FOREIGN KEY (fragment) REFERENCES public.fragments(id) ON DELETE CASCADE;
-
-
---
--- Name: characterrel characterrel_character_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.characterrel
-    ADD CONSTRAINT characterrel_character_fkey FOREIGN KEY ("character") REFERENCES public.characters(id);
-
-
---
--- Name: characterrel characterrel_fragment_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.characterrel
-    ADD CONSTRAINT characterrel_fragment_fkey FOREIGN KEY (fragment) REFERENCES public.fragments(id);
+CREATE TRIGGER tasks_insert_entity BEFORE INSERT ON public.tasks FOR EACH ROW EXECUTE FUNCTION public.insert_into_entities();
 
 
 --
@@ -661,19 +584,11 @@ ALTER TABLE ONLY public.edits
 
 
 --
--- Name: fragment_images fragment_images_fragment_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+-- Name: exif_tags exif_tags_image_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
 --
 
-ALTER TABLE ONLY public.fragment_images
-    ADD CONSTRAINT fragment_images_fragment_fkey FOREIGN KEY (fragment) REFERENCES public.fragments(id);
-
-
---
--- Name: fragment_images fragment_images_image_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.fragment_images
-    ADD CONSTRAINT fragment_images_image_fkey FOREIGN KEY (image) REFERENCES public.images(id);
+ALTER TABLE ONLY public.exif_tags
+    ADD CONSTRAINT exif_tags_image_fkey FOREIGN KEY (image) REFERENCES public.images(id);
 
 
 --
@@ -730,22 +645,6 @@ ALTER TABLE ONLY public.images
 
 ALTER TABLE ONLY public.imagetags
     ADD CONSTRAINT imagetags_image_fkey FOREIGN KEY (image) REFERENCES public.images(id);
-
-
---
--- Name: location_fragments locationfragments_fragment_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.location_fragments
-    ADD CONSTRAINT locationfragments_fragment_fkey FOREIGN KEY (fragment) REFERENCES public.fragments(id) ON DELETE CASCADE;
-
-
---
--- Name: location_fragments locationfragments_location_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.location_fragments
-    ADD CONSTRAINT locationfragments_location_fkey FOREIGN KEY (location) REFERENCES public.locations(id) ON DELETE CASCADE;
 
 
 --
@@ -837,27 +736,19 @@ ALTER TABLE ONLY public.stories
 
 
 --
--- Name: story_fragments storyfragments_fragment_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.story_fragments
-    ADD CONSTRAINT storyfragments_fragment_fkey FOREIGN KEY (fragment) REFERENCES public.fragments(id) ON DELETE CASCADE;
-
-
---
--- Name: story_fragments storyfragments_story_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
---
-
-ALTER TABLE ONLY public.story_fragments
-    ADD CONSTRAINT storyfragments_story_fkey FOREIGN KEY (story) REFERENCES public.stories(id) ON DELETE CASCADE;
-
-
---
 -- Name: tags tags_entity_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
 --
 
 ALTER TABLE ONLY public.tags
     ADD CONSTRAINT tags_entity_fkey FOREIGN KEY (entity) REFERENCES public.entities(id);
+
+
+--
+-- Name: tasks tasks_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: storyteller
+--
+
+ALTER TABLE ONLY public.tasks
+    ADD CONSTRAINT tasks_id_fkey FOREIGN KEY (id) REFERENCES public.entities(id);
 
 
 --
