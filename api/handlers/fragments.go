@@ -17,7 +17,6 @@ type CreateStoryFragment struct {
 	Content     string          `json:"content"`
 	Name		string			`json:"name"`
 	Tags		[]string		`json:"tags"`
-	Image		*string			`json:"image"`
 }
 
 func RegisterFragmentRoutes(r *gin.Engine) *gin.Engine {
@@ -82,11 +81,8 @@ func GetFragmentById(c *gin.Context) {
 
 func CreateNewFragment(fragment *CreateStoryFragment, creatorID uuid.UUID) (model.Fragment, error) {
 	now := time.Now().Unix()
-	image		:= ""
 	fragmentid := uuid.New()
-	if fragment.Image != nil {
-		image = *fragment.Image
-	}
+	
 
 	metadata, err := createDefaultMetadata(creatorID)
 	if err != nil {
@@ -98,7 +94,6 @@ func CreateNewFragment(fragment *CreateStoryFragment, creatorID uuid.UUID) (mode
 		Metadata:	metadata.ID,
 		Content:	fragment.Content,
 		Name:		fragment.Name,
-		Image:		image,
 		LastEdited:	now,
 		Created:	now,
 	}

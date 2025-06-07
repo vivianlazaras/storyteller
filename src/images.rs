@@ -4,11 +4,9 @@ use image::{DynamicImage, ImageError, ImageFormat, io::Reader as ImageReader};
 use nom_exif::{ExifIter, MediaParser, MediaSource};
 use rocket::{
     Route, State,
-    form::{Form, FromForm},
-    fs::{NamedFile, TempFile, relative},
+    fs::{NamedFile, TempFile},
     get,
-    http::ContentType,
-    post, routes,
+    http::ContentType, routes,
     tokio::{
         fs,
         fs::File,
@@ -17,7 +15,6 @@ use rocket::{
 };
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap,
     io::Cursor,
     path::{Path, PathBuf},
 };
@@ -121,7 +118,7 @@ impl ImageProcessor {
         }
     }
 
-    pub async fn process<'r>(&self, mut image_data: ImageData<'r>) -> Result<ImageBuilder> {
+    pub async fn process<'r>(&self, image_data: ImageData<'r>) -> Result<ImageBuilder> {
         // Generate safe filename
         let name = Uuid::new_v4().to_string();
         let save_path = self.image_dir.join(&name);
@@ -136,7 +133,7 @@ impl ImageProcessor {
         let exif_source = MediaSource::seekable(Cursor::new(&bytes))?;
         if exif_source.has_exif() {
             let mut parser = MediaParser::new();
-            if let Ok(mut tags) = parser.parse(exif_source) {
+            if let Ok(tags) = parser.parse(exif_source) {
                 let taglist: ExifIter = tags;
                 for tag in taglist {
                     if let Some(value) = tag.get_value() {

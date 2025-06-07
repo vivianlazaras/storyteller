@@ -20,17 +20,7 @@ use crate::{
     model::Character,
 };
 use anyhow::Result;
-use rocket::{
-    Route, State,
-    form::{Form, FromForm},
-    fs::TempFile,
-    get, post,
-    response::{Redirect, content::RawHtml},
-    routes,
-};
-use rocket_dyn_templates::{Template, context};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use super::frontend::*;
 
 impl Character {

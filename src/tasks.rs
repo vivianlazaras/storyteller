@@ -1,10 +1,9 @@
 use crate::ApiClient;
 use rocket::{
-    FromForm, Route, State, delete, form::Form, get, post, put, response::Redirect, routes,
+    FromForm, Route, State, form::Form, post, response::Redirect, routes,
 };
 use std::collections::HashMap;
 
-use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {

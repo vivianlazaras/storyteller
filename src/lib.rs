@@ -2,6 +2,8 @@
 extern crate serde_derive;
 #[macro_use]
 extern crate err_derive;
+use time::{OffsetDateTime, format_description::well_known::Rfc3339, format_description};
+use time::UtcOffset;
 
 pub mod characters;
 pub mod config;
@@ -171,4 +173,21 @@ pub enum Category {
 
 pub fn normalize_newlines(input: &str) -> String {
     input.replace("\r\n", "\n").replace('\r', "\n")
+}
+
+pub fn epoch_to_human(epoch: i64) -> String {
+    match OffsetDateTime::from_unix_timestamp(epoch) {
+        Ok(utc_dt) => {
+            // Attempt to get local timezone offset at this datetime
+            match UtcOffset::local_offset_at(utc_dt) {
+                Ok(local_offset) => {
+                    let local_dt = utc_dt.to_offset(local_offset);
+                    let format = format_description::parse("[month]/[day]/[year] [hour]:[minute]").unwrap();
+                    local_dt.format(&format).unwrap_or_else(|_| "Invalid format".to_string())
+                }
+                Err(_) => "Failed to get local timezone offset".to_string(),
+            }
+        }
+        Err(_) => "Invalid epoch time".to_string(),
+    }
 }

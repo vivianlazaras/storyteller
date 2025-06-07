@@ -35,7 +35,7 @@ impl ThemeLoader {
 
         let mut mobile_contents = String::new();
         let mut desktop_contents = String::new();
-        let mut main_contents = String::new();
+        let main_contents = String::new();
 
         desktop_file.read_to_string(&mut desktop_contents).await?;
         mobile_file.read_to_string(&mut mobile_contents).await?;

@@ -1,6 +1,6 @@
 <div id="header">
     <a class="header_link" href="/characters">Characters</a>
-    <a class="header_link" href="/places">Places</a>
+    <a class="header_link" href="/locations">Places</a>
     <a class="header_link" href="/stories">Stories</a>
     <a class="header_link" href="/users/account">account</a>
     <img

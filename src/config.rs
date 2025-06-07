@@ -93,10 +93,11 @@ impl Default for APIConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
-    server: ServerConfig,
-    api: APIConfig,
+    pub server: ServerConfig,
+    pub api: APIConfig,
     /// the directory in which to store image files
-    images: PathBuf,
+    pub images: PathBuf,
+    pub uploadLimit: String,
 }
 
 impl Config {
@@ -115,18 +116,24 @@ impl Config {
     pub fn oidc(&self) -> &rocket_oidc::OIDCConfig {
         &self.server.oidc
     }
+
+    pub fn url(&self) -> &str {
+        &self.server.url
+    }
 }
 
 impl Default for Config {
     fn default() -> Config {
         let mut server = ServerConfig::default();
         server.port = 8440;
-        let mut images = PathBuf::new();
+        let mut images = std::env::current_dir().unwrap();
         images.push("/images");
+        
         Config {
             server,
             api: APIConfig::default(),
             images,
+            uploadLimit: "50MiB".to_string(),
         }
     }
 }

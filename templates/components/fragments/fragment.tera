@@ -1,0 +1,13 @@
+{% macro fragment(fragment) %}
+<div class="fragment">
+  <div class="entitylink">
+  <button onclick="list_toggle('{{ fragment.id }}')" class="entitylink">
+    {{ fragment.name }}
+  </button>
+  </div>
+  <div class="listitem" id="{{ fragment.id }}">
+    <div class="created">Created: {{ fragment.created }}</div>
+    <p>{{ fragment.content }}</p>
+  </div>
+</div>
+{% endmacro fragment %}

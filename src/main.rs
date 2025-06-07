@@ -65,18 +65,15 @@ async fn rocket() -> _ {
 
     let current_dir = std::env::current_dir().unwrap();
     let processor = storyteller::images::ImageProcessor::new(
-        String::from("stories.qrespite.org"),
-        current_dir.join("./images/"),
+        config.url().to_string(),
+        config.images.clone(),
     )
     .await;
     let rocketconfig = rocket::Config {
         address: config.listen().parse().unwrap(),
         port: config.port(),
         limits: Limits::new()
-            .limit("default", "5GiB".parse().unwrap())
-            .limit("form", "5GiB".parse().unwrap())
-            .limit("data-form", "5GiB".parse().unwrap())
-            .limit("file", "5GiB".parse().unwrap()),
+            .limit("default", "5GiB".parse().unwrap()),
         ..rocket::Config::default()
     };
 

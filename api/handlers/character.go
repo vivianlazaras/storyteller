@@ -40,7 +40,6 @@ func ListPubCharacters(c *gin.Context) {
 type CreateCharacterData struct {
 	Name string			`json:"name"`
 	Description *string	`json:"description"`
-	Image *string		`json:"image"`
 }
 
 func GetCharacter(c *gin.Context) {
@@ -61,13 +60,8 @@ func GetCharacter(c *gin.Context) {
 func CreateCharacterFromFragment(fragment *CreateCharacterData, creatorID uuid.UUID) (model.Character, error) {
 	now := time.Now().Unix()
 	description := ""
-	image 		:= ""
 	if fragment.Description != nil {
 		description = *fragment.Description
-	}
-
-	if fragment.Image != nil {
-		image = *fragment.Image
 	}
 
 	metadata, err := createDefaultMetadata(creatorID)
@@ -86,7 +80,6 @@ func CreateCharacterFromFragment(fragment *CreateCharacterData, creatorID uuid.U
 		Timeline:    timeline.ID,
 		Name:        fragment.Name,
 		Description: description,
-		Image:		 image,
 		Created:     now,
 		LastEdited:  now,
 	}

@@ -15,7 +15,6 @@ type Fragment struct {
 	Name       string `gorm:"column:name;not null" json:"name"`
 	LastEdited int64  `gorm:"column:last_edited;default:unix_now()" json:"last_edited"`
 	Created    int64  `gorm:"column:created;default:unix_now()" json:"created"`
-	Image      string `gorm:"column:image" json:"image"`
 }
 
 // TableName Fragment's table name

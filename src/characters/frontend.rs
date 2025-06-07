@@ -1,9 +1,8 @@
 use crate::{
     ApiClient,
-    images::{ImageBuilder, ImageData, ImageProcessor},
+    images::ImageProcessor,
     model::Character,
 };
-use anyhow::Result;
 use rocket::{
     Route, State,
     form::{Form, FromForm},

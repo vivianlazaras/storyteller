@@ -1,0 +1,13 @@
+{% macro location(location) %}
+<div class="location">
+    <div class="entitylink">
+        <h3>
+            {{ location.name }}
+        </h3>
+        <div id="{{ location.id }}">
+            <div class="created">Created: {{ location.created }}</div>
+            <p>{{ location.description }}</p>
+        </div>
+    </div>
+</div>
+{% endmacro location %}

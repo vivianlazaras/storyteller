@@ -31,6 +31,7 @@ url = "2.5.4"
 structopt = "0.3.26"
 image = "0.25.6"
 nom-exif = "2.5.1"
+time = { version = "0.3.41", features = ["local-offset"]}
 
 [features]
 redis = ["dep:redis"]

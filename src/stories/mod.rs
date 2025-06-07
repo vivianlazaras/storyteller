@@ -38,8 +38,13 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let tagurl = format!("/tags/{}", story.id);
     let tags: Vec<Tag> = api.get(&tagurl, None).await.unwrap();
 
-    let fragments: Option<Vec<StoryFragment>> =
-        api.get("/fragments", Some(params.clone())).await.unwrap();
+    let fragments = match
+        api.get::<Option<Vec<StoryFragment>>>("/fragments", Some(params.clone())).await.unwrap() {
+            Some(fragments) => {
+                Some(fragments.into_iter().map(|f| f.render()).collect::<Vec<crate::fragments::frontend::FragmentRender>>())
+            },
+            None => None,
+        };
 
     /// may need to be implemented later, for now don't worry about it
     /// I have to grab each character for each fragment and assembly them.

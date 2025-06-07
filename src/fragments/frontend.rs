@@ -2,7 +2,7 @@ use crate::ApiClient;
 use crate::model::*;
 use rocket::response::Redirect;
 use rocket::response::content::RawHtml;
-use rocket::{FromForm, Route, State, delete, form::Form, get, post, put, routes};
+use rocket::{FromForm, Route, State, form::Form, get, post, routes};
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
 use super::api::*;
@@ -32,9 +32,19 @@ impl<'r> CreateFragmentForm<'r> {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct FragmentRender {
+    pub id: Uuid,
+    pub name: String,
+    pub content: String,
+    pub image: Option<String>,
+    pub created: String,
+    pub last_edited: String,
+}
+
 #[post("/", data = "<form>")]
 async fn create_fragment<'r>(form: Form<CreateFragmentForm<'r>>, api: &State<ApiClient>) -> Redirect {
-    let mut form = form.into_inner();
+    let form = form.into_inner();
     let builder = form.to_builder();
     let newfragment: StoryFragment = builder.build(&api, "").await.unwrap();
     let redirect = if let Some(parent) = builder.parent {

@@ -2,7 +2,6 @@ use crate::ApiClient;
 use rocket::response::content::RawHtml;
 use rocket::{Route, State, get, routes};
 use rocket_dyn_templates::{Template, context};
-use std::collections::HashMap;
 
 pub struct SearchCriteria {
     name: Option<String>,

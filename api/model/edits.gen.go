@@ -15,6 +15,8 @@ type Edit struct {
 	Value     string `gorm:"column:value;not null" json:"value"`
 	Prevvalue string `gorm:"column:prevvalue" json:"prevvalue"`
 	Change    string `gorm:"column:change" json:"change"`
+	Entity    string `gorm:"column:entity" json:"entity"`
+	Field     string `gorm:"column:field" json:"field"`
 }
 
 // TableName Edit's table name
