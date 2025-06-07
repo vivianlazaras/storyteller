@@ -56,16 +56,16 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
         Some(characters) => Some(
             characters
                 .into_iter()
-                .map(|c| c.render(Some(String::from("/images/debe1a6f-5f7f-4cf4-84ef-e913efaa8dcd")), Vec::new()))
+                .map(|c| c.render(Some(String::from("/assets/images/debe1a6f-5f7f-4cf4-84ef-e913efaa8dcd")), Vec::new()))
                 .collect::<Vec<CharacterRender>>(),
         ),
         None => None,
     };
 
-    let tasks: Option<Vec<Task>> = api.get("/tasks/", Some(params)).await.unwrap();
+    let notes: Option<Vec<Task>> = api.get("/notes/", Some(params)).await.unwrap();
     RawHtml(Template::render(
         "stories/story",
-        context! { title: story.name.clone(), tasks, story, fragments, characters, tags },
+        context! { title: story.name.clone(), notes, story, fragments, characters, tags },
     ))
 }
 

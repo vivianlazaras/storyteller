@@ -1,0 +1,8 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+<div class="content" id="content">
+    
+</div>
+</body>

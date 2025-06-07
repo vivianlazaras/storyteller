@@ -1,6 +1,6 @@
-{% macro taskform(parent, category) %}
-<div id="taskform" class="taskform form">
-    <form action="/tasks?parent={{ parent }}&category={{ category }}" method="post">
+{% macro noteform(parent, category) %}
+<div id="noteform" class="noteform form">
+    <form action="/notes?parent={{ parent }}&category={{ category }}" method="post">
         <label for="name">Name</label>
         <input
             id="name"
@@ -15,7 +15,7 @@
             id="description"
             name="description"
             rows="4"
-            placeholder="Describe the task"
+            placeholder="Describe the note"
         ></textarea>
 
         {# ── Deadline: date picker + hidden Unix-ts field ── #}
@@ -45,4 +45,4 @@ document.getElementById('deadline_date').addEventListener('change', (e) => {
     hidden.value = Math.floor(date.getTime() / 1000); // seconds since epoch
 });
 </script>
-{% endmacro taskform %}
+{% endmacro noteform %}

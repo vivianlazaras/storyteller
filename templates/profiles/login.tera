@@ -1,0 +1,14 @@
+{% include "head" %}
+<body>
+    {% include "header" %}
+    
+<div id="content" class="login-container">
+    <form class="login-form" action="/profile/login" method="post">
+        <input type="text" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+        <a href="{{ oidc_url }}">OIDC Login</a>
+    </form>
+</div>
+</body>
+

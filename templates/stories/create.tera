@@ -2,7 +2,7 @@
 
 <body>
 {% include "header" %}
-<div class="content" id="content">
+<div class="content content-form" id="content">
     <form action="/stories" method="POST">
     <h1 class="create_banner">Create A New Story</h1>
   <label for="name">Title:</label><br>

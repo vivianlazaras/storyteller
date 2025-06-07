@@ -92,9 +92,9 @@ async fn rocket() -> _ {
         .register("/", catchers![unauthorized, notfound])
         .attach(Template::fairing())
         .mount("/static", FileServer::from("static"))
-        .mount("/users", storyteller::users::get_routes())
-        .mount("/tasks/", storyteller::tasks::get_routes())
-        .mount("/images/", storyteller::assets::images::get_routes())
+        .mount("/profiles", storyteller::profiles::get_routes())
+        .mount("/notes/", storyteller::notes::get_routes())
+        .mount("/assets/images/", storyteller::assets::images::get_routes())
         .mount("/search", storyteller::search::get_routes());
     rocket_oidc::setup(rocket, config.oidc().clone())
         .await

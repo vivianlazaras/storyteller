@@ -1,7 +1,7 @@
 {% include "head" %}
 <body>
 {% include "header" %}
-<div id="content">
+<div id="content" class="content content-form">
     <h1>Create A New Setting</h1>
 
     <form action="/locations/" method="post">

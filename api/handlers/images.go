@@ -10,7 +10,7 @@ import (
 )
 
 func RegisterImageRoutes(r *gin.Engine) *gin.Engine {
-	r.POST("/images/", CreateImage)
+	r.POST("/assets/images/", CreateImage)
 	return r
 }
 

@@ -1,13 +1,13 @@
 <label for="itemInput">Add Tags:</label>
 <input list="items" id="itemInput" name="itemInput">
-<datalist id="items">
+<datalist id="items" class="taglist">
   {% for option in options %}
     <option value="{{ option.value }}">
   {% endfor %}
 </datalist>
 <button type="button" onclick="addItem()">Add</button>
 
-<div id="selectedItems"></div>
+<div id="selectedItems" class="tagselector"></div>
 
 <!-- Hidden container for actual form submission -->
 <div id="hiddenInputs"></div>

@@ -1,7 +1,7 @@
 {% include "head" %}
 <body>
 {% include "header" %}
-<div id="content" class="content">
+<div id="content" class="content content-form">
     <form action="/search" method="post">
         <label for="name">Name:</label>
         <input class="textfield" id="name" type="text" placeholder="name"/>
@@ -17,9 +17,10 @@
         <br/>
         <label for="category">category:</label><br>
         <select id="category" name="category">
-            <option value="Character" {% if category == "Character" %}selected{% endif %}>Character</option>
-            <option value="Story" {% if category == "Story" %}selected{% endif %}>Story</option>
-            <option value="Place" {% if category == "Place" %}selected{% endif %}>Place</option>
+            <option value="characters" {% if category == "Character" %}selected{% endif %}>Character</option>
+            <option value="stories" {% if category == "Story" %}selected{% endif %}>Story</option>
+            <option value="locations" {% if category == "Location" %}selected{% endif %}>Location</option>
+            <option value="timelines" {% if category == "Timeline" %}selected{% endif %}>Timeline</option>
         </select><br><br>
         
         {% include "components/tagselector" %}

@@ -9,17 +9,17 @@
         </div>
     </div>
     <div class="header_link">
-        <a class="header_item header_category" href="/users/account">Profile</a>
+        <a class="header_item header_category" href="/profiles/account">Profile</a>
         <div class="dropdown">
-            <a class="header_item" href="/users/settings">Settings</a>
+            <a class="header_item" href="/profiles/settings">Settings</a>
+            <a class="header_item" href="/profiles/login">Login/Logout</a>
         </div>
     </div>
     <div class="header_link">
         <a class="header_item header_category" href="/assets/">Assets</a>
         <div class="dropdown">
             <a class="header_item" href="/assets/images">Images</a>
-            <a class="header_item" href="/assets/models">Models</a>
-
+            <!-- will return when implemented <a class="header_item" href="/assets/models">Models</a> -->
         </div>
     </div>
 

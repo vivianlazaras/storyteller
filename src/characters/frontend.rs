@@ -47,7 +47,7 @@ async fn create_character<'f>(
 #[get("/<id>")]
 async fn get_character(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let character: Character = api.get(&format!("/characters/{}", id), None).await.unwrap();
-    let render = character.render(Some(String::from("/images/debe1a6f-5f7f-4cf4-84ef-e913efaa8dcd")), Vec::new());
+    let render = character.render(Some(String::from("/assets/images/debe1a6f-5f7f-4cf4-84ef-e913efaa8dcd")), Vec::new());
     RawHtml(Template::render(
         "characters/character",
         context! { title: render.name.clone(), character: render },

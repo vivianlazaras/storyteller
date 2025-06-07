@@ -41,15 +41,6 @@
 
 }
 
-textarea.dynamic-size {
-    width: 40vw;            /* 80% of viewport width */
-    min-height: calc(1.2em * 40); /* Approx. height for 40 rows (1.2em per row for padding) */
-    box-sizing: border-box;
-    resize: vertical;       /* Allow vertical resize */
-    padding: 0.5em;
-    font-family: inherit;
-    font-size: 1em;
-  }
 
 #content {
     display: flex;
@@ -59,7 +50,6 @@ textarea.dynamic-size {
     height: 100%;
     display: flex;
     padding: 1%;
-    border: 1px solid black;
 }
 
 img.resize {
@@ -236,7 +226,69 @@ button[type="submit"]:hover, .actionlink:hover {
     text-decoration: none;
     color: black;
 }
+.login-container,
+.content-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
 
-.header_item:hover {
-    
+/* Form styles scoped to both login-form and content-form forms */
+.login-form,
+.content-form form {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    width: 600px;
+    gap: 1rem;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"],
+.content-form select,
+.content-form input[list].textfield,
+.content-form input[type="text"],
+.content-form input[type="password"] {
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+}
+
+/* Buttons in both forms */
+.login-form button,
+.content-form button {
+    padding: 0.75rem;
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-form button:hover,
+.content-form button:hover {
+    background-color: #0056b3;
+}
+
+/* Links in both forms */
+.login-form a,
+.content-form a {
+    text-align: center;
+    display: block;
+    margin-top: 1rem;
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.login-form a:hover,
+.content-form a:hover {
+    text-decoration: underline;
 }

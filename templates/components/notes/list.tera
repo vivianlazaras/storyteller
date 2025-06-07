@@ -1,0 +1,16 @@
+{% import "components/notes/create" as notes %}
+{% macro notelist(notes, edit=false, parent, category) %}
+    <div class="notelist">
+        {% for note in notes %}
+            <div class="noteentry"
+                 style="{% if note.completed != 0 %}background-color: lightgreen; color: green;{% endif %}">
+                <h3 class="notename">{{ note.name }}</h3>
+                <button>Complete</button>
+            </div>
+        {% endfor %}
+
+        {% if edit %}
+            {{ notes::noteform(parent=parent, category=category) }}
+        {% endif %}
+    </div>
+{% endmacro notelist %}

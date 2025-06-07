@@ -62,7 +62,7 @@ impl ImageBuilder {
     }
 
     pub async fn build(self, api: &ApiClient, access_token: &str) -> Result<Image> {
-        api.post("/images/", access_token, None, &self).await
+        api.post("/assets/images/", access_token, None, &self).await
     }
 }
 

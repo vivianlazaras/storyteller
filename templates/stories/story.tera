@@ -1,4 +1,4 @@
-{% import "components/tasks/list" as tasks %}
+{% import "components/notes/list" as notes %}
 {% import "components/characters/character" as macros %}
 {% import "components/fragments/fragment" as fragments %}
 {% include "head" %}
@@ -80,7 +80,7 @@ function list_toggle(id) {
         Add Existing Character
       </a>
     </div>
-    {{ tasks::tasklist(tasks=tasks, edit=true, parent=story.id, category="stories") }}
+    {{ notes::notelist(notes=notes, edit=true, parent=story.id, category="stories") }}
   </div>
 </div>
 
