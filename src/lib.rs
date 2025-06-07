@@ -14,7 +14,7 @@ pub mod stories;
 pub mod users;
 pub use config::Config;
 pub mod fragments;
-pub mod images;
+pub mod assets;
 pub mod links;
 pub mod search;
 pub mod tasks;

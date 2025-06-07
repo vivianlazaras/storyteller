@@ -16,7 +16,7 @@
 //! ```
 use crate::{
     ApiClient,
-    images::{ImageBuilder, ImageData, ImageProcessor},
+    assets::images::{ImageBuilder, ImageData, ImageProcessor},
     model::Character,
 };
 use anyhow::Result;

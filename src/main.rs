@@ -64,7 +64,7 @@ async fn rocket() -> _ {
     };
 
     let current_dir = std::env::current_dir().unwrap();
-    let processor = storyteller::images::ImageProcessor::new(
+    let processor = storyteller::assets::images::ImageProcessor::new(
         config.url().to_string(),
         config.images.clone(),
     )
@@ -94,7 +94,7 @@ async fn rocket() -> _ {
         .mount("/static", FileServer::from("static"))
         .mount("/users", storyteller::users::get_routes())
         .mount("/tasks/", storyteller::tasks::get_routes())
-        .mount("/images/", storyteller::images::get_routes())
+        .mount("/images/", storyteller::assets::images::get_routes())
         .mount("/search", storyteller::search::get_routes());
     rocket_oidc::setup(rocket, config.oidc().clone())
         .await

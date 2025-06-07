@@ -1,6 +1,6 @@
 use crate::{
     ApiClient,
-    images::ImageProcessor,
+    assets::images::ImageProcessor,
     model::Character,
 };
 use rocket::{
