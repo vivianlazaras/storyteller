@@ -1,8 +1,28 @@
 <div id="header">
-    <a class="header_link" href="/characters">Characters</a>
-    <a class="header_link" href="/locations">Places</a>
-    <a class="header_link" href="/stories">Stories</a>
-    <a class="header_link" href="/users/account">account</a>
+    <div class="header_link">
+        <a class="header_item header_category" href="/stories">Stories</a>
+        <div class="dropdown">
+            <a class="header_item" href="/characters">Characters</a>
+            <a class="header_item" href="/locations">Locations</a>
+            <a class="header_item" href="/fragments/">Chapters/Fragments</a>
+            <a class="header_item" href="/timelines/">Timelines</a>
+        </div>
+    </div>
+    <div class="header_link">
+        <a class="header_item header_category" href="/users/account">Profile</a>
+        <div class="dropdown">
+            <a class="header_item" href="/users/settings">Settings</a>
+        </div>
+    </div>
+    <div class="header_link">
+        <a class="header_item header_category" href="/assets/">Assets</a>
+        <div class="dropdown">
+            <a class="header_item" href="/assets/images">Images</a>
+            <a class="header_item" href="/assets/models">Models</a>
+
+        </div>
+    </div>
+
     <img
         class="profile_image"
         src="{{ profile | default(value="/static/profile.jpg") }}"

@@ -204,3 +204,39 @@ button[type="submit"]:hover, .actionlink:hover {
     object-fit: cover;
     margin-left: auto; /* Pushes the image to the far right */
 }
+
+.dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%; /* Match parent width */
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 0.5em 0;
+    box-sizing: border-box; /* ensures padding doesn't increase width */
+    z-index: 1000;
+}
+
+/* Ensure header links are relative for positioning */
+.header_link {
+    position: relative;
+    display: inline-block;
+}
+
+/* Show dropdown when hovering over parent */
+.header_link:hover .dropdown {
+    display: block;
+}
+
+/* Optional styling */
+.header_item {
+    display: block;
+    padding: 0.5em;
+    text-decoration: none;
+    color: black;
+}
+
+.header_item:hover {
+    
+}
