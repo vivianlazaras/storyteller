@@ -6,7 +6,7 @@ use crate::ApiClient;
 use rocket::response::{Redirect, content::RawHtml};
 use rocket::{
     Route, get, post, form::Form, FromForm, State, routes,
-    http::{Cookie, CookieJar},
+    http::{Cookie, SameSite, CookieJar},
     
 };
 
@@ -71,7 +71,7 @@ pub struct LoginForm {
 }
 
 #[post("/login", data = "<form>")]
-async fn login(api: &State<ApiClient>, form: Form<LoginForm>) -> Redirect {
+async fn login(api: &State<ApiClient>, form: Form<LoginForm>, jar: &CookieJar<'_>) -> Redirect {
     let login = form.into_inner();
     let access_token: String = match api.post("/login", "", None, login).await {
         Ok(token) => {
@@ -82,6 +82,15 @@ async fn login(api: &State<ApiClient>, form: Form<LoginForm>) -> Redirect {
             return Redirect::to("/profiles/login")
         },
     };
+    jar.add(
+        Cookie::build((
+            "access_token",
+            access_token,
+        ))
+        .secure(false)
+        .http_only(true) // good practice
+        .same_site(SameSite::Lax), // or SameSite::Strict, if you prefer
+    );
     Redirect::to("/profiles/login")
 }
 
