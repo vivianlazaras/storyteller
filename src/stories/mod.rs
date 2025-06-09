@@ -1,8 +1,13 @@
 use crate::characters::frontend::CharacterRender;
 use crate::model::Task;
 use crate::model::{Character, Story, StoryFragment, Tag};
-use crate::*;
+use rocket::{FromForm, FromFormField};
+use std::collections::HashMap;
+use crate::api::{ApiClient, get_access_token};
 use rocket::form::Form;
+use crate::auth::Guard;
+use rocket::http::CookieJar;
+
 use rocket::{
     Route, State, delete, get, post, put,
     response::{Redirect, content::RawHtml},
@@ -39,7 +44,7 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let tags: Vec<Tag> = api.get(&tagurl, None).await.unwrap();
 
     let fragments = match
-        api.get::<Option<Vec<StoryFragment>>>("/fragments", Some(params.clone())).await.unwrap() {
+        api.get::<Option<Vec<StoryFragment>>, _>("/fragments", Some(params.clone())).await.unwrap() {
             Some(fragments) => {
                 Some(fragments.into_iter().map(|f| f.render()).collect::<Vec<crate::fragments::frontend::FragmentRender>>())
             },
@@ -49,7 +54,7 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     /// may need to be implemented later, for now don't worry about it
     /// I have to grab each character for each fragment and assembly them.
     let characters: Option<Vec<CharacterRender>> = match api
-        .get::<Option<Vec<Character>>>("/characters/filter", Some(params.clone()))
+        .get::<Option<Vec<Character>>, _>("/characters/filter", Some(params.clone()))
         .await
         .unwrap()
     {
@@ -70,10 +75,9 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
 }
 
 #[get("/")]
-async fn list_stories(api: &State<ApiClient>) -> RawHtml<Template> {
-    //let user =;
-    //let stories = StoryFragment::belonging_to(&user)
-    let resp: Vec<Story> = api.get("/stories", None).await.unwrap();
+async fn list_stories(guard: Guard, api: &State<ApiClient>, cookies: &CookieJar<'_>) -> RawHtml<Template> {
+    //let access_token = cookies.get("access_token").unwrap();
+    let resp: Vec<Story> = api.get_protected("/stories", &get_access_token(&cookies), None).await.unwrap();
     RawHtml(Template::render(
         "stories/index",
         context! { title: "published stories", stories: resp },

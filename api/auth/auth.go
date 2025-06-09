@@ -5,6 +5,7 @@ import (
 	"errors"
     "fmt"
     "os"
+    "strings"
     "net/http"
     "crypto/rsa"
 	"crypto/x509"
@@ -136,4 +137,61 @@ func GetJWTPubKey(c *gin.Context) {
 // base64URL encodes to base64 URL encoding without padding
 func base64URL(b []byte) string {
 	return base64.RawURLEncoding.EncodeToString(b)
+}
+
+// ValidateToken verifies the JWT's signature and standard claims
+func ValidateToken(tokenString string) (*OIDCClaims, error) {
+	// Parse token and validate signature
+	token, err := jwt.ParseWithClaims(tokenString, &OIDCClaims{}, func(token *jwt.Token) (any, error) {
+		// Ensure the token uses the expected signing method
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return &JWTPubKey, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("token parsing failed: %w", err)
+	}
+
+	// Validate claims
+	claims, ok := token.Claims.(*OIDCClaims)
+	if !ok || !token.Valid {
+		return nil, errors.New("invalid token or claims")
+	}
+
+	// Additional OIDC-style checks (issuer, audience, expiration)
+	if claims.Iss != "http://localhost:8442" {
+		return nil, fmt.Errorf("invalid issuer: %s", claims.Iss)
+	}
+	if claims.Aud != "storyteller" {
+		return nil, fmt.Errorf("invalid audience: %s", claims.Aud)
+	}
+
+	return claims, nil
+}
+
+// JWTMiddleware validates the JWT and injects claims into the Gin context
+func JWTMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get the Authorization header
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or malformed Authorization header"})
+			return
+		}
+
+		// Extract token string
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		// Validate token
+		claims, err := ValidateToken(tokenString)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Store claims in the context for handlers to access
+		c.Set("claims", claims)
+		c.Next()
+	}
 }

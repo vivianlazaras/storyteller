@@ -5,20 +5,20 @@ import (
 	"time"
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/model"
-	// "github.com/vivianlazaras/storyteller/auth"
+	"github.com/vivianlazaras/storyteller/auth"
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/google/uuid"
 )
 
 func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
-	r.GET("/stories", ListPubStories)
+	r.GET("/stories", auth.JWTMiddleware(), GetStories)
     r.GET("/stories/:id", GetStory)
     r.POST("/stories", CreateStory)
 	r.DELETE("/stories/:id", DeleteStory)
 	return r
 }
 
-func ListPubStories(c *gin.Context) {
+func GetStories(c *gin.Context) {
 	// grab all stories where public = true
 	var stories []model.Story
     err := db.DB.

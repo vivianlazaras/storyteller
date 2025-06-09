@@ -6,12 +6,12 @@ use bcrypt::hash;
 use bcrypt::BcryptError;
 use bcrypt::DEFAULT_COST;
 use crate::ApiClient;
+use crate::auth::*;
 use rocket_oidc::auth::AuthGuard;
 use rocket::response::{Redirect, content::RawHtml};
 use rocket::{
     Route, get, post, form::Form, FromForm, State, routes,
-    http::{Cookie, SameSite, CookieJar},
-    
+    http::{Cookie, SameSite, CookieJar},  
 };
 
 pub fn hash_password(plain: &str) -> Result<String, bcrypt::BcryptError> {
@@ -30,15 +30,6 @@ pub struct User {
     email: String,
 }
 
-#[non_exhaustive]
-#[derive(Serialize, Deserialize, Debug)]
-pub struct UserGuard {
-    pub email: String,
-    pub sub: String,
-    pub picture: Option<String>,
-    pub email_verified: Option<bool>,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserInfo {
     given_name: String,
@@ -50,8 +41,6 @@ impl CoreClaims for UserGuard {
         self.sub.as_str()
     }
 }
-
-pub(crate) type Guard = AuthGuard<UserGuard>;
 
 #[get("/account")]
 async fn account() -> Redirect {
