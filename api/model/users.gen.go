@@ -8,11 +8,12 @@ const TableNameUser = "users"
 
 // User mapped from table <users>
 type User struct {
-	ID      string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
-	Fname   string `gorm:"column:fname;not null" json:"fname"`
-	Lname   string `gorm:"column:lname;not null" json:"lname"`
-	Subject string `gorm:"column:subject" json:"subject"`
-	Email   string `gorm:"column:email;not null" json:"email"`
+	ID           string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
+	Fname        string `gorm:"column:fname;not null" json:"fname"`
+	Lname        string `gorm:"column:lname;not null" json:"lname"`
+	Subject      string `gorm:"column:subject" json:"subject"`
+	Email        string `gorm:"column:email;not null" json:"email"`
+	PasswordHash string `gorm:"column:password_hash" json:"password_hash"`
 }
 
 // TableName User's table name

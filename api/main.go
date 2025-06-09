@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/vivianlazaras/storyteller/auth"
-	"fmt"
 	"log"
+	"fmt"
 )
 
 func main() {
@@ -15,13 +15,19 @@ func main() {
 		return
 	}
 
-	var realmURL = config.Server.Oidc.IssuerUrl
-	// Secure routes
-	/*
-	secured.Use(oidc.RequireAuth())
-	*/
-	if err := auth.InitJWKS(realmURL); err != nil {
-		log.Fatalf("Failed to load JWKS: %v", err)
+	//var realmURL = config.Server.Oidc.IssuerUrl
+	if config.Api.Server.SelfHostedAuth {
+		if config.Api.Server.KeyFile == nil {
+			fmt.Printf("Private KeyFile required for self hosted authentication")
+			return
+		}
+		var autherr = auth.InitAuth(*config.Api.Server.KeyFile)
+		if autherr != nil {
+			fmt.Printf("failed loading private keyfile: " + autherr.Error())
+			return
+		}
+
+		log.Println("INFO: successfully loaded JWT key")
 	}
 
 	addr := fmt.Sprintf("%s:%d", config.Api.Server.Listen, config.Api.Server.Port)

@@ -1,6 +1,6 @@
 {
     "images": "./images/",
-    "uploadLimit": "100MiB",
+    "uploadLimit": "1GiB",
     "server":
     {
         "port":8440,
@@ -27,7 +27,8 @@
             "url":"http://localhost:8442",
             "ssl":false,
             "certFile":null,
-            "keyFile":null,
+            "keyFile":"../keys/jwt.key",
+            "self_hosted_auth": true,
             "oidc":
             {
                 "client_id":"storyteller-api",

@@ -87,6 +87,17 @@ async fn get_fragment(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     ))
 }
 
+#[get("/")]
+async fn list_fragments(api: &State<ApiClient>) -> RawHtml<Template> {
+    let fragments: Vec<StoryFragment> = match api.get("/fragments/", None).await.unwrap() {
+        Some(fragments) => fragments,
+        None => Vec::new()
+    };
+    RawHtml(
+        Template::render("fragments/index", context!( title: "fragments", fragments ))
+    )
+}
+
 pub fn get_routes() -> Vec<Route> {
-    routes![get_fragment, create_fragment_html, create_fragment]
+    routes![get_fragment, create_fragment_html, create_fragment, list_fragments]
 }

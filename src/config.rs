@@ -40,6 +40,7 @@ pub struct ServerConfig {
     ssl: bool,
     certFile: Option<PathBuf>,
     keyFile: Option<PathBuf>,
+    self_hosted_auth: Option<bool>,
     oidc: OIDCConfig,
 }
 
@@ -58,6 +59,7 @@ impl Default for ServerConfig {
             ssl: false,
             certFile: None,
             keyFile: None,
+            self_hosted_auth: Some(true),
             oidc: OIDCConfig::default(),
         }
     }

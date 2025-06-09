@@ -29,6 +29,8 @@ type ServerConfig struct {
 	Url string			`json:"url"`
 	CertFile *string	`json:"certFile"`
 	KeyFile	 *string	`json:"keyFile"`
+	// if the go API should be handling issuing JWTs
+	SelfHostedAuth bool		`json:"self_hosted_auth"`
 	Oidc	 *OIDCConfig `json:"oidc"`
 }
 
@@ -38,7 +40,7 @@ type APISettings struct {
 
 type APIConfig struct {
 	Server ServerConfig	`json:"server"`
-	DB DBConfig			`json:"db"`
+	DB DBConfig		`json:"db"`
 }
 
 type Config struct {

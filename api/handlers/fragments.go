@@ -24,7 +24,22 @@ func RegisterFragmentRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/fragments", GetFragmentsByStory)
 	r.GET("/fragments/:id", GetFragmentById)
 	r.POST("/fragments/", CreateFragment)
+	r.GET("/fragments/", GetFragments)
 	return r
+}
+
+func GetFragments(c *gin.Context) {
+	var fragments []model.Fragment
+	err := db.DB.
+		Where("entities.active = ?", true).
+		Joins("JOIN entities ON entities.id = fragments.id").
+		Find(&fragments).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	c.JSON(http.StatusOK, fragments)
 }
 
 func linkFragment(fragment *CreateStoryFragment, id uuid.UUID) error {

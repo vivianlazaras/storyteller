@@ -99,7 +99,12 @@ func CreateRelation(c *gin.Context) {
 	}
 
     result := CreateNewRelation(&relation)
-    result.GinResult(c)
+    if result.IsError() {
+		result.GinResult(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, relation)
 }
 
 type Operation struct {

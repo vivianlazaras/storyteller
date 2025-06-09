@@ -1,85 +1,77 @@
 package auth
 
 import (
+    "time"
 	"errors"
-	"fmt"
-	"net/http"
-	"strings"
-	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/MicahParks/keyfunc"
+    "fmt"
+    "os"
+    "github.com/vivianlazaras/storyteller/model"
+    "gorm.io/gorm"
+	"golang.org/x/crypto/bcrypt"
+    "github.com/golang-jwt/jwt/v5"
 )
 
-var jwks *keyfunc.JWKS
-
-// InitJWKS initializes and caches the JWKS from Keycloak
-func InitJWKS(realmURL string) error {
-	jwksURL := fmt.Sprintf("%s/protocol/openid-connect/certs", realmURL)
-
-	options := keyfunc.Options{
-		RefreshInterval:   time.Hour,
-		RefreshRateLimit:  time.Minute * 5,
-		RefreshTimeout:    time.Second * 10,
-		RefreshUnknownKID: true,
-	}
-
-	var err error
-	jwks, err = keyfunc.Get(jwksURL, options)
-	return err
+var jwtSigningKey []byte;
+func InitAuth(path string) error {
+    key, err := LoadJWTSigningKey(path)
+    jwtSigningKey = key
+    return err
 }
 
-// JWTMiddleware returns a Gin middleware that verifies the JWT
-func JWTMiddleware(expectedAudience string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or invalid Authorization header"})
-			return
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
-		// Parse and validate the token
-		token, err := jwt.Parse(tokenString, jwks.Keyfunc)
-		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
-			return
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token claims"})
-			return
-		}
-
-		// Optional: verify audience
-		if aud, ok := claims["aud"].(string); !ok || aud != expectedAudience {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "invalid audience"})
-			return
-		}
-
-		// Add claims to context
-		c.Set("claims", claims)
-
-		c.Next()
-	}
+func GetUserByEmail(db *gorm.DB, email string) (*model.User, error) {
+    var user model.User
+    result := db.Where("email = ?", email).First(&user)
+    if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+        return nil, errors.New("user not found")
+    } else if result.Error != nil {
+        return nil, result.Error
+    }
+    return &user, nil
 }
 
-// ExtractClaim gets a claim from the Gin context
-func ExtractClaim(c *gin.Context, key string) (string, error) {
-	claimsAny, exists := c.Get("claims")
-	if !exists {
-		return "", errors.New("no claims in context")
-	}
-	claims, ok := claimsAny.(jwt.MapClaims)
-	if !ok {
-		return "", errors.New("invalid claims type")
-	}
-	val, ok := claims[key].(string)
-	if !ok {
-		return "", fmt.Errorf("claim %q not found or not a string", key)
-	}
-	return val, nil
+type OIDCClaims struct {
+    Sub   string `json:"sub"`   // Subject (user ID)
+    Email string `json:"email"` // Optional additional claim
+    jwt.RegisteredClaims        // includes exp, iat, etc.
+}
+
+func AuthenticateAndIssueToken(db *gorm.DB, email, password string) (string, error) {
+    user, err := GetUserByEmail(db, email)
+    if err != nil {
+        return "", err
+    }
+
+    // Verify password
+    if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+        return "", errors.New("invalid password")
+    }
+
+    // Create OIDC-style claims
+    expiration := time.Now().Add(time.Hour)
+    claims := OIDCClaims{
+        Sub:   user.ID,
+        Email: user.Email,
+        RegisteredClaims: jwt.RegisteredClaims{
+            ExpiresAt: jwt.NewNumericDate(expiration),
+            IssuedAt:  jwt.NewNumericDate(time.Now()),
+        },
+    }
+
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    signedToken, err := token.SignedString(jwtSigningKey)
+    if err != nil {
+        return "", err
+    }
+
+    return signedToken, nil
+}
+
+// LoadJWTSigningKey reads the signing key from the given file path.
+func LoadJWTSigningKey(filePath string) ([]byte, error) {
+    key, err := os.ReadFile(filePath)
+    if err != nil {
+        return nil, fmt.Errorf("failed to load JWT signing key: %w", err)
+    }
+
+    return key, nil
 }

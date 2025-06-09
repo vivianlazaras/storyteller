@@ -9,7 +9,7 @@
     <br/>
         <div id="list" class="story-list">
             {% for fragment in fragments %}
-                <a class="brief" href="/stories/{{ story.id }}">
+                <a class="brief" href="/stories/{{ fragment.id }}">
                     <div class="fragment-card card">
                         <h3 class="fragment-title title">{{ fragment.name }}</h3>
                         
