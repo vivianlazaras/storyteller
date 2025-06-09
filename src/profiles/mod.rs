@@ -2,13 +2,22 @@ use rocket_dyn_templates::{Template, context};
 use rocket_oidc::{CoreClaims, OIDCGuard};
 use uuid::Uuid;
 
+use bcrypt::hash;
+use bcrypt::BcryptError;
+use bcrypt::DEFAULT_COST;
 use crate::ApiClient;
+use rocket_oidc::auth::AuthGuard;
 use rocket::response::{Redirect, content::RawHtml};
 use rocket::{
     Route, get, post, form::Form, FromForm, State, routes,
     http::{Cookie, SameSite, CookieJar},
     
 };
+
+pub fn hash_password(plain: &str) -> Result<String, bcrypt::BcryptError> {
+    // Hash the password using bcrypt with the default cost (12)
+    hash(plain, DEFAULT_COST)
+}
 
 pub fn default_profile_url() -> String {
     String::from("/static/profile.jpg")
@@ -30,13 +39,19 @@ pub struct UserGuard {
     pub email_verified: Option<bool>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserInfo {
+    given_name: String,
+    family_name: String,
+}
+
 impl CoreClaims for UserGuard {
     fn subject(&self) -> &str {
         self.sub.as_str()
     }
 }
 
-pub(crate) type Guard = OIDCGuard<UserGuard>;
+pub(crate) type Guard = AuthGuard<UserGuard>;
 
 #[get("/account")]
 async fn account() -> Redirect {
@@ -57,10 +72,15 @@ async fn profile(guard: Guard) -> RawHtml<Template> {
         Some(picture) => picture.clone(),
         None => default_profile_url(),
     };
+
+    let info = UserInfo {
+        given_name: "vivian".to_string(),
+        family_name: "lazaras".to_string(),
+    };
     println!("guard: {:?}", guard);
     RawHtml(Template::render(
-        "profile",
-        context!( title: "profile", name: guard.claims.email, info: guard.userinfo, picture: image_url ),
+        "profiles/profile",
+        context!( title: "profile", name: guard.claims.email, info, picture: image_url ),
     ))
 }
 
@@ -68,6 +88,29 @@ async fn profile(guard: Guard) -> RawHtml<Template> {
 pub struct LoginForm {
     email: String,
     password: String,
+}
+
+impl LoginForm {
+    pub fn build(self) -> Result<LoginBuilder, BcryptError> {
+        LoginBuilder::new(self.email, self.password)
+    }
+}
+/// A login builder is used instead of just login form as login builder
+/// hashed the password before sending it to the API server
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LoginBuilder {
+    email: String,
+    password: String,
+}
+
+impl LoginBuilder {
+    pub fn new(email: String, password: String) -> Result<Self, BcryptError> {
+        let hashed_password = hash_password(&password)?;
+        Ok(Self {
+            email,
+            password: hashed_password,
+        })
+    }
 }
 
 #[post("/login", data = "<form>")]
@@ -91,7 +134,7 @@ async fn login(api: &State<ApiClient>, form: Form<LoginForm>, jar: &CookieJar<'_
         .http_only(true) // good practice
         .same_site(SameSite::Lax), // or SameSite::Strict, if you prefer
     );
-    Redirect::to("/profiles/login")
+    Redirect::to("/profiles/profile")
 }
 
 #[get("/logout")]

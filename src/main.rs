@@ -80,8 +80,11 @@ async fn rocket() -> _ {
     let url = config.api_endpoint();
     println!("api endpoint: {}", url);
     let api = ApiClient::new(&url).await.unwrap();
+    let decoding_key = api.get_jwt_pubkey().await.unwrap();
+    let validator = rocket_oidc::client::Validator::from_pubkey(config.api_endpoint().to_string(), "storyteller".to_string(), decoding_key).unwrap();
     let rocket = rocket::custom(rocketconfig)
         .manage(api)
+        .manage(validator)
         .mount("/", routes![index])
         .manage(processor)
         .mount("/stories", storyteller::stories::get_routes())
@@ -96,6 +99,8 @@ async fn rocket() -> _ {
         .mount("/notes/", storyteller::notes::get_routes())
         .mount("/assets/images/", storyteller::assets::images::get_routes())
         .mount("/search", storyteller::search::get_routes());
+    
+    //rocket_oidc::register_validator(rocket, validator);
     rocket_oidc::setup(rocket, config.oidc().clone())
         .await
         .unwrap()

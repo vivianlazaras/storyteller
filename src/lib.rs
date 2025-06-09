@@ -10,6 +10,7 @@ pub mod config;
 mod model;
 pub mod locations;
 pub mod render;
+pub mod errors;
 pub mod stories;
 pub mod profiles;
 pub use config::Config;
@@ -22,12 +23,53 @@ pub mod notes;
 pub mod themes;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
-
+use crate::errors::*;
 use anyhow::Result;
 use reqwest::Url;
 use rocket::{FromForm, FromFormField};
 use serde::Serialize;
 use uuid::Uuid;
+
+use jsonwebtoken::DecodingKey;
+use serde::Deserialize;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
+
+#[derive(Deserialize)]
+struct Jwk {
+    kty: String,
+    n: String,
+    e: String,
+    alg: Option<String>,
+    r#use: Option<String>,
+    kid: Option<String>,
+
+    // Add other fields as needed
+}
+
+#[derive(Deserialize)]
+struct JwkSet {
+    keys: Vec<Jwk>,
+}
+
+fn decoding_key_from_jwk(jwk_set: JwkSet) -> Result<DecodingKey> {
+
+    let jwk = jwk_set
+        .keys
+        .first()
+        .ok_or(ApiError::MissingJWTKey)?;
+
+    if jwk.kty != "RSA" {
+        return Err(ApiError::UnsupportedKeyType.into());
+    }
+
+    let modulus = URL_SAFE_NO_PAD.decode(&jwk.n)?;
+    let exponent = URL_SAFE_NO_PAD.decode(&jwk.e)?;
+
+    let decoding_key = DecodingKey::from_rsa_components(&jwk.n, &jwk.e)?;
+
+    Ok(decoding_key)
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromFormField, Copy)]
 pub enum Owner {
@@ -162,6 +204,11 @@ impl ApiClient {
         }
 
         Ok(())
+    }
+
+    pub async fn get_jwt_pubkey(&self) -> Result<DecodingKey> {
+        let keys: JwkSet = self.get("/pubkey", None).await?;
+        Ok(decoding_key_from_jwk(keys)?)
     }
 }
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+    "log"
     "net/http"
     "github.com/vivianlazaras/storyteller/model"
     "github.com/vivianlazaras/storyteller/auth"
@@ -42,6 +43,7 @@ func Login(c *gin.Context) {
     token, autherr := auth.AuthenticateAndIssueToken(db.DB, login.Email, login.Password)
     if autherr != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to verify user authenticity"})
+        log.Println("ERROR: " + autherr.Error())
         return
     }
 

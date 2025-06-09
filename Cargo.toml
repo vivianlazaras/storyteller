@@ -32,6 +32,9 @@ structopt = "0.3.26"
 image = "0.25.6"
 nom-exif = "2.5.1"
 time = { version = "0.3.41", features = ["local-offset"]}
+bcrypt = "0.17.0"
+jsonwebtoken = "9.3.1"
+base64 = "0.22.1"
 
 [features]
 redis = ["dep:redis"]

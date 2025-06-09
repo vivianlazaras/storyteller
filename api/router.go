@@ -3,6 +3,7 @@ package main
 import (
     "github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/handlers"
+    "github.com/vivianlazaras/storyteller/auth"
     "fmt"
     "io/ioutil"
 )
@@ -29,6 +30,8 @@ func SetupRouter(config *Config) (*gin.Engine, error) {
     handlers.RegisterEntityRoutes(r)
     handlers.RegisterNoteRoutes(r)
     handlers.RegisterImageRoutes(r)
+    handlers.RegisterProfileRoutes(r)
+    auth.RegisterAuthRoutes(r)
     // Repeat for other models
 
     return r, nil
