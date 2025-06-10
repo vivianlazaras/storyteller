@@ -2,6 +2,7 @@ use crate::{
     ApiClient,
     assets::images::ImageProcessor,
     model::Character,
+    auth::Guard,
 };
 use rocket::{
     Route, State,
@@ -9,7 +10,7 @@ use rocket::{
     fs::TempFile,
     get, post,
     response::{Redirect, content::RawHtml},
-    routes,
+    routes, http::CookieJar
 };
 use rocket_dyn_templates::{Template, context};
 use serde::{Deserialize, Serialize};
@@ -27,6 +28,7 @@ pub struct CharacterRender {
 
 #[post("/", data = "<form>")]
 async fn create_character<'f>(
+    guard: Guard, jar: &CookieJar<'_>,
     api: &State<ApiClient>,
     processor: &State<ImageProcessor>,
     form: Form<CharacterBuilderForm<'f>>,
@@ -45,7 +47,7 @@ async fn create_character<'f>(
 }
 
 #[get("/<id>")]
-async fn get_character(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
+async fn get_character(guard: Guard, jar: &CookieJar<'_>, id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let character: Character = api.get(&format!("/characters/{}", id), None).await.unwrap();
     let render = character.render(Some(String::from("/assets/images/debe1a6f-5f7f-4cf4-84ef-e913efaa8dcd")), Vec::new());
     RawHtml(Template::render(
@@ -63,7 +65,7 @@ async fn create_character_html() -> RawHtml<Template> {
 }
 
 #[get("/")]
-async fn list_characters(api: &State<ApiClient>) -> RawHtml<Template> {
+async fn list_characters(guard: Guard, jar: &CookieJar<'_>, api: &State<ApiClient>) -> RawHtml<Template> {
     let characters: Option<Vec<Character>> = api.get("/characters", None).await.unwrap();
     RawHtml(Template::render(
         "characters/index",

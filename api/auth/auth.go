@@ -23,6 +23,21 @@ import (
 var jwtSigningKey *rsa.PrivateKey;
 var JWTPubKey     rsa.PublicKey;
 
+// GetUserIDFromContext extracts the user ID from OIDC claims in Gin context
+func GetUserIDFromContext(c *gin.Context) (string, error) {
+	claimsVal, exists := c.Get("claims")
+	if !exists {
+		return "", errors.New("no claims found in context")
+	}
+
+	claims, ok := claimsVal.(*OIDCClaims)
+	if !ok {
+		return "", errors.New("invalid claims type in context")
+	}
+
+	return claims.Sub, nil
+}
+
 func RegisterAuthRoutes(r *gin.Engine) *gin.Engine {
     r.GET("/pubkey", GetJWTPubKey)
     return r
@@ -58,7 +73,8 @@ func InitAuth(path string) error {
 }
 
 func GetUserByEmail(db *gorm.DB, email string) (*model.User, error) {
-    var user model.User
+    
+	var user model.User
     result := db.Where("email = ?", email).First(&user)
     if errors.Is(result.Error, gorm.ErrRecordNotFound) {
         return nil, errors.New("user not found")
@@ -90,7 +106,7 @@ func AuthenticateAndIssueToken(db *gorm.DB, email, password string) (string, err
     // Create OIDC-style claims
     expiration := time.Now().Add(time.Hour)
     claims := OIDCClaims{
-        Sub:   user.ID,
+        Sub:   user.Subject,
         Email: user.Email,
         Aud:   "storyteller",
         Iss:    "http://localhost:8442",
@@ -194,4 +210,26 @@ func JWTMiddleware() gin.HandlerFunc {
 		c.Set("claims", claims)
 		c.Next()
 	}
+}
+
+// GetUserByEmailFromClaims retrieves the user from the DB using the email in OIDC claims
+func GetUserFromClaims(db *gorm.DB, c *gin.Context) (*model.User, error) {
+	claimsVal, exists := c.Get("claims")
+	if !exists {
+		return nil, errors.New("no claims found in context")
+	}
+
+	claims, ok := claimsVal.(*OIDCClaims)
+	if !ok {
+		return nil, errors.New("invalid claims format in context")
+	}
+
+	var user model.User
+	result := db.Where("email = ? and subject = ?", claims.Email, claims.Sub).First(&user)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, errors.New("user not found")
+	} else if result.Error != nil {
+		return nil, result.Error
+	}
+	return &user, nil
 }

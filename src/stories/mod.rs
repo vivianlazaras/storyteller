@@ -25,26 +25,29 @@ pub struct AccountBtn {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromForm)]
-pub struct CreateStory {
+pub struct StoryBuilder {
     title: String,
     description: Option<String>,
     renderer: SupportedRender,
     #[field(name = "tags")]
     pub tags: Vec<String>,
+    /// The group in which this story is created in, will default to user's default group
+    pub group: Option<Uuid>,
 }
 
 #[get("/<id>")]
-async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
+async fn get_story(guard: Guard, id: Uuid, api: &State<ApiClient>, jar: &CookieJar<'_>) -> RawHtml<Template> {
+    let access_token = get_access_token(jar);
     let url = format!("/stories/{}", id);
     let id_string = id.to_string();
-    let story: Story = api.get(&url, None).await.unwrap();
+    let story: Story = api.get_protected(&url, &access_token, None).await.unwrap();
     let mut params = HashMap::new();
     params.insert("parent", id_string.as_str());
     let tagurl = format!("/tags/{}", story.id);
     let tags: Vec<Tag> = api.get(&tagurl, None).await.unwrap();
 
     let fragments = match
-        api.get::<Option<Vec<StoryFragment>>, _>("/fragments", Some(params.clone())).await.unwrap() {
+        api.get_protected::<Option<Vec<StoryFragment>>, _>("/fragments", &access_token, Some(params.clone())).await.unwrap() {
             Some(fragments) => {
                 Some(fragments.into_iter().map(|f| f.render()).collect::<Vec<crate::fragments::frontend::FragmentRender>>())
             },
@@ -54,7 +57,7 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     /// may need to be implemented later, for now don't worry about it
     /// I have to grab each character for each fragment and assembly them.
     let characters: Option<Vec<CharacterRender>> = match api
-        .get::<Option<Vec<Character>>, _>("/characters/filter", Some(params.clone()))
+        .get_protected::<Option<Vec<Character>>, _>("/characters/filter", &access_token, Some(params.clone()))
         .await
         .unwrap()
     {
@@ -67,7 +70,7 @@ async fn get_story(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
         None => None,
     };
 
-    let notes: Option<Vec<Task>> = api.get("/notes/", Some(params)).await.unwrap();
+    let notes: Option<Vec<Task>> = api.get_protected("/notes/", &access_token, Some(params)).await.unwrap();
     RawHtml(Template::render(
         "stories/story",
         context! { title: story.name.clone(), notes, story, fragments, characters, tags },
@@ -96,18 +99,14 @@ async fn create_story_html(api: &State<ApiClient>) -> RawHtml<Template> {
 
 #[post("/", data = "<story>")]
 async fn create_story(
-    //guard: Guard,
-    //jar: &CookieJar<'_>,
+    guard: Guard,
+    jar: &CookieJar<'_>,
     //auth: &State<rocket_oidc::AuthState>,
-    story: Form<CreateStory>,
+    story: Form<StoryBuilder>,
     api: &State<ApiClient>,
 ) -> Redirect {
     let story = story.into_inner();
-    //let access_token = jar.get("access_token").unwrap().to_string();
-    //println!("create story called: {}", serde_json::to_string(&story).unwrap());
-    //let token_response = auth.client.exchange_token_for_audience(&access_token, "storyteller-api").await.unwrap();
-
-    let result: Story = api.post("/stories", "", None, &story).await.unwrap();
+    let result: Story = api.post("/stories", &get_access_token(jar), None, &story).await.unwrap();
 
     Redirect::to(format!("/stories/{}", result.id))
 }

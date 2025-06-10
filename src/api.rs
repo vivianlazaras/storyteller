@@ -139,17 +139,17 @@ impl ApiClient {
         decoding_key_from_jwk(keys)
     }
 
-    pub async fn get_protected<'a, T: DeserializeOwned>(
+    pub async fn get_protected<'a, T: DeserializeOwned, P: AsRef<str>>(
         &self,
-        route: impl AsRef<str>,
+        route: P,
         access_token: &str,
-        params: Option<&Map<'a>>,
+        params: Option<Map<'a>>,
     ) -> Result<T> {
         let url = join_url(&self.url, route.as_ref())?;
         let mut builder = self.client.get(url).bearer_auth(access_token);
 
         if let Some(p) = params {
-            builder = builder.query(p);
+            builder = builder.query(&p);
         }
 
         let response = builder.send().await?.error_for_status()?;

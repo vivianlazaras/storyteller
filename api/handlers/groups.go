@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/vivianlazaras/storyteller/model"
 )
@@ -29,7 +30,7 @@ func getNullGroup() (string, error) {
 		return results[0], nil
 	}
 
-	var nullGroup = model.Usergroup {
+	var nullGroup = model.Group {
 		ID: uuid.New().String(),
 		Name: "null",
 		Description: "The default group assigned when creating metadata object, this group should never have any members",
@@ -37,4 +38,18 @@ func getNullGroup() (string, error) {
 
 	dberr := db.DB.Create(nullGroup).Error
 	return nullGroup.ID, dberr
+}
+
+func GetGroupsForUser(db *gorm.DB, userID uuid.UUID) ([]model.Group, error) {
+	var groups []model.Group
+
+	err := db.Table("groups").
+		Joins("JOIN grouprel ON groups.id = grouprel.groupid").
+		Where("grouprel.userid = ?", userID).
+		Scan(&groups).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return groups, nil
 }

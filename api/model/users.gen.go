@@ -14,6 +14,8 @@ type User struct {
 	Subject      string `gorm:"column:subject" json:"subject"`
 	Email        string `gorm:"column:email;not null" json:"email"`
 	PasswordHash string `gorm:"column:password_hash" json:"password_hash"`
+	ProfileImage string `gorm:"column:profile_image" json:"profile_image"`
+	DefaultGroup string `gorm:"column:default_group" json:"default_group"`
 }
 
 // TableName User's table name

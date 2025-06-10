@@ -12,18 +12,28 @@ import (
 
 func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/stories", auth.JWTMiddleware(), GetStories)
-    r.GET("/stories/:id", GetStory)
-    r.POST("/stories", CreateStory)
-	r.DELETE("/stories/:id", DeleteStory)
+    r.GET("/stories/:id", auth.JWTMiddleware(), GetStory)
+    r.POST("/stories", auth.JWTMiddleware(), CreateStory)
+	r.DELETE("/stories/:id", auth.JWTMiddleware(), DeleteStory)
 	return r
 }
 
 func GetStories(c *gin.Context) {
-	// grab all stories where public = true
+	user, usererr := auth.GetUserFromClaims(db.DB, c)
+	if usererr != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "could not retrieve user"})
+		return
+	}
+
+	if user.DefaultGroup == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "default group is null"})
+		return
+	}
+	// grab all stories for the user's default group
 	var stories []model.Story
     err := db.DB.
-        Where("metadata.public = ? and metadata.active = ?", true, true).
-        Joins("JOIN metadata ON metadata.id = stories.metadata").
+        Where("entities.active = ? and entities.group_id = ?", true, user.DefaultGroup).
+        Joins("JOIN entities ON entities.id = stories.id").
 		Order("stories.last_edited DESC").
         Find(&stories).Error
 	if err != nil {
@@ -52,15 +62,16 @@ func GetStory(c *gin.Context) {
 	c.JSON(http.StatusOK, story)
 }
 
-type CreateStoryParts struct {
+type StoryBuilder struct {
 	Title        string          `json:"title"`
 	Description *string         `json:"description,omitempty"`
 	Render      string 			`json:"render"`
 	Image		*string			`json:"image"`
 	Tags		[]string		`json:"tags"`
+	Group		*string			`json:"group"`
 }
 
-func CreateStoryFromParts(fragment *CreateStoryParts, creatorID uuid.UUID) (model.Story, error) {
+func CreateStoryFromParts(fragment *StoryBuilder, creatorID uuid.UUID) (model.Story, error) {
 	now := time.Now().Unix()
 	description := ""
 	image		:= ""
@@ -73,17 +84,11 @@ func CreateStoryFromParts(fragment *CreateStoryParts, creatorID uuid.UUID) (mode
 		return model.Story{}, err
 	}
 
-	timeline, err := createDefaultTimeline(metadata.ID)
-	if err != nil {
-		return model.Story{}, err
-	}
-
 	var storyid = uuid.New();
 
 	var story = model.Story {
 		ID:          storyid.String(),
 		Metadata:	 metadata.ID,
-		Timeline:    timeline.ID,
 		Name:        fragment.Title,
 		Description: description,
 		Image:		 image,
@@ -106,9 +111,9 @@ func CreateStory(c *gin.Context) {
 	
 	// I do need to handle automatic user creation if user not found
 	// aka handle settings
-	user, err := getUserByEmail("vivianlazaras@gmail.com")
+	user, err := auth.GetUserFromClaims(db.DB, c)
 
-	var parts CreateStoryParts
+	var parts StoryBuilder
 	if err := c.ShouldBindJSON(&parts); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request: " + err.Error(),

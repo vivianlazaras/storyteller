@@ -19,8 +19,6 @@ func ReadFileAsString(path string) (string, error) {
 func SetupRouter(config *Config) (*gin.Engine, error) {
     r := gin.Default()
 
-
-    handlers.RegisterUserRoutes(r)
     handlers.RegisterStoryRoutes(r)
     handlers.RegisterAnalyticsRoutes(r)
     handlers.RegisterCharacterRoutes(r)

@@ -22,7 +22,7 @@ pub struct Args {
 
 #[catch(401)]
 fn unauthorized() -> Redirect {
-    Redirect::to("/")
+    Redirect::to("/profiles/login")
 }
 
 #[catch(404)]

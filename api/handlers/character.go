@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/model"
 	"github.com/vivianlazaras/storyteller/db"
+	"github.com/vivianlazaras/storyteller/auth"
 )
 
 func RegisterCharacterRoutes(r *gin.Engine) *gin.Engine {
@@ -91,7 +92,7 @@ func CreateCharacterFromFragment(fragment *CreateCharacterData, creatorID uuid.U
 func CreateCharacter(c *gin.Context) {
 	// I do need to handle automatic user creation if user not found
 	// aka handle settings
-	user, err := getUserByEmail("vivianlazaras@gmail.com")
+	user, err := auth.GetUserFromClaims(db.DB, c)
 
 	var fragment CreateCharacterData
 	if err := c.ShouldBindJSON(&fragment); err != nil {

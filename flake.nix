@@ -42,6 +42,7 @@
           buildInputs = [
             rustToolchain
             pkgs.go
+            pkgs.apacheHttpd
             pkgs.pkg-config
             pkgs.openssl
             pkgs.gorm-gentool

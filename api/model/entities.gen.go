@@ -8,8 +8,9 @@ const TableNameEntity = "entities"
 
 // Entity mapped from table <entities>
 type Entity struct {
-	ID     string `gorm:"column:id;primaryKey" json:"id"`
-	Active bool   `gorm:"column:active;default:true" json:"active"`
+	ID      string `gorm:"column:id;primaryKey" json:"id"`
+	Active  bool   `gorm:"column:active;default:true" json:"active"`
+	GroupID string `gorm:"column:group_id" json:"group_id"`
 }
 
 // TableName Entity's table name

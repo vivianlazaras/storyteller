@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/model"
-	// "github.com/vivianlazaras/storyteller/auth"
+	"github.com/vivianlazaras/storyteller/auth"
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/google/uuid"
 )
@@ -132,7 +132,7 @@ func CreateNewFragment(fragment *CreateStoryFragment, creatorID uuid.UUID) (mode
 func CreateFragment(c *gin.Context) {
 	// I do need to handle automatic user creation if user not found
 	// aka handle settings
-	user, err := getUserByEmail("vivianlazaras@gmail.com")
+	user, err := auth.GetUserFromClaims(db.DB, c)
 
 	var fragment CreateStoryFragment
 	if err := c.ShouldBindJSON(&fragment); err != nil {

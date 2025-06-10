@@ -4,16 +4,16 @@
 
 package model
 
-const TableNameUsergroup = "usergroups"
+const TableNameGroup = "groups"
 
-// Usergroup mapped from table <usergroups>
-type Usergroup struct {
+// Group mapped from table <groups>
+type Group struct {
 	ID          string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
 	Name        string `gorm:"column:name" json:"name"`
 	Description string `gorm:"column:description" json:"description"`
 }
 
-// TableName Usergroup's table name
-func (*Usergroup) TableName() string {
-	return TableNameUsergroup
+// TableName Group's table name
+func (*Group) TableName() string {
+	return TableNameGroup
 }

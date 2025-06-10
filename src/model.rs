@@ -42,7 +42,6 @@ pub struct Story {
     pub last_edited: i64,
     pub name: String,
     pub description: Option<String>,
-    pub timeline: Uuid,
     pub renderer: Option<String>,
     pub image: Option<String>,
 }
