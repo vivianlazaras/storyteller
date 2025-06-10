@@ -13,9 +13,9 @@ import (
 
 func RegisterCharacterRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/characters", ListPubCharacters)
-    r.GET("/characters/:id", GetCharacter)
-    r.POST("/characters", CreateCharacter)
-	r.GET("/characters/filter", GetCharactersByStory)
+    r.GET("/characters/:id", auth.JWTMiddleware(), GetCharacter)
+    r.POST("/characters", auth.JWTMiddleware(), CreateCharacter)
+	r.GET("/characters/filter", auth.JWTMiddleware(), GetCharactersByStory)
     /*r.PUT("/characters/:id", middleware.RequireOIDC(), UpdateCharacter)
     r.DELETE("/characters/:id", middleware.RequireOIDC(), DeleteCharacter)
 	*/return r
@@ -38,7 +38,7 @@ func ListPubCharacters(c *gin.Context) {
 }
 // hmm, when a character that isn't published is linked to a published story
 // what should happen? Should the character get auto published? How about auto shared in groups?
-type CreateCharacterData struct {
+type CharacterBuilder struct {
 	Name string			`json:"name"`
 	Description *string	`json:"description"`
 }
@@ -58,7 +58,7 @@ func GetCharacter(c *gin.Context) {
 	c.JSON(http.StatusOK, character)
 }
 
-func CreateCharacterFromFragment(fragment *CreateCharacterData, creatorID uuid.UUID) (model.Character, error) {
+func CreateCharacterFromFragment(fragment *CharacterBuilder, creatorID uuid.UUID) (model.Character, error) {
 	now := time.Now().Unix()
 	description := ""
 	if fragment.Description != nil {
@@ -70,15 +70,9 @@ func CreateCharacterFromFragment(fragment *CreateCharacterData, creatorID uuid.U
 		return model.Character{}, err
 	}
 
-	timeline, err := createDefaultTimeline(metadata.ID)
-	if err != nil {
-		return model.Character{}, err
-	}
-
 	var character = model.Character{
 		ID:          uuid.New().String(),
 		Metadata:	 metadata.ID,
-		Timeline:    timeline.ID,
 		Name:        fragment.Name,
 		Description: description,
 		Created:     now,
@@ -94,7 +88,7 @@ func CreateCharacter(c *gin.Context) {
 	// aka handle settings
 	user, err := auth.GetUserFromClaims(db.DB, c)
 
-	var fragment CreateCharacterData
+	var fragment CharacterBuilder
 	if err := c.ShouldBindJSON(&fragment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request: " + err.Error(),

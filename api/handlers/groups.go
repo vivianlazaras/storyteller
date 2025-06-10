@@ -15,11 +15,11 @@ func getNullGroup() (string, error) {
 	var results []string
 
 	err := db.DB.Raw(`
-		SELECT usergroups.id
-		FROM usergroups
-		LEFT JOIN grouprel ON usergroups.id = grouprel.groupid
-		WHERE usergroups.name = ?
-		GROUP BY usergroups.id
+		SELECT groups.id
+		FROM groups
+		LEFT JOIN grouprel ON groups.id = grouprel.groupid
+		WHERE groups.name = ?
+		GROUP BY groups.id
 		HAVING COUNT(grouprel.userid) = 0
 	`, "null").Scan(&results).Error
 

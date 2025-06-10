@@ -11,7 +11,6 @@ type Metadatum struct {
 	ID      string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
 	Creator string `gorm:"column:creator" json:"creator"`
 	License string `gorm:"column:license" json:"license"`
-	Shared  string `gorm:"column:shared" json:"shared"`
 	Public  bool   `gorm:"column:public;default:true" json:"public"`
 	Active  bool   `gorm:"column:active;default:true" json:"active"`
 }

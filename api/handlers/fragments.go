@@ -21,10 +21,10 @@ type CreateStoryFragment struct {
 
 func RegisterFragmentRoutes(r *gin.Engine) *gin.Engine {
 	
-	r.GET("/fragments", GetFragmentsByStory)
-	r.GET("/fragments/:id", GetFragmentById)
-	r.POST("/fragments/", CreateFragment)
-	r.GET("/fragments/", GetFragments)
+	r.GET("/fragments", auth.JWTMiddleware(), GetFragmentsByStory)
+	r.GET("/fragments/:id", auth.JWTMiddleware(), GetFragmentById)
+	r.POST("/fragments/", auth.JWTMiddleware(), CreateFragment)
+	r.GET("/fragments/", auth.JWTMiddleware(), GetFragments)
 	return r
 }
 

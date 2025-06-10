@@ -9,7 +9,6 @@ const TableNameCharacter = "characters"
 // Character mapped from table <characters>
 type Character struct {
 	ID          string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
-	Timeline    string `gorm:"column:timeline" json:"timeline"`
 	Name        string `gorm:"column:name;not null" json:"name"`
 	Description string `gorm:"column:description" json:"description"`
 	Metadata    string `gorm:"column:metadata" json:"metadata"`
