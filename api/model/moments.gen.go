@@ -10,8 +10,8 @@ const TableNameMoment = "moments"
 type Moment struct {
 	ID       string `gorm:"column:id;primaryKey" json:"id"`
 	Timeline string `gorm:"column:timeline" json:"timeline"`
-	Entity   string `gorm:"column:entity" json:"entity"`
 	Idx      int64  `gorm:"column:idx;not null" json:"idx"`
+	Fragment string `gorm:"column:fragment" json:"fragment"`
 }
 
 // TableName Moment's table name

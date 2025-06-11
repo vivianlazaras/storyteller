@@ -6,11 +6,12 @@ import (
     "github.com/google/uuid"
     "github.com/vivianlazaras/storyteller/db"
     "github.com/vivianlazaras/storyteller/model"
+	"github.com/vivianlazaras/storyteller/auth"
 )
 
 func RegisterEntityRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/relations", ListEntitiesByChildCategory)
-	r.POST("/relations/", CreateRelation)
+	r.POST("/relations/", auth.JWTMiddleware(), CreateRelation)
 	return r
 }
 

@@ -16,9 +16,9 @@ func RegisterCharacterRoutes(r *gin.Engine) *gin.Engine {
     r.GET("/characters/:id", auth.JWTMiddleware(), GetCharacter)
     r.POST("/characters", auth.JWTMiddleware(), CreateCharacter)
 	r.GET("/characters/filter", auth.JWTMiddleware(), GetCharactersByStory)
-    /*r.PUT("/characters/:id", middleware.RequireOIDC(), UpdateCharacter)
-    r.DELETE("/characters/:id", middleware.RequireOIDC(), DeleteCharacter)
-	*/return r
+    //r.PUT("/characters/:id", middleware.RequireOIDC(), UpdateCharacter)
+    r.DELETE("/characters/:id", auth.JWTMiddleware(), DeleteCharacter)
+	return r
 }
 
 // for now this route can only fetch public characters
