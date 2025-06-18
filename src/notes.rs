@@ -1,7 +1,5 @@
 use crate::ApiClient;
-use rocket::{
-    FromForm, Route, State, form::Form, post, response::Redirect, routes,
-};
+use rocket::{FromForm, Route, State, form::Form, post, response::Redirect, routes};
 use std::collections::HashMap;
 
 use uuid::Uuid;

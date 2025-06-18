@@ -12,6 +12,7 @@ type Location struct {
 	Name        string `gorm:"column:name;not null" json:"name"`
 	Description string `gorm:"column:description" json:"description"`
 	Created     int64  `gorm:"column:created;default:unix_now()" json:"created"`
+	Thumbnail   string `gorm:"column:thumbnail" json:"thumbnail"`
 }
 
 // TableName Location's table name

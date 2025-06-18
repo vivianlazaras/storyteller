@@ -130,7 +130,7 @@ impl Default for Config {
         server.port = 8440;
         let mut images = std::env::current_dir().unwrap();
         images.push("/images");
-        
+
         Config {
             server,
             api: APIConfig::default(),

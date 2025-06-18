@@ -3,10 +3,32 @@ use rocket::response::content::RawHtml;
 use rocket::{FromForm, Route, State, form::Form, get, post, response::Redirect, routes};
 use std::collections::HashMap;
 use uuid::Uuid;
+
+use crate::get_access_token;
+use rocket::http::CookieJar;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RelatedEntity {
     id: Uuid,
     name: String,
+    description: Option<String>,
+    group_name: Option<String>,
+    group_id: Option<Uuid>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct GroupedEntity {
+    id: Uuid,
+    name: String,
+    entities: Vec<RelatedEntity>,
+}
+
+#[non_exhaustive]
+pub enum Category {
+    Story,
+    Fragment,
+    Timeline,
+    Character,
+    Location,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromForm)]
@@ -16,6 +38,11 @@ pub struct Relation {
     pub parent_category: String,
     pub child_category: String,
     pub description: Option<String>,
+}
+
+pub struct Entity {
+    id: Uuid,
+    category: Category,
 }
 
 /*pub struct RelationBuilder<'l> {
@@ -46,10 +73,14 @@ async fn create_link_html(
     id: Uuid,
     parent: String,
     child: String,
+    jar: &CookieJar<'_>,
 ) -> RawHtml<Template> {
     let mut params = HashMap::new();
     params.insert("category", child.as_str());
-    let items: Option<Vec<RelatedEntity>> = api.get("/relations", Some(params)).await.unwrap();
+    let items: Option<Vec<RelatedEntity>> = api
+        .get_protected("/relations", &get_access_token(jar), Some(params))
+        .await
+        .unwrap();
     RawHtml(Template::render(
         "links/create",
         context! { title: "create link", category: child, parent_category: parent, parent: id, items },

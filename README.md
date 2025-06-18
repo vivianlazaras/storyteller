@@ -1,8 +1,21 @@
-*+# Queer Respite
+# StoryTeller
 
 The goal of this project, is to create a safe place for those who question, those who challenge convention in whatever way that may be, simply by being who they are. It's all too common to feel like things are not the way they should be, because they aren't, thousands of years of cultural truama, and a growth of technology who are only starting to catch up with. I start this project ot reinforce strong local communities, to provide access to quality education, and to slowly work to make the world safe for everyone.
 
 Towards this end, this project serves as a repository for decentralized open source technology that is self hostable, as well as stories, and books that help to learn a better way to exist. -
+
+## Entity Model
+Each entity represents a fundamental of story creation
+1. Who - Characters
+2. What - Fragments
+3. Where - Locations
+4. When - Timelines
+5. How - Methods
+6. Why - Motivations
+7. Connection - Links/Relationships
+How every piece fits together, the space between who, what, where, when, how, and why.
+8. Interpretation - Interpretation 
+How the user recieves and reinterprets the story 
 
 ## Database backends
 1. sled (lightweight pure rust key value store)

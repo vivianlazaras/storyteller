@@ -2,15 +2,17 @@ package handlers
 
 import (
     "net/http"
+	"fmt"
     "github.com/gin-gonic/gin"
     "github.com/google/uuid"
     "github.com/vivianlazaras/storyteller/db"
     "github.com/vivianlazaras/storyteller/model"
 	"github.com/vivianlazaras/storyteller/auth"
+	"gorm.io/gorm"
 )
 
 func RegisterEntityRoutes(r *gin.Engine) *gin.Engine {
-	r.GET("/relations", ListEntitiesByChildCategory)
+	r.GET("/relations", auth.JWTMiddleware(), ListEntitiesByChildCategory)
 	r.POST("/relations/", auth.JWTMiddleware(), CreateRelation)
 	return r
 }
@@ -18,45 +20,167 @@ func RegisterEntityRoutes(r *gin.Engine) *gin.Engine {
 type RelatedEntity struct {
     ID   string `json:"id"`
     Name string `json:"name"`
+    Description string  `json:"description"`
+}
+
+type GroupedEntity struct {
+	ID			uuid.UUID		`json:"id"`
+	Name		string			`json:"name"`
+	Entities	[]RelatedEntity	`json:"entities"`
+}
+
+func GetTableForCategory(category string) (string, error) {
+	var table string
+	switch category {
+	case "story", "stories":
+		table = "stories"
+	case "character", "characters":
+		table = "characters"
+	case "timeline", "timelines":
+		table = "timelines"
+	case "location", "locations":
+		table = "locations"
+	case "fragment", "fragments":
+		table = "fragments"
+	default:
+		return "", fmt.Errorf("unsupported category: %s", category)
+	}
+	return table, nil
+}
+
+func ListEntitiesByCategoryForUser(db *gorm.DB, userID uuid.UUID, category string) (map[string]GroupedEntity, error) {
+	
+	// Group by group_id
+	grouped := make(map[string]GroupedEntity)
+
+	var entities []struct {
+		ID			string
+		Name		string
+		Description	string
+		GroupID		uuid.UUID
+		GroupName	string
+	};
+
+	table, cerr := GetTableForCategory(category)
+	if cerr != nil {
+		return nil, cerr
+	}
+
+	err := db.
+		Table("entities").
+		Select(fmt.Sprintf(
+			"entities.id, %s.name, %s.description, groups.id as group_id, groups.name as group_name",
+			table, table,
+		)).
+		Joins("JOIN groups ON groups.id = entities.group_id").
+		Joins("JOIN grouprel ON grouprel.group_id = groups.id").
+		Joins(fmt.Sprintf("JOIN %s ON %s.id = entities.id", table, table)).
+		Where("grouprel.user_id = ?", userID).
+		Scan(&entities).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, e := range entities {
+		key := fmt.Sprintf("%s (%s)", e.GroupName, e.GroupID.String())
+	
+		related := RelatedEntity{
+			ID:          e.ID,
+			Name:        e.Name,
+			Description: e.Description,
+		}
+	
+		if _, ok := grouped[key]; !ok {
+			grouped[key] = GroupedEntity{
+				ID:       e.GroupID,
+				Name:     e.GroupName,
+				Entities: []RelatedEntity{related},
+			}
+		} else {
+			group := grouped[key]
+			group.Entities = append(group.Entities, related)
+			grouped[key] = group
+		}
+	}
+
+	return grouped, nil
+}
+
+func ListEntitiesByCategoryForGroup(db *gorm.DB, groupID uuid.UUID, category string) ([]RelatedEntity, error) {
+	var entities []RelatedEntity
+	table, cerr := GetTableForCategory(category)
+	if cerr != nil {
+		return []RelatedEntity{}, cerr
+	}
+
+	err := db.
+		Table("entities").
+		Select(fmt.Sprintf(
+			"entities.id, %s.name, %s.description",
+			table, table,
+		)).
+		Joins(fmt.Sprintf("JOIN %s ON %s.id = entities.id", table, table)).
+		Where("entities.group_id = ?", groupID).
+		Scan(&entities).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return entities, nil
 }
 
 func ListEntitiesByChildCategory(c *gin.Context) {
-    childCategory := c.Query("category")
-    if childCategory == "" {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "child_category query parameter is required"})
-        return
-    }
+	childCategory := c.Query("category")
+	user, uerr := auth.GetUserFromClaims(db.DB, c)
+	if uerr != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to get user"})
+		return
+	}
 
-    var entities []RelatedEntity
-    var query string
+	if childCategory == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "child_category query parameter is required"})
+		return
+	}
 
-    switch childCategory {
-    case "characters":
-        query = `SELECT id, name FROM characters`
-    case "stories":
-        query = `SELECT id, name FROM stories`
-    case "fragments":
-        query = `SELECT id, name FROM fragments`
-    case "locations":
-        query = `SELECT id, name FROM locations`
-    default:
-        c.JSON(http.StatusBadRequest, gin.H{"error": "unknown child_category"})
-        return
-    }
+	var entities []RelatedEntity
+	var query string
 
-    err := db.DB.Raw(query).Scan(&entities).Error
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	switch childCategory {
+	case "characters", "stories", "fragments", "locations", "timelines":
+		query = fmt.Sprintf(`
+			SELECT e.id, e.name, e.description
+			FROM %s e
+			JOIN relations r ON r.child = e.id
+			JOIN entities ent ON ent.id = e.id
+			JOIN grouprel gr ON gr.group_id = ent.group_id
+			WHERE r.child_category = ?
+			AND gr.user_id = ?
+		`, childCategory)
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unknown child_category"})
+		return
+	}
 
-    c.JSON(http.StatusOK, entities)
+	err := db.DB.Raw(query, childCategory, user.ID).Scan(&entities).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, entities)
 }
 
-func CreateNewRelation(relation *model.Relation) Result {
+/// a utility function for setting entities.group_id using the user's default group
+func CreateNewEntity(db *gorm.DB, id uuid.UUID, userID uuid.UUID) {
+
+}
+
+func CreateNewRelation(db *gorm.DB, relation *model.Relation) (*model.Relation, error) {
 	// Check if the relation already exists
 	var exists bool
-	err := db.DB.
+	err := db.
 		Table("relations").
 		Select("count(*) > 0").
 		Where("parent = ? AND child = ? AND parent_category = ? AND child_category = ?",
@@ -64,31 +188,19 @@ func CreateNewRelation(relation *model.Relation) Result {
 		Find(&exists).Error
 
 	if err != nil {
-		return Result{
-			Status:  http.StatusInternalServerError,
-			Message: "Failed to check existing relation",
-		}
+		return nil, fmt.Errorf("failed to check existing relation: %w", err)
 	}
 
 	if exists {
-		return Result{
-			Status:  http.StatusConflict,
-			Message: "Relation already exists",
-		}
+		return nil, fmt.Errorf("relation already exists")
 	}
 
 	// Insert new relation
-	if err := db.DB.Table("relations").Create(&relation).Error; err != nil {
-		return Result{
-			Status:  http.StatusInternalServerError,
-			Message: "Failed to create relation: " + err.Error(),
-		}
+	if err := db.Table("relations").Create(&relation).Error; err != nil {
+		return nil, fmt.Errorf("failed to create relation: %w", err)
 	}
 
-	return Result{
-		Status:  http.StatusOK,
-		Message: "Relation created successfully",
-	}
+	return relation, nil
 }
 
 func CreateRelation(c *gin.Context) {
@@ -99,10 +211,9 @@ func CreateRelation(c *gin.Context) {
 		return
 	}
 
-    result := CreateNewRelation(&relation)
-    if result.IsError() {
-		result.GinResult(c)
-		return
+    _, err := CreateNewRelation(db.DB, &relation)
+    if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 	}
 
 	c.JSON(http.StatusOK, relation)
@@ -118,3 +229,5 @@ type Operation struct {
 func CheckPermissions(user uuid.UUID, entity uuid.UUID, op Operation) bool {
     return false
 }
+
+func DeleteEntity() {}

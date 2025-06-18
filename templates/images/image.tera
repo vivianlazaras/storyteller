@@ -1,0 +1,24 @@
+{% include "head" %}
+
+<body>
+    {% include "header" %}
+    <div class="content" id="content">
+        <img src="{{ image.url }}" class="entityimage" width="400"/>
+        <table>
+            <tr>
+                <th>Exif Tag Name</th>
+                <th>Exif Tag Value</th>
+            </tr>
+            {% for exif_tag in image.exif_tags %}
+                <tr>
+                    <td>
+                        {{ exif_tag.tag }}
+                    </td>
+                    <td>
+                        {{ exif_tag.value }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>

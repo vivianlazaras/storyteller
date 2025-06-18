@@ -1,0 +1,45 @@
+{% macro image_selector(name, images) %}
+<fieldset>
+  <legend>Select an image:</legend>
+  {% for image in images %}
+    <label style="display: inline-block; margin: 5px;">
+      <input type="radio" name="{{ name }}" value="{{ image.id }}">
+      <img src="{{ image.url }}" alt="Image {{ loop.index }}" width="150">
+    </label>
+  {% endfor %}
+</fieldset>
+{% endmacro image_selector %}
+
+{% macro gallery(images) %}
+    <div class="gallery">
+    {% for image in images %}
+      <a href="/assets/images/info/{{ image.id }}">
+        <img src="{{ image.url }}">
+      </a>
+    {% endfor %}
+    <div id="custom-menu">
+      <!-- Custom Context Menu for interacting with gallery images -->
+    </div>
+    <script>
+      let clickedId = null;
+
+      document.addEventListener("contextmenu", function(event) {
+        event.preventDefault();
+    
+        const clickedElement = event.target;
+        console.log("Right-clicked element:", clickedElement);
+        console.log("Element ID:", clickedElement.id);
+    
+        // Optionally position a custom menu
+        const menu = document.getElementById("custom-menu");
+        menu.style.left = `${event.pageX}px`;
+        menu.style.top = `${event.pageY}px`;
+        menu.style.display = "block";
+      });
+    
+      document.addEventListener("click", function() {
+        document.getElementById("custom-menu").style.display = "none";
+      });
+    </script>
+    </div>
+{% endmacro gallery %}

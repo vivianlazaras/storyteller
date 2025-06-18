@@ -7,9 +7,9 @@
     <div id="content" class="content">
     {{ searchbar::searchbar(category="fragments") }}
     <br/>
-        <div id="list" class="story-list">
+        <div id="list" class="list">
             {% for fragment in fragments %}
-                <a class="brief" href="/stories/{{ fragment.id }}">
+                <a class="brief" href="/fragments/{{ fragment.id }}">
                     <div class="fragment-card card">
                         <h3 class="fragment-title title">{{ fragment.name }}</h3>
                         

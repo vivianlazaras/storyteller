@@ -1,0 +1,9 @@
+{% include "head" %}
+<body>
+    {% include "header" %}
+    <div id="content">
+        <svg>
+            {{ tree }}
+        </svg>
+    </div>
+</body>

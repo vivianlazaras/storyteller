@@ -1,6 +1,6 @@
 {
     "images": "./images/",
-    "uploadLimit": "1GiB",
+    "uploadLimit": "4GiB",
     "server":
     {
         "port":8440,

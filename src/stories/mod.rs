@@ -1,18 +1,20 @@
-use crate::characters::frontend::CharacterRender;
+use crate::api::{ApiClient, get_access_token};
+use crate::auth::Guard;
+use crate::characters::api::CharacterRender;
 use crate::model::Task;
 use crate::model::{Character, Story, StoryFragment, Tag};
+use rocket::form::Form;
+use rocket::http::CookieJar;
 use rocket::{FromForm, FromFormField};
 use std::collections::HashMap;
-use crate::api::{ApiClient, get_access_token};
-use rocket::form::Form;
-use crate::auth::Guard;
-use rocket::http::CookieJar;
 
 use rocket::{
     Route, State, delete, get, post, put,
     response::{Redirect, content::RawHtml},
     routes,
 };
+
+use crate::locations::LocationRender;
 
 use crate::render::SupportedRender;
 use rocket_dyn_templates::{Template, context};
@@ -36,7 +38,12 @@ pub struct StoryBuilder {
 }
 
 #[get("/<id>")]
-async fn get_story(guard: Guard, id: Uuid, api: &State<ApiClient>, jar: &CookieJar<'_>) -> RawHtml<Template> {
+async fn get_story(
+    guard: Guard,
+    id: Uuid,
+    api: &State<ApiClient>,
+    jar: &CookieJar<'_>,
+) -> RawHtml<Template> {
     let access_token = get_access_token(jar);
     let url = format!("/stories/{}", id);
     let id_string = id.to_string();
@@ -46,41 +53,62 @@ async fn get_story(guard: Guard, id: Uuid, api: &State<ApiClient>, jar: &CookieJ
     let tagurl = format!("/tags/{}", story.id);
     let tags: Vec<Tag> = api.get(&tagurl, None).await.unwrap();
 
-    let fragments = match
-        api.get_protected::<Option<Vec<StoryFragment>>, _>("/fragments", &access_token, Some(params.clone())).await.unwrap() {
-            Some(fragments) => {
-                Some(fragments.into_iter().map(|f| f.render()).collect::<Vec<crate::fragments::frontend::FragmentRender>>())
-            },
-            None => None,
-        };
-
-    /// may need to be implemented later, for now don't worry about it
-    /// I have to grab each character for each fragment and assembly them.
-    let characters: Option<Vec<CharacterRender>> = match api
-        .get_protected::<Option<Vec<Character>>, _>("/characters/filter", &access_token, Some(params.clone()))
+    let fragments = match api
+        .get_protected::<Option<Vec<StoryFragment>>, _>(
+            "/fragments",
+            &access_token,
+            Some(params.clone()),
+        )
         .await
         .unwrap()
     {
-        Some(characters) => Some(
-            characters
+        Some(fragments) => Some(
+            fragments
                 .into_iter()
-                .map(|c| c.render(Some(String::from("/assets/images/debe1a6f-5f7f-4cf4-84ef-e913efaa8dcd")), Vec::new()))
-                .collect::<Vec<CharacterRender>>(),
+                .map(|f| f.render())
+                .collect::<Vec<crate::fragments::frontend::FragmentRender>>(),
         ),
         None => None,
     };
 
-    let notes: Option<Vec<Task>> = api.get_protected("/notes/", &access_token, Some(params)).await.unwrap();
+    /// may need to be implemented later, for now don't worry about it
+    /// I have to grab each character for each fragment and assembly them.
+    let characters: Option<Vec<CharacterRender>> = match api
+        .get_protected::<Option<Vec<CharacterRender>>, _>(
+            "/characters/filter",
+            &access_token,
+            Some(params.clone()),
+        )
+        .await
+        .unwrap()
+    {
+        Some(characters) => Some(characters),
+        None => None,
+    };
+
+    let locations: Option<Vec<LocationRender>> = api.get_protected("/locations/filter", &get_access_token(jar), Some(params.clone())).await.unwrap();
+
+    let notes: Option<Vec<Task>> = api
+        .get_protected("/notes/", &access_token, Some(params))
+        .await
+        .unwrap();
     RawHtml(Template::render(
         "stories/story",
-        context! { title: story.name.clone(), notes, story, fragments, characters, tags },
+        context! { title: story.name.clone(), notes, story, fragments, characters, tags, locations },
     ))
 }
 
 #[get("/")]
-async fn list_stories(guard: Guard, api: &State<ApiClient>, cookies: &CookieJar<'_>) -> RawHtml<Template> {
+async fn list_stories(
+    guard: Guard,
+    api: &State<ApiClient>,
+    cookies: &CookieJar<'_>,
+) -> RawHtml<Template> {
     //let access_token = cookies.get("access_token").unwrap();
-    let resp: Vec<Story> = api.get_protected("/stories", &get_access_token(&cookies), None).await.unwrap();
+    let resp: Vec<Story> = api
+        .get_protected("/stories", &get_access_token(&cookies), None)
+        .await
+        .unwrap();
     RawHtml(Template::render(
         "stories/index",
         context! { title: "published stories", stories: resp },
@@ -106,7 +134,10 @@ async fn create_story(
     api: &State<ApiClient>,
 ) -> Redirect {
     let story = story.into_inner();
-    let result: Story = api.post("/stories", &get_access_token(jar), None, &story).await.unwrap();
+    let result: Story = api
+        .post("/stories", &get_access_token(jar), None, &story)
+        .await
+        .unwrap();
 
     Redirect::to(format!("/stories/{}", result.id))
 }

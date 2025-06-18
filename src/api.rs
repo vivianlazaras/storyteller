@@ -1,14 +1,14 @@
-use time::{OffsetDateTime, UtcOffset, format_description};
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use reqwest::{Client, Url};
-use std::collections::HashMap;
-use uuid::Uuid;
-use jsonwebtoken::DecodingKey;
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use base64::Engine;
-use anyhow::Result;
 use crate::errors::*;
+use anyhow::Result;
+use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use jsonwebtoken::DecodingKey;
+use reqwest::{Client, Url};
 use rocket::http::CookieJar;
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use std::collections::HashMap;
+use time::{OffsetDateTime, UtcOffset, format_description};
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 struct Jwk {
@@ -64,7 +64,13 @@ impl ApiClient {
         })
     }
 
-    pub async fn post<'a, T, R, P>(&self, route: P, access_token: &str, params: Option<Map<'a>>, data: T) -> Result<R>
+    pub async fn post<'a, T, R, P>(
+        &self,
+        route: P,
+        access_token: &str,
+        params: Option<Map<'a>>,
+        data: T,
+    ) -> Result<R>
     where
         T: Serialize,
         R: DeserializeOwned,
@@ -77,11 +83,7 @@ impl ApiClient {
             builder = builder.query(&params);
         }
 
-        let response = builder
-            .bearer_auth(access_token)
-            .json(&data)
-            .send()
-            .await?;
+        let response = builder.bearer_auth(access_token).json(&data).send().await?;
 
         if response.status().is_success() {
             Ok(response.json::<R>().await?)
@@ -167,8 +169,11 @@ pub(crate) fn epoch_to_human(epoch: i64) -> String {
         Ok(utc_dt) => match UtcOffset::local_offset_at(utc_dt) {
             Ok(local_offset) => {
                 let local_dt = utc_dt.to_offset(local_offset);
-                let format = format_description::parse("[month]/[day]/[year] [hour]:[minute]").unwrap();
-                local_dt.format(&format).unwrap_or_else(|_| "Invalid format".to_string())
+                let format =
+                    format_description::parse("[month]/[day]/[year] [hour]:[minute]").unwrap();
+                local_dt
+                    .format(&format)
+                    .unwrap_or_else(|_| "Invalid format".to_string())
             }
             Err(_) => "Failed to get local timezone offset".to_string(),
         },
@@ -177,5 +182,30 @@ pub(crate) fn epoch_to_human(epoch: i64) -> String {
 }
 
 pub(crate) fn get_access_token(jar: &CookieJar<'_>) -> String {
-    jar.get("access_token").map(|c| c.value().to_string()).unwrap_or(String::from(""))
+    jar.get("access_token")
+        .map(|c| c.value().to_string())
+        .unwrap_or(String::from(""))
 }
+
+#[rocket::async_trait]
+pub trait EntityBuilder: Serialize {
+    async fn build<R>(&self, api: &ApiClient) -> Result<R>;
+}
+
+pub trait Entity {
+    type Builder: Serialize;
+    fn route() -> &'static str;
+    fn id(&self) -> Uuid;
+    fn into_builder(self) -> Self::Builder;
+}
+/*
+I couldn't help but laugh a bit in my own head at "there are less positions available because of AI" AI is a tool like any other, it makes our lives easier, it automates tasks and makes work go by much faster, so why would there be less work if AI allows work to go by more efficiently. Well isn't is somewhat obvious, we don't do work to survive or to do something rewarding, we are all depressed and work is just "something you have to do" but why not use AI to make incredible things, why not re imagine how we exist in the world and do things because they challenge us? Of course generations of truama have left us feeling like we could never deserve to want anything, that what we have to deal with is simly too great a challenge, but I have to ask, is it?
+
+Are we really afraid of doing the work? of dying? or are we afraid of success, afraid of what will happen if we do incredible things, yes we could do horrible things, but each time we learn, we get better. climate change was an issue of lack of knowledge and lack of caution, we have caution and knowledge now, so why not take the reigns of our own fates, why not build something incredible? what is holding us back?
+
+Fear, we are afraid to try, but so what? if we never try we never truly live, we never truly become fully fledged individuals, its just a matter of keeping at it, and trying. Hell storyteller is heavily built by AI, but that's made it doable, that's made my life so much easier, AI is no different from a search engine, people are just using it as an excuse to keep doing the same thing day in and day out instead of imagining something new. maybe we are afraid to imagine? afraid to dream? but I ask why? why be afraid to dream, as long as we have food, water, shelter, touch, rest, purpose, safety what's the harm in dreaming?
+
+I have a dream today, that one day we all can imagine a world without pain, without suffering, I have a dream that we can live our lives in peace, where creativity, and seeing the effect it has on the world, our art, is nothing more than a thought and it gets made real.
+
+what if we could see and understand everything in the world around us, see the intricacy of how it all fits together, molds, changes, and grows, what if we could see, imagine, and truly understand the majesty of life, is that not worth facing down a little fear?
+*/

@@ -35,6 +35,10 @@ time = { version = "0.3.41", features = ["local-offset"]}
 bcrypt = "0.17.0"
 jsonwebtoken = "9.3.1"
 base64 = "0.22.1"
+petgraph = "0.8.2"
+graphviz = { path = "./graphviz" }
+regex = "1.11.1"
+ubyte = "0.10.4"
 
 [features]
 redis = ["dep:redis"]

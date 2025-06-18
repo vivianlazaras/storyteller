@@ -65,7 +65,6 @@ pub struct Character {
     pub created: i64,
     pub last_edited: i64,
     pub shared: Option<Uuid>,
-    pub timeline: Uuid,
     pub name: String,
     pub description: Option<String>,
 }
@@ -99,4 +98,12 @@ pub struct Image {
     pub id: Uuid,
     pub url: String,
     pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Location {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub created: i64,
 }

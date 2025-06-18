@@ -9,3 +9,9 @@
 .brief {
     flex: 0 1 calc(25% - 40px); /* 4 items per row, accounting for gap */
 }
+
+/* Ensure header links are relative for positioning */
+.header_link {
+    position: relative;
+    display: inline-block;
+}

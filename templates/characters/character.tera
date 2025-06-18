@@ -4,6 +4,12 @@
 <body>
     {% include "header" %}
     <div id="content">
+        <form action="/characters/delete" method="post">
+            <input name="id" type="hidden" value="{{ character.id }}"/>
+            <button class="deletebtn" type="submit">Delete</button>
+
+        </form>
+        
         {{ macros::character(character=character) }}
     </div>
 </body>

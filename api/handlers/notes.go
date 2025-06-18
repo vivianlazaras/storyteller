@@ -77,8 +77,8 @@ func CreateNote(c *gin.Context) {
 		ChildCategory: "notes",
 	}
 
-	relresult := CreateNewRelation(&relation)
-	if !relresult.IsError() {
+	_, relresult := CreateNewRelation(db.DB, &relation)
+	if relresult == nil {
 		c.JSON(http.StatusOK, note)
 	}
 }

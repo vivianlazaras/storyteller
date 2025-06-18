@@ -1,24 +1,29 @@
 <div class="form-group">
-    <label for="image">Upload Image</label>
-    <input type="file" id="image" name="image" accept="image/*" />
+    <label for="images">Upload Images</label>
+    <input type="file" id="images" name="images" accept="image/*" multiple />
 
-    {# Optional preview container, usable with JS if desired #}
-    <div id="image-preview" style="margin-top: 1em;">
-        <img id="image-preview-img" src="" alt="Image preview" style="max-width: 100%; display: none;" />
-    </div>
+    <div id="image-preview" style="margin-top: 1em; display: flex; flex-wrap: wrap; gap: 1em;"></div>
 </div>
+
 <script>
     document.getElementById('image')?.addEventListener('change', function (event) {
-        const file = event.target.files[0];
-        const previewImg = document.getElementById('image-preview-img');
-    
-        if (file) {
+        const previewContainer = document.getElementById('image-preview');
+        previewContainer.innerHTML = ''; // Clear previous previews
+
+        Array.from(event.target.files).forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+
             const reader = new FileReader();
             reader.onload = function (e) {
-                previewImg.src = e.target.result;
-                previewImg.style.display = 'block';
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.alt = file.name;
+                img.style.maxWidth = '150px';
+                img.style.maxHeight = '150px';
+                img.style.objectFit = 'cover';
+                previewContainer.appendChild(img);
             };
             reader.readAsDataURL(file);
-        }
+        });
     });
 </script>

@@ -2,17 +2,20 @@ use rocket_dyn_templates::{Template, context};
 use rocket_oidc::{CoreClaims, OIDCGuard};
 use uuid::Uuid;
 
-use bcrypt::hash;
-use bcrypt::BcryptError;
-use bcrypt::DEFAULT_COST;
 use crate::ApiClient;
 use crate::auth::*;
-use rocket_oidc::auth::AuthGuard;
+use bcrypt::BcryptError;
+use bcrypt::DEFAULT_COST;
+use bcrypt::hash;
 use rocket::response::{Redirect, content::RawHtml};
 use rocket::{
-    Route, get, post, form::Form, FromForm, State, routes,
-    http::{Cookie, SameSite, CookieJar},  
+    FromForm, Route, State,
+    form::Form,
+    get,
+    http::{Cookie, CookieJar, SameSite},
+    post, routes,
 };
+use rocket_oidc::auth::AuthGuard;
 
 pub fn hash_password(plain: &str) -> Result<String, bcrypt::BcryptError> {
     // Hash the password using bcrypt with the default cost (12)
@@ -47,11 +50,11 @@ async fn account() -> Redirect {
     Redirect::to("/profiles/login")
 }
 
-#[get("/login")]
-async fn login_page() -> RawHtml<Template> {
+#[get("/login?<redirect>")]
+async fn login_page(redirect: Option<String>) -> RawHtml<Template> {
     RawHtml(Template::render(
         "profiles/login",
-        context!( title: "login", oidc_url: "/auth/keycloak" )
+        context!( title: "login", redirect, oidc_url: "/auth/keycloak" ),
     ))
 }
 
@@ -75,6 +78,7 @@ async fn profile(guard: Guard) -> RawHtml<Template> {
 
 #[derive(FromForm, Debug, Serialize, Deserialize)]
 pub struct LoginForm {
+    redirect: Option<String>,
     email: String,
     password: String,
 }
@@ -104,26 +108,26 @@ impl LoginBuilder {
 
 #[post("/login", data = "<form>")]
 async fn login(api: &State<ApiClient>, form: Form<LoginForm>, jar: &CookieJar<'_>) -> Redirect {
+    
     let login = form.into_inner();
+    let redirect = login.redirect.clone();
     let access_token: String = match api.post("/login", "", None, login).await {
         Ok(token) => {
             // login has succeeded server should've responded with a signed json web token
             token
-        },
-        Err(e) => {
-            return Redirect::to("/profiles/login")
-        },
+        }
+        Err(e) => return Redirect::to("/profiles/login"),
     };
     jar.add(
-        Cookie::build((
-            "access_token",
-            access_token,
-        ))
-        .secure(false)
-        .http_only(true) // good practice
-        .same_site(SameSite::Lax), // or SameSite::Strict, if you prefer
+        Cookie::build(("access_token", access_token))
+            .secure(false)
+            .http_only(true) // good practice
+            .same_site(SameSite::Lax), // or SameSite::Strict, if you prefer
     );
-    Redirect::to("/profiles/profile")
+    match redirect {
+        Some(redirect) => Redirect::to(redirect),
+        None => Redirect::to("/profiles/profile")
+    }
 }
 
 #[get("/logout")]

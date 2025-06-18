@@ -1,6 +1,9 @@
-use rocket::{get, response::{Redirect, Responder}, Request};
-use rocket_dyn_templates::{Template, context};
 use rocket::http::Status;
+use rocket::{
+    Request, get,
+    response::{Redirect, Responder},
+};
+use rocket_dyn_templates::{Template, context};
 
 #[derive(Debug, Clone, Error)]
 #[error(display = "api request failure: {}", _0)]

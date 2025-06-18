@@ -1,7 +1,7 @@
-use uuid::Uuid;
+use super::frontend::FragmentRender;
 use crate::ApiClient;
 use crate::model::StoryFragment;
-use super::frontend::FragmentRender;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct FragmentBuilder<'a> {
@@ -14,7 +14,11 @@ pub struct FragmentBuilder<'a> {
 
 impl<'a> FragmentBuilder<'a> {
     pub fn new() {}
-    pub async fn build(&self, api: &ApiClient, access_token: &str) -> anyhow::Result<StoryFragment> {
+    pub async fn build(
+        &self,
+        api: &ApiClient,
+        access_token: &str,
+    ) -> anyhow::Result<StoryFragment> {
         api.post("/fragments/", access_token, None, &self).await
     }
 }
@@ -28,7 +32,7 @@ impl StoryFragment {
             image: None,
             created: crate::epoch_to_human(self.created),
             // I'll handle last edited when I have edit's implemented
-            last_edited: String::from("unimplemented")
+            last_edited: String::from("unimplemented"),
         }
     }
 }

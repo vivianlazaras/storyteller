@@ -1,24 +1,69 @@
+use crate::get_access_token;
 use crate::{ApiClient, model::Image};
+use crate::{auth::Guard, model::Tag};
 use anyhow::Result;
 use image::{DynamicImage, ImageError, ImageFormat, io::Reader as ImageReader};
 use nom_exif::{ExifIter, MediaParser, MediaSource};
+use rocket::response::content::RawHtml;
 use rocket::{
-    Route, State,
+    response::Redirect,
+    FromForm, Route, State,
+    form::Form,
     fs::{NamedFile, TempFile},
     get,
-    http::ContentType, routes,
+    http::ContentType,
+    http::CookieJar,
+    post, routes,
     tokio::{
         fs,
         fs::File,
         io::{AsyncReadExt, AsyncWriteExt},
     },
 };
+use rocket_dyn_templates::{Template, context};
 use serde::{Deserialize, Serialize};
 use std::{
     io::Cursor,
     path::{Path, PathBuf},
 };
 use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExifTagRender {
+    tag: String,
+    value: String
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImageRender {
+    id: Uuid,
+    description: Option<String>,
+    url: String,
+    exif_tags: Vec<ExifTagRender>,
+    tags: Vec<String>,
+}
+
+#[rocket::async_trait]
+pub trait ImageForm<'r>: Sized + Send {
+    fn description(&self) -> Option<&str>;
+    fn tags(&self) -> &[String];
+    fn images(&self) -> Option<&Vec<TempFile<'r>>>;
+    fn category(&self) -> &str;
+    fn parent(&self) -> Option<Uuid>;
+    async fn into_image_builder(&self, processor: &ImageProcessor) -> Result<Option<ImageBuilder>> {
+        let images = match self.images() {
+            Some(images) => images,
+            None => return Ok(None),
+        };
+        let data = ImageData {
+            images,
+            tags: self.tags(),
+            description: self.description(),
+            category: self.category(),
+            parent: self.parent(),
+        };
+        Ok(processor.process(data).await?)
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExifTag {
@@ -32,64 +77,49 @@ impl ExifTag {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ImageEntry {
+    url: String,
+    exif_tags: Vec<ExifTag>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImageBuilder {
-    url: String,
+    entries: Vec<ImageEntry>,
     description: Option<String>,
     tags: Vec<String>,
-    exif_tags: Vec<ExifTag>,
-    parent: Uuid,
     category: String,
+    parent: Option<Uuid>,
 }
 
 impl ImageBuilder {
     pub fn new(
-        url: String,
+        entries: Vec<ImageEntry>,
         description: Option<String>,
         tags: Vec<String>,
-        exif_tags: Vec<ExifTag>,
-        parent: Uuid,
         category: String,
+        parent: Option<Uuid>,
     ) -> Self {
         Self {
-            url,
+            entries,
             description,
             tags,
-            exif_tags,
-            parent,
             category,
+            parent,
         }
     }
 
-    pub async fn build(self, api: &ApiClient, access_token: &str) -> Result<Image> {
+    pub async fn build(self, api: &ApiClient, access_token: &str) -> Result<Vec<Image>> {
         api.post("/assets/images/", access_token, None, &self).await
     }
 }
 
 pub struct ImageData<'r> {
-    pub image: TempFile<'r>,
-    pub tags: Vec<String>,
-    pub description: Option<String>,
-    pub parent: Uuid,
-    pub category: String,
-}
-
-impl<'r> ImageData<'r> {
-    pub fn new(
-        image: TempFile<'r>,
-        tags: Vec<String>,
-        description: Option<String>,
-        parent: Uuid,
-        category: String,
-    ) -> Self {
-        Self {
-            image,
-            tags,
-            description,
-            parent,
-            category,
-        }
-    }
+    pub images: &'r Vec<TempFile<'r>>,
+    pub tags: &'r [String],
+    pub description: Option<&'r str>,
+    pub category: &'r str,
+    pub parent: Option<Uuid>,
 }
 
 pub struct ImageProcessor {
@@ -104,69 +134,67 @@ impl ImageProcessor {
                 .await
                 .unwrap_or_else(|e| panic!("Failed to create image directory: {}", e));
         }
-
         if !image_dir.is_dir() {
             panic!(
                 "The specified image path is not a directory: {:?}",
                 image_dir
             );
         }
-
         Self {
             image_dir,
             hostname,
         }
     }
 
-    pub async fn process<'r>(&self, image_data: ImageData<'r>) -> Result<ImageBuilder> {
-        // Generate safe filename
-        let name = Uuid::new_v4().to_string();
-        let save_path = self.image_dir.join(&name);
+    pub async fn process<'r>(&self, image_data: ImageData<'r>) -> Result<Option<ImageBuilder>> {
+        let mut entries = Vec::new();
+        for image in image_data.images.iter() {
+            // if user doesn't select a file the input will exist still, but it won't have a name
+            // this checks if the name exists to see if a file was actually selected for upload
+            /*if image.name().is_none() {
+                continue;
+            }*/
+            let name = Uuid::new_v4().to_string();
+            let save_path = self.image_dir.join(&name);
 
-        // Read image bytes from TempFile
-        let mut bytes = Vec::new();
-        let mut temp = image_data.image.open().await?;
-        temp.read_to_end(&mut bytes).await?;
+            let mut bytes = Vec::new();
+            let mut temp = image.open().await?;
+            temp.read_to_end(&mut bytes).await?;
 
-        // Extract EXIF data before stripping
-        let mut exif_tags = Vec::new();
-        let exif_source = MediaSource::seekable(Cursor::new(&bytes))?;
-        if exif_source.has_exif() {
-            let mut parser = MediaParser::new();
-            if let Ok(tags) = parser.parse(exif_source) {
-                let taglist: ExifIter = tags;
-                for tag in taglist {
-                    if let Some(value) = tag.get_value() {
-                        exif_tags.push(ExifTag::new(tag.tag_code(), value.to_string()));
+            let mut exif_tags = Vec::new();
+            let exif_source = MediaSource::seekable(Cursor::new(&bytes))?;
+            if exif_source.has_exif() {
+                let mut parser = MediaParser::new();
+                if let Ok(tags) = parser.parse(exif_source) {
+                    let taglist: ExifIter = tags;
+                    for tag in taglist {
+                        if let Some(value) = tag.get_value() {
+                            exif_tags.push(ExifTag::new(tag.tag_code(), value.to_string()));
+                        }
                     }
                 }
             }
+
+            let reader = ImageReader::new(Cursor::new(&bytes)).with_guessed_format()?;
+            let format = reader.format().unwrap_or(ImageFormat::Png);
+            let img = reader.decode()?;
+
+            let mut output = Vec::new();
+            img.write_to(&mut Cursor::new(&mut output), format)?;
+
+            let mut file = File::create(&save_path).await?;
+            file.write_all(&output).await?;
+
+            let url = format!("{}/assets/images/{}", self.hostname, name);
+            entries.push(ImageEntry { url, exif_tags })
         }
-
-        // Decode image and guess format
-        let reader = ImageReader::new(Cursor::new(&bytes)).with_guessed_format()?;
-        let format = reader.format().unwrap_or(ImageFormat::Png);
-        let img = reader.decode()?;
-
-        // Re-encode without EXIF
-        let mut output = Vec::new();
-        img.write_to(&mut Cursor::new(&mut output), format)?;
-
-        // Save image to disk
-        let mut file = File::create(&save_path).await?;
-        file.write_all(&output).await?;
-
-        // Generate public URL
-        let url = format!("{}/images/{}", self.hostname, name);
-
-        Ok(ImageBuilder::new(
-            url,
-            image_data.description.clone(),
-            image_data.tags.clone(),
-            exif_tags,
+        Ok(Some(ImageBuilder::new(
+            entries,
+            image_data.description.map(|s| s.to_string()),
+            image_data.tags.to_vec(),
+            image_data.category.to_string(),
             image_data.parent,
-            image_data.category.clone(),
-        ))
+        )))
     }
 
     pub async fn get_image(&self, id: Uuid) -> Result<(DynamicImage, ImageFormat), ImageError> {
@@ -188,9 +216,9 @@ impl ImageProcessor {
         let img = reader.decode()?;
         Ok((img, format))
     }
+
     pub fn get_image_url(&self, id: Uuid) -> PathBuf {
-        let relative = self.image_dir.join(id.to_string());
-        relative
+        self.image_dir.join(id.to_string())
     }
 
     fn image_format_to_content_type(format: ImageFormat) -> ContentType {
@@ -213,12 +241,84 @@ impl ImageProcessor {
     }
 }
 
+#[derive(Debug, FromForm)]
+pub struct UploadForm<'r> {
+    images: Option<Vec<TempFile<'r>>>,
+    tags: Option<Vec<String>>,
+    description: Option<String>,
+    category: String,
+    parent: Uuid,
+}
+
+impl<'r> ImageForm<'r> for UploadForm<'r> {
+    fn images(&self) -> Option<&Vec<TempFile<'r>>> {
+        self.images.as_ref()
+    }
+
+    fn description(&self) -> Option<&str> {
+        self.description.as_deref()
+    }
+
+    fn tags(&self) -> &[String] {
+        self.tags.as_deref().unwrap_or(&[])
+    }
+
+    fn category(&self) -> &str {
+        &self.category
+    }
+
+    fn parent(&self) -> Option<Uuid> {
+        Some(self.parent)
+    }
+}
+
+#[get("/upload?<parent>&<category>")]
+async fn upload_html(parent: Uuid, category: String) -> RawHtml<Template> {
+    RawHtml(Template::render(
+        "images/upload",
+        context! { title: "upload image", parent, category },
+    ))
+}
+
+#[post("/upload", data = "<form>")]
+async fn upload_image<'r>(
+    guard: Guard,
+    processor: &State<ImageProcessor>,
+    jar: &CookieJar<'_>,
+    form: Form<UploadForm<'r>>,
+    api: &State<ApiClient>,
+) -> Redirect {
+    let form = form.into_inner();
+    let parent = form.parent.clone();
+    let category = form.category.clone();
+
+    if let Some(builder) = form
+        .into_image_builder(&processor)
+        .await
+        .unwrap()
+    {
+        builder.build(&api, &get_access_token(jar)).await.unwrap();
+    };
+    let url = format!("/{}/{}", category, parent);
+    Redirect::to(url)
+}
+
 #[get("/<id>")]
 async fn get_image(id: Uuid, processor: &State<ImageProcessor>) -> Option<NamedFile> {
     let path = processor.get_image_url(id);
+    println!("path: {}", path.display());
     NamedFile::open(path).await.ok()
 }
 
+#[get("/info/<id>")]
+async fn get_info(guard: Guard, id: Uuid, api: &State<ApiClient>, jar: &CookieJar<'_>) -> RawHtml<Template> {
+    let url = format!("/assets/images/{}", id);
+    let image: ImageRender = api.get_protected(url, &get_access_token(jar), None).await.unwrap();
+    RawHtml(
+        Template::render("images/image", context!(title: "image info", image ))
+    )
+}
+
 pub fn get_routes() -> Vec<Route> {
-    routes![get_image]
+    routes![get_image, upload_html, upload_image, get_info]
 }

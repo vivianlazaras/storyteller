@@ -1,6 +1,8 @@
 {% import "components/notes/list" as notes %}
 {% import "components/characters/character" as macros %}
 {% import "components/fragments/fragment" as fragments %}
+{% import "components/links/add" as links %}
+{% import "components/locations/location" as locations %}
 {% include "head" %}
 
 <body>
@@ -56,14 +58,7 @@ function list_toggle(id) {
       {% endfor %}
     </div>
 
-    <div class="actionitem">
-      <a class="actionlink" href="/fragments/create?category=stories&id={{ story.id }}">
-        Create Fragment
-      </a>
-      <a class="actionlink" href="/links/create?parent=stories&child=fragments&id={{ story.id }}">
-        Add Existing Fragment
-      </a>
-    </div>
+    {{ links::add_entity(name="Fragment", parentCategory="stories", childCategory="fragments", id=story.id ) }}
 
     <div id="chars" class="chars entitylist">
       {% for character in characters %}
@@ -72,14 +67,15 @@ function list_toggle(id) {
         </div>
       {% endfor %}
     </div>
-    <div class="actionitem">
-      <a class="actionlink" href="/characters/create?category=stories&id={{ story.id }}">
-        Create Character
-      </a>
-      <a class="actionlink" href="/links/create?parent=stories&child=characters&id={{ story.id }}">
-        Add Existing Character
-      </a>
+    {{ links::add_entity(name="Character", parentCategory="stories", childCategory="characters", id=story.id ) }}
+    
+    <div id="locs" class="locs entitylist">
+      {% for location in locations %}
+        {{ locations::location(location=location) }}
+      {% endfor %}
     </div>
+
+    {{ links::add_entity(name="Location", parentCategory="stories", childCategory="locations", id=story.id ) }}
     {{ notes::notelist(notes=notes, edit=true, parent=story.id, category="stories") }}
   </div>
 </div>

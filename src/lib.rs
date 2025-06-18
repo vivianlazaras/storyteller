@@ -1,26 +1,33 @@
+#![allow(non_upper_case_globals)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(improper_ctypes)]
+
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate err_derive;
-use time::{OffsetDateTime, format_description::well_known::Rfc3339, format_description};
 use time::UtcOffset;
+use time::{OffsetDateTime, format_description, format_description::well_known::Rfc3339};
 
 pub mod characters;
 pub mod config;
-mod model;
-pub mod locations;
-pub mod render;
 pub mod errors;
-pub mod stories;
+pub mod locations;
+mod model;
 pub mod profiles;
+pub mod render;
+pub mod stories;
 pub use config::Config;
-pub mod fragments;
-pub mod timelines;
-pub mod assets;
-pub mod links;
-pub mod search;
-pub mod notes;
-pub mod themes;
-pub mod auth;
 pub mod api;
+pub mod assets;
+pub mod auth;
+pub mod fragments;
+pub mod links;
+pub mod notes;
+pub mod search;
+pub mod themes;
+pub mod timelines;
 pub use api::*;

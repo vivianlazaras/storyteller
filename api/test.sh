@@ -1,5 +1,5 @@
 # Endpoint URL
-URL="http://localhost:8000/stories"
+URL="http://localhost:8442/timelines"
 
 # Optional description (use null or a string)
 DESCRIPTION="\"This is an optional description\""
@@ -8,10 +8,11 @@ DESCRIPTION="\"This is an optional description\""
 # JSON payload
 JSON=$(cat <<EOF
 {
-  "name": "My Fragment",
+  "name": "New Timeline",
   "description": $DESCRIPTION,
-  "render": "markdown",
-  "content": "# Hello World\nThis is a fragment."
+  "generator": {
+    "story":"5e4b87f4-bd35-4360-8edf-ab878fb36edd"
+  }
 }
 EOF
 )

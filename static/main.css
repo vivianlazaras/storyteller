@@ -57,23 +57,16 @@ img.resize {
     height: auto;
 }
 
-#list {
-    width: 100%;
-    display: flex;
-    column-gap: 40px;
-    row-gap: 0px;
-}
-
 .brief {
     text-decoration: none;
     width: 100%;
     color: black;
     min-width: 10%;
     line-height: 50px;
-    height: 50px;
+    min-height: 200px;
     text-align: center;
     border-radius: 40px;
-    background: linear-gradient(to right, lightpink, lavender, lightblue);
+    border: 1px solid black;
 }
 
 
@@ -291,4 +284,38 @@ button[type="submit"]:hover, .actionlink:hover {
 .login-form a:hover,
 .content-form a:hover {
     text-decoration: underline;
+}
+
+svg {
+    min-width: 300px;
+    min-height: 800px;
+}
+
+.list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 40px;
+}
+
+.description {
+    padding: 20px;
+}
+
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+  }
+  
+  .gallery img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+  }
+
+.error {
+    background-color: lightcoral;
+    color: red;
+    width: 100%;
 }

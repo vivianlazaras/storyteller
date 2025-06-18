@@ -11,7 +11,7 @@ use storyteller::ApiClient;
 use storyteller::Config;
 use structopt::StructOpt;
 use tokio::{fs::File, io::AsyncReadExt};
-
+use ubyte::{ByteUnit, ToByteUnit};
 #[derive(Debug, Clone, StructOpt)]
 pub struct Args {
     #[structopt(short, long)]
@@ -21,8 +21,10 @@ pub struct Args {
 }
 
 #[catch(401)]
-fn unauthorized() -> Redirect {
-    Redirect::to("/profiles/login")
+fn unauthorized(req: &rocket::Request<'_>) -> Redirect {
+    let attempted_path = req.uri().to_string();
+    let redirect = format!("/profiles/login?redirect={}", attempted_path);
+    Redirect::to(redirect)
 }
 
 #[catch(404)]
@@ -73,7 +75,9 @@ async fn rocket() -> _ {
         address: config.listen().parse().unwrap(),
         port: config.port(),
         limits: Limits::new()
-            .limit("default", "5GiB".parse().unwrap()),
+        .limit("file", ByteUnit::Gigabyte(2))
+        .limit("form", ByteUnit::Gigabyte(2))
+        .limit("data-form", ByteUnit::Gigabyte(2)),
         ..rocket::Config::default()
     };
 
@@ -81,7 +85,12 @@ async fn rocket() -> _ {
     println!("api endpoint: {}", url);
     let api = ApiClient::new(&url).await.unwrap();
     let decoding_key = api.get_jwt_pubkey().await.unwrap();
-    let validator = rocket_oidc::client::Validator::from_pubkey(config.api_endpoint().to_string(), "storyteller".to_string(), decoding_key).unwrap();
+    let validator = rocket_oidc::client::Validator::from_pubkey(
+        config.api_endpoint().to_string(),
+        "storyteller".to_string(),
+        decoding_key,
+    )
+    .unwrap();
     let rocket = rocket::custom(rocketconfig)
         .manage(api)
         .manage(validator)
@@ -89,6 +98,7 @@ async fn rocket() -> _ {
         .manage(processor)
         .mount("/stories", storyteller::stories::get_routes())
         .mount("/characters", storyteller::characters::get_routes())
+        .mount("/timelines", storyteller::timelines::get_routes())
         .mount("/locations", storyteller::locations::get_routes())
         .mount("/links", storyteller::links::get_routes())
         .mount("/fragments", storyteller::fragments::get_routes())
@@ -99,7 +109,7 @@ async fn rocket() -> _ {
         .mount("/notes/", storyteller::notes::get_routes())
         .mount("/assets/images/", storyteller::assets::images::get_routes())
         .mount("/search", storyteller::search::get_routes());
-    
+
     //rocket_oidc::register_validator(rocket, validator);
     rocket_oidc::setup(rocket, config.oidc().clone())
         .await

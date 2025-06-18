@@ -9,6 +9,7 @@ import (
 	"github.com/vivianlazaras/storyteller/auth"
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type CreateStoryFragment struct {
@@ -68,13 +69,7 @@ func GetFragmentsByStory(c *gin.Context) {
 		return
 	}
 
-	var fragments []model.Fragment
-	err := db.DB.
-		Model(&model.Fragment{}).
-		Joins("JOIN relations ON relations.child = fragments.id").
-		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", parentID, "stories", "fragments").
-		Order("fragments.last_edited ASC").
-		Find(&fragments).Error
+	fragments,err := selectFragmentsByStory(db.DB, parentID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
@@ -82,6 +77,19 @@ func GetFragmentsByStory(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, fragments)
+}
+
+func selectFragmentsByStory(db *gorm.DB, parentID uuid.UUID) ([]model.Fragment, error) {
+
+	var fragments []model.Fragment
+	err := db.
+		Model(&model.Fragment{}).
+		Joins("JOIN relations ON relations.child = fragments.id").
+		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", parentID, "stories", "fragments").
+		Order("fragments.last_edited ASC").
+		Find(&fragments).Error
+
+	return fragments, err
 }
 
 func GetFragmentById(c *gin.Context) {

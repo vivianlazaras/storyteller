@@ -24,6 +24,7 @@ func SetupRouter(config *Config) (*gin.Engine, error) {
     handlers.RegisterCharacterRoutes(r)
     handlers.RegisterLocationRoutes(r)
     handlers.RegisterTagRoutes(r)
+    handlers.RegisterTimelineRoutes(r)
     handlers.RegisterFragmentRoutes(r)
     handlers.RegisterEntityRoutes(r)
     handlers.RegisterNoteRoutes(r)

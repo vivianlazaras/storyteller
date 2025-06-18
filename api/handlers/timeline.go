@@ -3,16 +3,31 @@ package handlers
 import (
 	"net/http"
 	"time"
+	"fmt"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/model"
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/vivianlazaras/storyteller/auth"
-	"github.com/google/uuid"	
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
+
+type TimelineBuilder struct {
+	Name        string              `json:"name"`
+	Description *string             `json:"description,omitempty"`
+	Generator   *TimelineGenerator  `json:"generator,omitempty"`
+}
+
+// Adjacently tagged enum workaround in Go
+type TimelineGenerator struct {
+	Fragments []uuid.UUID	`json:"fragments"`
+	Entity     *uuid.UUID	`json:"entity"`
+}
 
 type FullMoment struct {
 	ID			uuid.UUID `json:"id"`
-	TimeLine	uuid.UUID `json:"timeline"`
+	Timeline	uuid.UUID `json:"timeline"`
 	Fragment	model.Fragment	`json:"fragment"`
 	Idx			int64	`json:"idx"`
 }
@@ -31,13 +46,9 @@ func RegisterTimelineRoutes(r *gin.Engine) *gin.Engine {
 	// with timelines through stories, or characters
 	r.GET("/timelines", auth.JWTMiddleware(), ListTimelines)
     r.GET("/timelines/:id", auth.JWTMiddleware(), GetTimeline)
+	r.POST("/timelines", CreateTimeline)
 
 	return r
-}
-
-func ListTimelines(c *gin.Context) {
-	// grab all stories where public = true
-	c.JSON(http.StatusOK, []model.Story{})
 }
 
 func GetTimeline(c *gin.Context) {
@@ -71,7 +82,7 @@ func GetTimeline(c *gin.Context) {
 
 		fullMoments = append(fullMoments, FullMoment{
 			ID:       uuid.MustParse(moment.ID),
-			TimeLine: uuid.MustParse(moment.Timeline),
+			Timeline: uuid.MustParse(moment.Timeline),
 			Fragment: fragment,
 			Idx:      moment.Idx,
 		})
@@ -107,11 +118,10 @@ func defaultTimeline(metadata string) model.Timeline {
 		ID:         uuid.New().String(),
 		Created:    now,
 		LastEdited: now,
-		Metadata: metadata,
 	}
 
 }
-
+/*
 func createTimeline(timeline *model.Timeline) error {
 	err := db.DB.Create(timeline).Error
 	return err
@@ -121,7 +131,7 @@ func createDefaultTimeline(metadata string) (model.Timeline, error) {
 	var timeline = defaultTimeline(metadata)
 	err := createTimeline(&timeline)
 	return timeline, err
-}
+}*/
 
 func UpdateTimeline(c *gin.Context) {
 
@@ -131,3 +141,120 @@ func DeleteTimeline(c *gin.Context) {
 	
 }
 
+func CreateMoment(db *gorm.DB, timeline uuid.UUID, fragment uuid.UUID, idx int64) (model.Moment, error) {
+	var moment = model.Moment {
+		ID: uuid.New().String(),
+		Timeline: timeline.String(),
+		Fragment: fragment.String(),
+		Idx: idx * 8,
+	}
+
+	err := db.Create(&moment)
+	return moment, err.Error
+}
+
+func ListTimelines(c *gin.Context) {
+	user, err := auth.GetUserFromClaims(db.DB, c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized: " + err.Error()})
+		return
+	}
+
+	// Fetch timelines accessible by this user
+	timelines, err := ListEntitiesByCategoryForGroup(db.DB, uuid.MustParse(user.DefaultGroup), "timelines")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch timelines: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, timelines)
+}
+
+/// this function either generates from existing story, xor from fragments
+/// not both as the ordering would be much more complex to implement if both were supported
+func CreateNewTimeline(db *gorm.DB, builder TimelineBuilder) (model.Timeline, error) {
+	now := time.Now().Unix()
+	var description = ""
+	var timelineid = uuid.New()
+	if builder.Description != nil {
+		description = *builder.Description
+	}
+
+	tx := db.Begin()
+	var timeline = model.Timeline {
+		ID: timelineid.String(),
+		Name: builder.Name,
+		Description: description,
+		Created: now,
+		LastEdited: now,
+	}
+
+	tlerr := tx.Create(&timeline).Error
+	if tlerr != nil {
+		fmt.Printf("error creating timeline: %s\n", tlerr);
+		tx.Rollback()
+		return model.Timeline{}, tlerr
+	}
+
+	if builder.Generator != nil {
+		if builder.Generator.Story != nil {
+			var relation = model.Relation {
+				Parent: builder.Generator.Story.String(),
+				Child: timelineid.String(),
+				ParentCategory: "stories",
+				ChildCategory: "timelines",
+				Description: "",
+			}
+			_, result := CreateNewRelation(tx, &relation)
+			if result != nil {
+				return model.Timeline{}, result
+			}
+			fragments,serr := selectFragmentsByStory(tx, *builder.Generator.Story);
+			if serr != nil {
+				tx.Rollback()
+				return model.Timeline{}, serr
+			}
+			for idx, fragment := range fragments {
+				_, merr := CreateMoment(tx, timelineid, uuid.MustParse(fragment.ID), int64(idx))
+				if merr != nil {
+					tx.Rollback()
+					return model.Timeline{}, merr
+				}
+			}
+		}else{
+			fmt.Printf("creating from fragments\n")
+			for idx, fragment := range builder.Generator.Fragments {
+				_, err := CreateMoment(tx, timelineid, fragment, int64(idx))
+				if err != nil {
+					tx.Rollback()
+					return model.Timeline{}, err
+				}
+			}
+		}
+	}else{
+		fmt.Printf("generator is null\n");
+	}
+
+	tx.Commit()
+	return timeline, nil
+}
+
+func CreateTimeline(c *gin.Context) {
+	fmt.Printf("in create timeline")
+	var builder TimelineBuilder
+	if err := c.ShouldBindJSON(&builder); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON submission"})
+		return
+	}
+
+	jsonData, _ := json.Marshal(builder)
+	fmt.Printf("received JSON: %s\n", jsonData)
+
+	timeline, tlerr := CreateNewTimeline(db.DB, builder)
+
+	if tlerr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create timeline"})
+		return
+	}
+	c.JSON(http.StatusOK, timeline)
+}

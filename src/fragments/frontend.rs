@@ -1,13 +1,14 @@
+use super::api::*;
 use crate::ApiClient;
+use crate::get_access_token;
 use crate::model::*;
+use rocket::fs::TempFile;
+use rocket::http::CookieJar;
 use rocket::response::Redirect;
 use rocket::response::content::RawHtml;
 use rocket::{FromForm, Route, State, form::Form, get, post, routes};
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
-use super::api::*;
-use rocket::fs::TempFile;
-
 #[derive(Debug, FromForm)]
 pub struct CreateFragmentForm<'r> {
     image: Option<TempFile<'r>>,
@@ -27,7 +28,7 @@ impl<'r> CreateFragmentForm<'r> {
             category: self.category.as_deref(),
             name: self.name.as_str(),
             content: self.content.as_str(),
-            tags: &self.tags
+            tags: &self.tags,
         }
     }
 }
@@ -43,10 +44,14 @@ pub struct FragmentRender {
 }
 
 #[post("/", data = "<form>")]
-async fn create_fragment<'r>(form: Form<CreateFragmentForm<'r>>, api: &State<ApiClient>) -> Redirect {
+async fn create_fragment<'r>(
+    form: Form<CreateFragmentForm<'r>>,
+    api: &State<ApiClient>,
+    jar: &CookieJar<'_>,
+) -> Redirect {
     let form = form.into_inner();
     let builder = form.to_builder();
-    let newfragment: StoryFragment = builder.build(&api, "").await.unwrap();
+    let newfragment: StoryFragment = builder.build(&api, &get_access_token(jar)).await.unwrap();
     let redirect = if let Some(parent) = builder.parent {
         let category = match &builder.category {
             Some(category) => category,
@@ -78,9 +83,12 @@ async fn create_fragment_html(
 }
 
 #[get("/<id>")]
-async fn get_fragment(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
+async fn get_fragment(id: Uuid, api: &State<ApiClient>, jar: &CookieJar<'_>) -> RawHtml<Template> {
     let url = format!("/fragments/{}", id);
-    let fragment: StoryFragment = api.get(&url, None).await.unwrap();
+    let fragment: StoryFragment = api
+        .get_protected(&url, &get_access_token(jar), None)
+        .await
+        .unwrap();
     RawHtml(Template::render(
         "fragments/fragment",
         context! { title: fragment.name.clone(), fragment },
@@ -88,16 +96,26 @@ async fn get_fragment(id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
 }
 
 #[get("/")]
-async fn list_fragments(api: &State<ApiClient>) -> RawHtml<Template> {
-    let fragments: Vec<StoryFragment> = match api.get("/fragments/", None).await.unwrap() {
+async fn list_fragments(api: &State<ApiClient>, jar: &CookieJar<'_>) -> RawHtml<Template> {
+    let fragments: Vec<StoryFragment> = match api
+        .get_protected("/fragments/", &get_access_token(jar), None)
+        .await
+        .unwrap()
+    {
         Some(fragments) => fragments,
-        None => Vec::new()
+        None => Vec::new(),
     };
-    RawHtml(
-        Template::render("fragments/index", context!( title: "fragments", fragments ))
-    )
+    RawHtml(Template::render(
+        "fragments/index",
+        context!( title: "fragments", fragments ),
+    ))
 }
 
 pub fn get_routes() -> Vec<Route> {
-    routes![get_fragment, create_fragment_html, create_fragment, list_fragments]
+    routes![
+        get_fragment,
+        create_fragment_html,
+        create_fragment,
+        list_fragments
+    ]
 }

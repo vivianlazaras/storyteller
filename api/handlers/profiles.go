@@ -22,9 +22,9 @@ type LoginInfo struct {
 	Password	string	`json:"password"`
 }
 
-func GetUserByEmail(email string) (*model.User, error) {
+func GetUserByEmail(db *gorm.DB, email string) (*model.User, error) {
     var user model.User
-    result := db.DB.Where("email = ?", email).First(&user)
+    result := db.Where("email = ?", email).First(&user)
     if errors.Is(result.Error, gorm.ErrRecordNotFound) {
         return nil, errors.New("user not found")
     } else if result.Error != nil {

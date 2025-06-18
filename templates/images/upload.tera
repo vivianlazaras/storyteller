@@ -1,0 +1,16 @@
+{% include "head" %}
+
+<body>
+    {% include "header" %}
+    <div class="content content-form" id="content">
+        <h1>Upload A New Image</h1>
+        <form action="/assets/images/upload" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="category" value="{{ category }}"/>
+            <input type="hidden" name="parent" value="{{ parent }}"/>
+
+            {% include "components/imageupload" %}
+
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+</body>
