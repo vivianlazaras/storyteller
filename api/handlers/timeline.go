@@ -21,8 +21,8 @@ type TimelineBuilder struct {
 
 // Adjacently tagged enum workaround in Go
 type TimelineGenerator struct {
-	Fragments []uuid.UUID	`json:"fragments"`
-	Entity     *uuid.UUID	`json:"entity"`
+	Source     *uuid.UUID	`json:"entity"`
+	ParentCategory	string	`json:"category"`
 }
 
 type FullMoment struct {
@@ -58,6 +58,7 @@ func GetTimeline(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "timeline not found"})
 		return
 	}
+	// I need to find out how to automatically re-generate if updates have occured.
 
 	// Fetch the associated moments
 	var moments []model.Moment
@@ -197,11 +198,11 @@ func CreateNewTimeline(db *gorm.DB, builder TimelineBuilder) (model.Timeline, er
 	}
 
 	if builder.Generator != nil {
-		if builder.Generator.Story != nil {
+		if builder.Generator.Source != nil {
 			var relation = model.Relation {
-				Parent: builder.Generator.Story.String(),
+				Parent: builder.Generator.Source.String(),
 				Child: timelineid.String(),
-				ParentCategory: "stories",
+				ParentCategory: builder.Generator.ParentCategory,
 				ChildCategory: "timelines",
 				Description: "",
 			}
@@ -209,7 +210,7 @@ func CreateNewTimeline(db *gorm.DB, builder TimelineBuilder) (model.Timeline, er
 			if result != nil {
 				return model.Timeline{}, result
 			}
-			fragments,serr := selectFragmentsByStory(tx, *builder.Generator.Story);
+			fragments,serr := selectFragmentsByEntity(tx, *builder.Generator.Source);
 			if serr != nil {
 				tx.Rollback()
 				return model.Timeline{}, serr
@@ -219,15 +220,6 @@ func CreateNewTimeline(db *gorm.DB, builder TimelineBuilder) (model.Timeline, er
 				if merr != nil {
 					tx.Rollback()
 					return model.Timeline{}, merr
-				}
-			}
-		}else{
-			fmt.Printf("creating from fragments\n")
-			for idx, fragment := range builder.Generator.Fragments {
-				_, err := CreateMoment(tx, timelineid, fragment, int64(idx))
-				if err != nil {
-					tx.Rollback()
-					return model.Timeline{}, err
 				}
 			}
 		}

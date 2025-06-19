@@ -1,10 +1,8 @@
 use crate::ApiClient;
 use crate::assets::images::ImageForm;
 use crate::auth::Guard;
-use crate::get_access_token;
 use crate::model::Location;
 use rocket::fs::TempFile;
-use rocket::http::CookieJar;
 
 use rocket::{
     FromForm, Route, State, delete, form::Form, get, post, put, response::Redirect,
@@ -63,10 +61,9 @@ pub struct LocationBuilder {
 async fn list_places(
     guard: Guard,
     api: &State<ApiClient>,
-    jar: &CookieJar<'_>,
 ) -> RawHtml<Template> {
     let locations: Vec<Location> = match api
-        .get_protected("/locations/", &get_access_token(jar), None)
+        .get_protected("/locations/", guard.access_token(), None)
         .await
         .unwrap()
     {
@@ -84,11 +81,10 @@ async fn get_place(
     guard: Guard,
     api: &State<ApiClient>,
     id: Uuid,
-    jar: &CookieJar<'_>,
 ) -> RawHtml<Template> {
     let url = format!("/locations/{}", id);
     let location: Location = api
-        .get_protected(&url, &get_access_token(jar), None)
+        .get_protected(&url, guard.access_token(), None)
         .await
         .unwrap();
     let render = location.render();
@@ -108,14 +104,14 @@ async fn create_place_html() -> RawHtml<Template> {
 
 #[post("/", data = "<form>")]
 async fn create_place<'r>(
+    guard: Guard,
     api: &State<ApiClient>,
     form: Form<LocationForm<'r>>,
-    jar: &CookieJar<'_>,
 ) -> Redirect {
     let locationform = form.into_inner();
     let location = locationform.to_builder();
     let loc: Location = api
-        .post("/locations/", &get_access_token(jar), None, &location)
+        .post("/locations/", guard.access_token(), None, &location)
         .await
         .unwrap();
     Redirect::to(format!("/locations/{}", loc.id))

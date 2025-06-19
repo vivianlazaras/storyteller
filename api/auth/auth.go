@@ -14,6 +14,7 @@ import (
 	"math/big"
     "github.com/gin-gonic/gin"
     "github.com/vivianlazaras/storyteller/model"
+	"github.com/vivianlazaras/storyteller/db"
     "gorm.io/gorm"
 	"golang.org/x/crypto/bcrypt"
 
@@ -208,6 +209,48 @@ func JWTMiddleware() gin.HandlerFunc {
 
 		// Store claims in the context for handlers to access
 		c.Set("claims", claims)
+
+		if c.Request.Method == http.MethodPut || c.Request.Method == http.MethodDelete {
+			idParam := c.Param("id")
+			if idParam == "" {
+				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "missing resource ID in path"})
+				return
+			}
+
+			user, err := GetUserFromClaims(db.DB, c)
+			if err != nil {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized: " + err.Error()})
+				return
+			}
+
+			requiredPerm := ""
+			if c.Request.Method == http.MethodPut {
+				requiredPerm = "update"
+			} else if c.Request.Method == http.MethodDelete {
+				requiredPerm = "delete"
+			}
+
+			var count int64
+			err = db.DB.
+				Table("entities").
+				Select("count(*)").
+				Joins("JOIN grouprel ON entities.group_id = grouprel.group_id").
+				Joins("JOIN groups ON entities.group_id = groups.id").
+				Where("entities.id = ? AND grouprel.user_id = ?", idParam, user.ID).
+				Where("? = ANY(groups.permissions)", requiredPerm). // Postgres array contains
+				Count(&count).Error
+
+			if err != nil {
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+				return
+			}
+
+			if count == 0 {
+				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+				return
+			}
+		}
+
 		c.Next()
 	}
 }

@@ -11,7 +11,7 @@ use storyteller::ApiClient;
 use storyteller::Config;
 use structopt::StructOpt;
 use tokio::{fs::File, io::AsyncReadExt};
-use ubyte::{ByteUnit, ToByteUnit};
+use ubyte::ByteUnit;
 #[derive(Debug, Clone, StructOpt)]
 pub struct Args {
     #[structopt(short, long)]
@@ -65,7 +65,6 @@ async fn rocket() -> _ {
         panic!("unable to fetch config");
     };
 
-    let current_dir = std::env::current_dir().unwrap();
     let processor = storyteller::assets::images::ImageProcessor::new(
         config.url().to_string(),
         config.images.clone(),
@@ -88,6 +87,7 @@ async fn rocket() -> _ {
     let validator = rocket_oidc::client::Validator::from_pubkey(
         config.api_endpoint().to_string(),
         "storyteller".to_string(),
+        "RS256".to_string(),
         decoding_key,
     )
     .unwrap();

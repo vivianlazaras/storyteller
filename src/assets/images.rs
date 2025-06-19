@@ -1,8 +1,7 @@
-use crate::get_access_token;
 use crate::{ApiClient, model::Image};
 use crate::{auth::Guard, model::Tag};
 use anyhow::Result;
-use image::{DynamicImage, ImageError, ImageFormat, io::Reader as ImageReader};
+use image::{DynamicImage, ImageError, ImageFormat, ImageReader};
 use nom_exif::{ExifIter, MediaParser, MediaSource};
 use rocket::response::content::RawHtml;
 use rocket::{
@@ -12,7 +11,6 @@ use rocket::{
     fs::{NamedFile, TempFile},
     get,
     http::ContentType,
-    http::CookieJar,
     post, routes,
     tokio::{
         fs,
@@ -284,7 +282,6 @@ async fn upload_html(parent: Uuid, category: String) -> RawHtml<Template> {
 async fn upload_image<'r>(
     guard: Guard,
     processor: &State<ImageProcessor>,
-    jar: &CookieJar<'_>,
     form: Form<UploadForm<'r>>,
     api: &State<ApiClient>,
 ) -> Redirect {
@@ -297,7 +294,7 @@ async fn upload_image<'r>(
         .await
         .unwrap()
     {
-        builder.build(&api, &get_access_token(jar)).await.unwrap();
+        builder.build(&api, guard.access_token()).await.unwrap();
     };
     let url = format!("/{}/{}", category, parent);
     Redirect::to(url)
@@ -311,9 +308,9 @@ async fn get_image(id: Uuid, processor: &State<ImageProcessor>) -> Option<NamedF
 }
 
 #[get("/info/<id>")]
-async fn get_info(guard: Guard, id: Uuid, api: &State<ApiClient>, jar: &CookieJar<'_>) -> RawHtml<Template> {
+async fn get_info(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let url = format!("/assets/images/{}", id);
-    let image: ImageRender = api.get_protected(url, &get_access_token(jar), None).await.unwrap();
+    let image: ImageRender = api.get_protected(url, guard.access_token(), None).await.unwrap();
     RawHtml(
         Template::render("images/image", context!(title: "image info", image ))
     )

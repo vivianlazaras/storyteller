@@ -21,7 +21,6 @@ use uuid::Uuid;
 #[post("/", data = "<form>")]
 async fn create_character<'f>(
     guard: Guard,
-    jar: &CookieJar<'_>,
     api: &State<ApiClient>,
     processor: &State<ImageProcessor>,
     form: Form<CharacterBuilderForm<'f>>,
@@ -29,7 +28,7 @@ async fn create_character<'f>(
     let form = form.into_inner();
     let character_builder = form.into_builder(&processor).await.unwrap();
     let character = character_builder
-        .build(&api, &get_access_token(jar))
+        .build(&api, guard.access_token())
         .await
         .unwrap();
 
@@ -45,12 +44,11 @@ async fn create_character<'f>(
 #[get("/<id>")]
 async fn get_character(
     guard: Guard,
-    jar: &CookieJar<'_>,
     id: Uuid,
     api: &State<ApiClient>,
 ) -> RawHtml<Template> {
     let render: CharacterRender = api
-        .get_protected(&format!("/characters/{}", id), &get_access_token(jar), None)
+        .get_protected(&format!("/characters/{}", id), guard.access_token(), None)
         .await
         .unwrap();
     RawHtml(Template::render(
@@ -70,11 +68,10 @@ async fn create_character_html() -> RawHtml<Template> {
 #[get("/")]
 async fn list_characters(
     guard: Guard,
-    jar: &CookieJar<'_>,
     api: &State<ApiClient>,
 ) -> RawHtml<Template> {
     let characters: Vec<CharacterRender> = match api
-        .get_protected("/characters", &get_access_token(jar), None)
+        .get_protected("/characters", guard.access_token(), None)
         .await
         .unwrap()
     {
@@ -92,15 +89,14 @@ async fn list_characters(
 async fn get_tree(
     guard: Guard,
     id: Uuid,
-    jar: &CookieJar<'_>,
     api: &State<ApiClient>,
 ) -> RawHtml<Template> {
     let url = format!("/characters/{}", id);
     let character: Character = api
-        .get_protected(url, &get_access_token(jar), None)
+        .get_protected(url, guard.access_token(), None)
         .await
         .unwrap();
-    let (graph, index_map) = Character::family_tree(id, &api, &get_access_token(jar))
+    let (graph, index_map) = Character::family_tree(id, &api, guard.access_token())
         .await
         .unwrap();
     let svg = render_graph(graph);
@@ -119,7 +115,6 @@ pub struct DeleteRequest {
 #[post("/delete", data = "<form>")]
 async fn delete_entity(
     guard: Guard,
-    jar: &CookieJar<'_>,
     form: Form<DeleteRequest>,
     api: &State<ApiClient>,
 ) {

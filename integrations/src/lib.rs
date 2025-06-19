@@ -1,3 +1,11 @@
+pub mod loader;
+pub mod error;
+pub mod data;
+use uuid::Uuid;
+
+use serde_derive::*;
+
+#[derive(Debug, Clone, Serialize, Deserialize, Copy)]
 pub enum Category {
     Character,
     Story,

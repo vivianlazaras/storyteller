@@ -1,9 +1,11 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
+//#![allow(unused_variables)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(improper_ctypes)]
+#![allow(non_local_impls)]
 
 #[macro_use]
 extern crate serde_derive;
@@ -18,7 +20,6 @@ pub mod errors;
 pub mod locations;
 mod model;
 pub mod profiles;
-pub mod render;
 pub mod stories;
 pub use config::Config;
 pub mod api;
@@ -30,4 +31,5 @@ pub mod notes;
 pub mod search;
 pub mod themes;
 pub mod timelines;
+pub mod render;
 pub use api::*;

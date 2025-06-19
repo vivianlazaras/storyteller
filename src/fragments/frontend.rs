@@ -1,6 +1,5 @@
 use super::api::*;
 use crate::ApiClient;
-use crate::get_access_token;
 use crate::model::*;
 use rocket::fs::TempFile;
 use rocket::http::CookieJar;
@@ -9,6 +8,7 @@ use rocket::response::content::RawHtml;
 use rocket::{FromForm, Route, State, form::Form, get, post, routes};
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
+use crate::auth::Guard;
 #[derive(Debug, FromForm)]
 pub struct CreateFragmentForm<'r> {
     image: Option<TempFile<'r>>,
@@ -45,13 +45,13 @@ pub struct FragmentRender {
 
 #[post("/", data = "<form>")]
 async fn create_fragment<'r>(
+    guard: Guard,
     form: Form<CreateFragmentForm<'r>>,
     api: &State<ApiClient>,
-    jar: &CookieJar<'_>,
 ) -> Redirect {
     let form = form.into_inner();
     let builder = form.to_builder();
-    let newfragment: StoryFragment = builder.build(&api, &get_access_token(jar)).await.unwrap();
+    let newfragment: StoryFragment = builder.build(&api, guard.access_token()).await.unwrap();
     let redirect = if let Some(parent) = builder.parent {
         let category = match &builder.category {
             Some(category) => category,
@@ -83,10 +83,10 @@ async fn create_fragment_html(
 }
 
 #[get("/<id>")]
-async fn get_fragment(id: Uuid, api: &State<ApiClient>, jar: &CookieJar<'_>) -> RawHtml<Template> {
+async fn get_fragment(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let url = format!("/fragments/{}", id);
     let fragment: StoryFragment = api
-        .get_protected(&url, &get_access_token(jar), None)
+        .get_protected(&url, guard.access_token(), None)
         .await
         .unwrap();
     RawHtml(Template::render(
@@ -96,9 +96,9 @@ async fn get_fragment(id: Uuid, api: &State<ApiClient>, jar: &CookieJar<'_>) -> 
 }
 
 #[get("/")]
-async fn list_fragments(api: &State<ApiClient>, jar: &CookieJar<'_>) -> RawHtml<Template> {
+async fn list_fragments(guard: Guard, api: &State<ApiClient>) -> RawHtml<Template> {
     let fragments: Vec<StoryFragment> = match api
-        .get_protected("/fragments/", &get_access_token(jar), None)
+        .get_protected("/fragments/", guard.access_token(), None)
         .await
         .unwrap()
     {

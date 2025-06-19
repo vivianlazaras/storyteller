@@ -42,9 +42,8 @@ async fn get_story(
     guard: Guard,
     id: Uuid,
     api: &State<ApiClient>,
-    jar: &CookieJar<'_>,
 ) -> RawHtml<Template> {
-    let access_token = get_access_token(jar);
+    let access_token = guard.access_token();
     let url = format!("/stories/{}", id);
     let id_string = id.to_string();
     let story: Story = api.get_protected(&url, &access_token, None).await.unwrap();
@@ -71,8 +70,8 @@ async fn get_story(
         None => None,
     };
 
-    /// may need to be implemented later, for now don't worry about it
-    /// I have to grab each character for each fragment and assembly them.
+    // may need to be implemented later, for now don't worry about it
+    // I have to grab each character for each fragment and assembly them.
     let characters: Option<Vec<CharacterRender>> = match api
         .get_protected::<Option<Vec<CharacterRender>>, _>(
             "/characters/filter",
@@ -86,10 +85,10 @@ async fn get_story(
         None => None,
     };
 
-    let locations: Option<Vec<LocationRender>> = api.get_protected("/locations/filter", &get_access_token(jar), Some(params.clone())).await.unwrap();
+    let locations: Option<Vec<LocationRender>> = api.get_protected("/locations/filter", &guard.access_token(), Some(params.clone())).await.unwrap();
 
     let notes: Option<Vec<Task>> = api
-        .get_protected("/notes/", &access_token, Some(params))
+        .get_protected("/notes/", guard.access_token(), Some(params))
         .await
         .unwrap();
     RawHtml(Template::render(
@@ -106,7 +105,7 @@ async fn list_stories(
 ) -> RawHtml<Template> {
     //let access_token = cookies.get("access_token").unwrap();
     let resp: Vec<Story> = api
-        .get_protected("/stories", &get_access_token(&cookies), None)
+        .get_protected("/stories", &guard.access_token(), None)
         .await
         .unwrap();
     RawHtml(Template::render(
@@ -128,14 +127,13 @@ async fn create_story_html(api: &State<ApiClient>) -> RawHtml<Template> {
 #[post("/", data = "<story>")]
 async fn create_story(
     guard: Guard,
-    jar: &CookieJar<'_>,
     //auth: &State<rocket_oidc::AuthState>,
     story: Form<StoryBuilder>,
     api: &State<ApiClient>,
 ) -> Redirect {
     let story = story.into_inner();
     let result: Story = api
-        .post("/stories", &get_access_token(jar), None, &story)
+        .post("/stories", &guard.access_token(), None, &story)
         .await
         .unwrap();
 

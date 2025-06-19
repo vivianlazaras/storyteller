@@ -85,7 +85,7 @@ pub struct Tag {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Task {
+pub struct Note {
     id: Uuid,
     name: String,
     description: Option<String>,

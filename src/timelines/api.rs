@@ -12,6 +12,14 @@ pub struct TimelineRender {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "category", content = "moment")]
+pub enum MomentRender {
+    Fragment(StoryFragment),
+    Image(Image),
+    Note(Note),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Timeline {
     id: Uuid,
     name: String,

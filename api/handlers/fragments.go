@@ -20,9 +20,15 @@ type CreateStoryFragment struct {
 	Tags		[]string		`json:"tags"`
 }
 
+type FragmentUpdate struct {
+	ID			uuid.UUID	`json:"id"`
+	Name		string		`json:"name"`
+	Content		string		`json:"content"`
+}
+
 func RegisterFragmentRoutes(r *gin.Engine) *gin.Engine {
 	
-	r.GET("/fragments", auth.JWTMiddleware(), GetFragmentsByStory)
+	r.GET("/fragments", auth.JWTMiddleware(), GetFragmentsByEntity)
 	r.GET("/fragments/:id", auth.JWTMiddleware(), GetFragmentById)
 	r.POST("/fragments/", auth.JWTMiddleware(), CreateFragment)
 	r.GET("/fragments/", auth.JWTMiddleware(), GetFragments)
@@ -60,7 +66,7 @@ func linkFragment(fragment *CreateStoryFragment, id uuid.UUID) error {
 	return nil
 }
 
-func GetFragmentsByStory(c *gin.Context) {
+func GetFragmentsByEntity(c *gin.Context) {
 	IDString := c.Query("parent")
 	parentID, iderr := uuid.Parse(IDString)
 	if iderr != nil {
@@ -69,7 +75,7 @@ func GetFragmentsByStory(c *gin.Context) {
 		return
 	}
 
-	fragments,err := selectFragmentsByStory(db.DB, parentID)
+	fragments,err := selectFragmentsByEntity(db.DB, parentID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
@@ -79,6 +85,7 @@ func GetFragmentsByStory(c *gin.Context) {
 	c.JSON(http.StatusOK, fragments)
 }
 
+/*
 func selectFragmentsByStory(db *gorm.DB, parentID uuid.UUID) ([]model.Fragment, error) {
 
 	var fragments []model.Fragment
@@ -86,6 +93,19 @@ func selectFragmentsByStory(db *gorm.DB, parentID uuid.UUID) ([]model.Fragment, 
 		Model(&model.Fragment{}).
 		Joins("JOIN relations ON relations.child = fragments.id").
 		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", parentID, "stories", "fragments").
+		Order("fragments.last_edited ASC").
+		Find(&fragments).Error
+
+	return fragments, err
+}*/
+
+func selectFragmentsByEntity(db *gorm.DB, parentID uuid.UUID) ([]model.Fragment, error) {
+
+	var fragments []model.Fragment
+	err := db.
+		Model(&model.Fragment{}).
+		Joins("JOIN relations ON relations.child = fragments.id").
+		Where("relations.parent = ? AND relations.child_category = ?", parentID, "fragments").
 		Order("fragments.last_edited ASC").
 		Find(&fragments).Error
 
@@ -140,6 +160,7 @@ func CreateNewFragment(fragment *CreateStoryFragment, creatorID uuid.UUID) (mode
 func CreateFragment(c *gin.Context) {
 	// I do need to handle automatic user creation if user not found
 	// aka handle settings
+	// also this is the best place to try and update timeline (if it exists)
 	user, err := auth.GetUserFromClaims(db.DB, c)
 
 	var fragment CreateStoryFragment
@@ -162,4 +183,79 @@ func CreateFragment(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, newfragment)
+}
+
+func UpdateFragment(db *gorm.DB, update FragmentUpdate, userID string) error {
+	
+	tx := db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	// Step 1: Load current fragment
+	var fragment model.Fragment
+	if err := tx.First(&fragment, "id = ?", update.ID).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Step 2: Compute line diff
+	diff := CalcDiff(&fragment.Content, &update.Content)
+	if len(diff) == 0 {
+		tx.Commit()
+		return nil // No changes
+	}
+
+	// Step 3: Create a group ID to associate these edits
+	groupID := uuid.New().String()
+	now := time.Now().Unix()
+
+	// Step 4: Create one Edit per change
+	for _, line := range diff {
+		edit := model.Edit{
+			ID:        uuid.New().String(),
+			UpdateID:   groupID,
+			Date:      now,
+			Editor:    userID,
+			Value:     line.Value,
+			Prevvalue: line.Previous,
+			Entity:    fragment.ID,
+			Field:     "content",
+			Change:    line.Change,
+		}
+		if err := tx.Create(&edit).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	// Step 5: Update the fragment content
+	fragment.Content = update.Content
+	if err := tx.Save(&fragment).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
+}
+
+func EditFragment(c *gin.Context) {
+	user, err := auth.GetUserFromClaims(db.DB, c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to get user from claims shomewhow"})
+		return
+	}
+	var fragmentUpdate FragmentUpdate
+	if err := c.ShouldBindJSON(&fragmentUpdate); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to bind JSON"})
+		return
+	}
+
+	updateErr := UpdateFragment(db.DB, fragmentUpdate, user.ID)
+	if updateErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update fragment"})
+		return
+	}
+
+	c.JSON(http.StatusOK, fragmentUpdate)
 }
