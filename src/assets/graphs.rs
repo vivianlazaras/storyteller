@@ -1,4 +1,5 @@
 use crate::api::ApiClient;
+use graphviz::style::{NodeAttr, color::Color};
 use graphviz::*;
 use petgraph::{dot::Config, dot::Dot, graph::DiGraph};
 use regex::Regex;
@@ -25,7 +26,10 @@ pub(crate) fn render_graph(graph: DiGraph<String, &'static str>) -> String {
     let context = Context::new();
     let mut gvGraph = Graph::new(graph_str, &context);
     gvGraph.set_layout(Layout::Dot);
-    let svg_slice = context.render(gvGraph, OutputFormat::Svg);
+    gvGraph
+        .set_attr_on_node("0", NodeAttr::FillColor(Color::RGB(0, 0, 255)))
+        .unwrap();
+    let svg_slice = context.render(&gvGraph, OutputFormat::Svg);
     let svg = String::from_utf8_lossy(&svg_slice);
     strip_svg_dimensions(&svg.to_string())
 }

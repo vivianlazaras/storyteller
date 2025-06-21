@@ -3,7 +3,6 @@ use std::collections::HashMap;
 pub enum TagCategory {
     GPS,
     DateTime,
-    
 }
 
 pub struct ExifTag {

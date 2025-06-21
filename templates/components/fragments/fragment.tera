@@ -1,3 +1,4 @@
+{% import "components/images/index" as images %}
 {% macro fragment(fragment) %}
 <div class="fragment">
   <div class="entitylink">
@@ -8,6 +9,8 @@
   <div class="listitem" id="{{ fragment.id }}">
     <div class="created">Created: {{ fragment.created }}</div>
     <p>{{ fragment.content }}</p>
+    {{ images::gallery(images=fragment.images) }}
   </div>
+  <a href="/assets/images/upload?category=fragments&parent={{ fragment.id }}">Upload Photos</a>
 </div>
 {% endmacro fragment %}

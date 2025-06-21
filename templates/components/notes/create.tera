@@ -1,6 +1,4 @@
 {% macro noteform(parent, category) %}
-<div id="noteform" class="noteform form">
-    <form action="/notes?parent={{ parent }}&category={{ category }}" method="post">
         <label for="name">Name</label>
         <input
             id="name"
@@ -9,6 +7,9 @@
             placeholder="Task name"
             required
         />
+
+        <input type="hidden" name="parent" value="{{ parent }}"/>
+        <input type="hidden" name="category" value="{{ category }}"/>
 
         <label for="description">Description</label>
         <textarea
@@ -34,7 +35,6 @@
         />
 
         <button type="submit">Create</button>
-    </form>
 </div>
 
 <script>

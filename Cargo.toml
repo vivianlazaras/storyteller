@@ -39,6 +39,8 @@ petgraph = "0.8.2"
 graphviz = { path = "./graphviz" }
 regex = "1.11.1"
 ubyte = "0.10.4"
+lofty = "0.22.4"
+chrono = "0.4.41"
 
 [features]
 redis = ["dep:redis"]

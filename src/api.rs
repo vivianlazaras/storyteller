@@ -54,7 +54,7 @@ fn join_url<B: AsRef<str>, P: AsRef<str>>(base: B, path: P) -> Result<Url, url::
     Url::parse(base.as_ref())?.join(path.as_ref())
 }
 
-pub type Map<'a> = HashMap<&'static str, &'a str>;
+pub type Map<'a> = HashMap<&'a str, &'a str>;
 
 impl ApiClient {
     pub async fn new(url: &str) -> Result<Self> {
@@ -188,7 +188,8 @@ pub(crate) fn get_access_token(jar: &CookieJar<'_>) -> String {
 }
 
 #[rocket::async_trait]
-pub trait EntityBuilder: Serialize {
+pub trait Builder: Serialize {
+    fn route() -> &'static str;
     async fn build<R>(&self, api: &ApiClient) -> Result<R>;
 }
 

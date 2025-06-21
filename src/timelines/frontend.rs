@@ -10,22 +10,15 @@ use rocket::{Route, State, get, post, routes};
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
 
-pub struct TimelineForm<'r> {
+pub struct TimelineForm {
     pub name: String,
     pub description: Option<String>,
-    /// This is intended as a means for defining a SVG superset for representing timelines
-    /// accross platforms where each node contains either UUID to reference an entity, or this projects
-    /// JSON spec to represent first class entities along a timeline.
-    /// however processing this entity is currently not implemented, thus does not show up in the UI.
-    pub svg: Option<TempFile<'r>>,
+    pub source: Uuid,
+    pub parent_category: String,
 }
 
 #[get("/<id>")]
-async fn get_timeline(
-    guard: Guard,
-    id: Uuid,
-    api: &State<ApiClient>,
-) -> RawHtml<Template> {
+async fn get_timeline(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let url = format!("/timelines/{}", id);
     let timeline: Timeline = api
         .get_protected(&url, guard.access_token(), None)
@@ -41,10 +34,7 @@ async fn get_timeline(
 }
 
 #[get("/")]
-async fn list_timelines(
-    guard: Guard,
-    api: &State<ApiClient>,
-) -> RawHtml<Template> {
+async fn list_timelines(guard: Guard, api: &State<ApiClient>) -> RawHtml<Template> {
     let timelines: Vec<RelatedEntity> = match api
         .get_protected("/timelines", guard.access_token(), None)
         .await
@@ -59,6 +49,14 @@ async fn list_timelines(
     ))
 }
 
+#[get("/create")]
+async fn create_html(guard: Guard, api: &State<ApiClient>) -> RawHtml<Template> {
+    RawHtml(Template::render(
+        "timelines/create",
+        context! { title: "create new timeline" },
+    ))
+}
+
 pub fn get_routes() -> Vec<Route> {
-    routes![get_timeline, list_timelines]
+    routes![get_timeline, list_timelines, create_html]
 }

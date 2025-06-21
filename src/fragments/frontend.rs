@@ -1,5 +1,6 @@
 use super::api::*;
 use crate::ApiClient;
+use crate::auth::Guard;
 use crate::model::*;
 use rocket::fs::TempFile;
 use rocket::http::CookieJar;
@@ -8,7 +9,6 @@ use rocket::response::content::RawHtml;
 use rocket::{FromForm, Route, State, form::Form, get, post, routes};
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
-use crate::auth::Guard;
 #[derive(Debug, FromForm)]
 pub struct CreateFragmentForm<'r> {
     image: Option<TempFile<'r>>,
@@ -38,7 +38,7 @@ pub struct FragmentRender {
     pub id: Uuid,
     pub name: String,
     pub content: String,
-    pub image: Option<String>,
+    pub images: Option<Vec<Image>>,
     pub created: String,
     pub last_edited: String,
 }

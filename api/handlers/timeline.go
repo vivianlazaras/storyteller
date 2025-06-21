@@ -216,7 +216,7 @@ func CreateNewTimeline(db *gorm.DB, builder TimelineBuilder) (model.Timeline, er
 				return model.Timeline{}, serr
 			}
 			for idx, fragment := range fragments {
-				_, merr := CreateMoment(tx, timelineid, uuid.MustParse(fragment.ID), int64(idx))
+				_, merr := CreateMoment(tx, timelineid, fragment.ID, int64(idx))
 				if merr != nil {
 					tx.Rollback()
 					return model.Timeline{}, merr

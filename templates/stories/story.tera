@@ -76,7 +76,8 @@ function list_toggle(id) {
     </div>
 
     {{ links::add_entity(name="Location", parentCategory="stories", childCategory="locations", id=story.id ) }}
-    {{ notes::notelist(notes=notes, edit=true, parent=story.id, category="stories") }}
+    {{ notes::notelist(notes=notes, parent=story.id, category="stories") }}
+    <a href="/notes/create?parent={{ story.id }}&category=stories">Add Note</a>
   </div>
 </div>
 

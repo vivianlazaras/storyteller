@@ -7,6 +7,7 @@ import (
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/vivianlazaras/storyteller/model"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func RegisterNoteRoutes(r *gin.Engine) *gin.Engine {
@@ -18,69 +19,69 @@ func RegisterNoteRoutes(r *gin.Engine) *gin.Engine {
 	return r
 } 
 
-type CreateNoteParts struct {
-	Name		string	`json:"name"`
-	Description *string	`json:"description"`
-	Deadline	*int64	`json:"deadline"`
+type NoteBuilder struct {
+	Name		string		`json:"name"`
+	Description *string		`json:"description"`
+	Deadline	*int64		`json:"deadline"`
+	Parent		uuid.UUID 	`json:"parent"`
+	Category	string		`json:"category"`
 }
 
-func CreateNoteFromParts(note CreateNoteParts) (model.Note, error) {
+func CreateNewNote(db *gorm.DB, builder NoteBuilder) (model.Note, error) {
 	now := time.Now().Unix()
 	description := ""
 
-	if note.Description != nil {
-		description = *note.Description
+	if builder.Description != nil {
+		description = *builder.Description
 	}
 
 	newnote := model.Note {
 		ID: uuid.New().String(),
-		Name: note.Name,
+		Name: builder.Name,
 		Description: description,
 		Created: now,
 	}
 
-	err := db.DB.Create(&newnote).Error
-	return newnote, err
+	// now that note should be linked through the Relations table
+	var relation = model.Relation {
+		Parent: builder.Parent.String(),
+		ParentCategory: builder.Category,
+		Child: newnote.ID,
+		ChildCategory: "notes",
+	}
+
+	tx := db.Begin()
+
+	err := db.Create(&newnote).Error
+	if err != nil {
+		tx.Rollback()
+		return model.Note{}, err
+	}
+
+	_, relresult := CreateNewRelation(tx, &relation)
+	if relresult != nil {
+		tx.Rollback()
+		return model.Note{}, relresult
+	}
+
+	return newnote, nil
 }
 
 func CreateNote(c *gin.Context) {
-	category := c.Query("category")
-
-	// ensure parameters are properly set
-	if category == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "missing required query parameter"})
-	}
-
-	entity, result := GetIDParam(c.Query("entity"))
-	if result.IsError() {
-		result.GinResult(c)
-		return
-	}
 
 	// I should really add an assertion of category here, but it's fine for now
 	
-	var parts CreateNoteParts
-	if jsonErr := c.ShouldBindJSON(&parts); jsonErr != nil {
+	var builder NoteBuilder
+	if jsonErr := c.ShouldBindJSON(&builder); jsonErr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse note creation json"})
 	}
 
-	note, err := CreateNoteFromParts(parts)
+	note, err := CreateNewNote(db.DB, builder)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "inernal server error creating note"})
 	}
 
-	// now that note should be linked through the Relations table
-	var relation = model.Relation {
-		Parent: entity.String(),
-		ParentCategory: category,
-		Child: note.ID,
-		ChildCategory: "notes",
-	}
-
-	_, relresult := CreateNewRelation(db.DB, &relation)
-	if relresult == nil {
-		c.JSON(http.StatusOK, note)
-	}
+	c.JSON(http.StatusOK, note)
 }
 
 func CompleteNote(c *gin.Context) {

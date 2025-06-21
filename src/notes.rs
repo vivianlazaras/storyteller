@@ -1,5 +1,9 @@
 use crate::ApiClient;
+use crate::auth::Guard;
+use rocket::get;
+use rocket::response::content::RawHtml;
 use rocket::{FromForm, Route, State, form::Form, post, response::Redirect, routes};
+use rocket_dyn_templates::{Template, context};
 use std::collections::HashMap;
 
 use uuid::Uuid;
@@ -14,29 +18,33 @@ pub struct Note {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromForm)]
-pub struct CreateNote {
+pub struct NoteForm {
     name: String,
     description: Option<String>,
     deadline: Option<i64>,
-}
-
-#[post("/?<parent>&<category>", data = "<noteform>")]
-async fn create_note(
     parent: Uuid,
     category: String,
-    noteform: Form<CreateNote>,
-    api: &State<ApiClient>,
-) -> Redirect {
+}
+
+#[post("/", data = "<noteform>")]
+async fn create_note(guard: Guard, noteform: Form<NoteForm>, api: &State<ApiClient>) -> Redirect {
     let note = noteform.into_inner();
-    let mut params = HashMap::new();
-    let parent_str = parent.to_string();
-    params.insert("entity", parent_str.as_str());
-    params.insert("category", category.as_str());
-    let _: Note = api.post("/notes/", "", Some(params), note).await.unwrap();
-    let redirect = format!("/{}/{}", category, parent);
+    let _: Note = api
+        .post("/notes/", guard.access_token(), None, &note)
+        .await
+        .unwrap();
+    let redirect = format!("/{}/{}", note.category, note.parent);
     Redirect::to(redirect)
 }
 
+#[get("/create?<parent>&<category>")]
+async fn create_note_html(parent: Uuid, category: String) -> RawHtml<Template> {
+    RawHtml(Template::render(
+        "notes/create",
+        context! { title: "create note", parent, category },
+    ))
+}
+
 pub fn get_routes() -> Vec<Route> {
-    routes![create_note]
+    routes![create_note, create_note_html]
 }

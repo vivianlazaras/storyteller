@@ -21,7 +21,7 @@ fn main() -> Result<()> {
     // Ensure target is added
     println!("Checking if target `wasm32-wasi` is installed...");
     let _ = Command::new("rustup")
-        .args(["target", "add", "wasm32-wasi"])
+        .args(["target", "add", "wasm32-wasip1"])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status()

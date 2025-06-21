@@ -1,7 +1,8 @@
 use crate::api::{ApiClient, get_access_token};
 use crate::auth::Guard;
 use crate::characters::api::CharacterRender;
-use crate::model::Task;
+use crate::fragments::frontend::FragmentRender;
+use crate::model::Note;
 use crate::model::{Character, Story, StoryFragment, Tag};
 use rocket::form::Form;
 use rocket::http::CookieJar;
@@ -38,11 +39,7 @@ pub struct StoryBuilder {
 }
 
 #[get("/<id>")]
-async fn get_story(
-    guard: Guard,
-    id: Uuid,
-    api: &State<ApiClient>,
-) -> RawHtml<Template> {
+async fn get_story(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let access_token = guard.access_token();
     let url = format!("/stories/{}", id);
     let id_string = id.to_string();
@@ -53,7 +50,7 @@ async fn get_story(
     let tags: Vec<Tag> = api.get(&tagurl, None).await.unwrap();
 
     let fragments = match api
-        .get_protected::<Option<Vec<StoryFragment>>, _>(
+        .get_protected::<Option<Vec<FragmentRender>>, _>(
             "/fragments",
             &access_token,
             Some(params.clone()),
@@ -61,13 +58,8 @@ async fn get_story(
         .await
         .unwrap()
     {
-        Some(fragments) => Some(
-            fragments
-                .into_iter()
-                .map(|f| f.render())
-                .collect::<Vec<crate::fragments::frontend::FragmentRender>>(),
-        ),
-        None => None,
+        Some(fragments) => Some(fragments),
+        None => Some(Vec::new()),
     };
 
     // may need to be implemented later, for now don't worry about it
@@ -85,9 +77,16 @@ async fn get_story(
         None => None,
     };
 
-    let locations: Option<Vec<LocationRender>> = api.get_protected("/locations/filter", &guard.access_token(), Some(params.clone())).await.unwrap();
+    let locations: Option<Vec<LocationRender>> = api
+        .get_protected(
+            "/locations/filter",
+            &guard.access_token(),
+            Some(params.clone()),
+        )
+        .await
+        .unwrap();
 
-    let notes: Option<Vec<Task>> = api
+    let notes: Option<Vec<Note>> = api
         .get_protected("/notes/", guard.access_token(), Some(params))
         .await
         .unwrap();

@@ -42,11 +42,7 @@ async fn create_character<'f>(
 }
 
 #[get("/<id>")]
-async fn get_character(
-    guard: Guard,
-    id: Uuid,
-    api: &State<ApiClient>,
-) -> RawHtml<Template> {
+async fn get_character(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let render: CharacterRender = api
         .get_protected(&format!("/characters/{}", id), guard.access_token(), None)
         .await
@@ -69,9 +65,12 @@ async fn create_character_html() -> RawHtml<Template> {
 async fn list_characters(
     guard: Guard,
     api: &State<ApiClient>,
+    jar: &rocket::http::CookieJar<'_>,
 ) -> RawHtml<Template> {
+    println!("access_token: {}", guard.access_token());
+    assert_eq!(&crate::get_access_token(jar), guard.access_token());
     let characters: Vec<CharacterRender> = match api
-        .get_protected("/characters", guard.access_token(), None)
+        .get_protected("/characters", &crate::get_access_token(jar), None)
         .await
         .unwrap()
     {
@@ -86,11 +85,7 @@ async fn list_characters(
 }
 
 #[get("/trees/<id>")]
-async fn get_tree(
-    guard: Guard,
-    id: Uuid,
-    api: &State<ApiClient>,
-) -> RawHtml<Template> {
+async fn get_tree(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let url = format!("/characters/{}", id);
     let character: Character = api
         .get_protected(url, guard.access_token(), None)
@@ -113,12 +108,7 @@ pub struct DeleteRequest {
 
 // this method could be the same for all entities
 #[post("/delete", data = "<form>")]
-async fn delete_entity(
-    guard: Guard,
-    form: Form<DeleteRequest>,
-    api: &State<ApiClient>,
-) {
-}
+async fn delete_entity(guard: Guard, form: Form<DeleteRequest>, api: &State<ApiClient>) {}
 
 #[derive(FromForm, Debug)]
 pub struct CharacterBuilderForm<'r> {

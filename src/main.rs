@@ -74,9 +74,9 @@ async fn rocket() -> _ {
         address: config.listen().parse().unwrap(),
         port: config.port(),
         limits: Limits::new()
-        .limit("file", ByteUnit::Gigabyte(2))
-        .limit("form", ByteUnit::Gigabyte(2))
-        .limit("data-form", ByteUnit::Gigabyte(2)),
+            .limit("file", ByteUnit::Gigabyte(2))
+            .limit("form", ByteUnit::Gigabyte(2))
+            .limit("data-form", ByteUnit::Gigabyte(2)),
         ..rocket::Config::default()
     };
 

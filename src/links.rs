@@ -1,5 +1,6 @@
 use crate::ApiClient;
-use rocket::response::content::RawHtml;
+use crate::auth::Guard;
+use rocket::response::content::{RawHtml, RawJson};
 use rocket::{FromForm, Route, State, form::Form, get, post, response::Redirect, routes};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -73,12 +74,11 @@ async fn create_link_html(
     id: Uuid,
     parent: String,
     child: String,
-    jar: &CookieJar<'_>,
 ) -> RawHtml<Template> {
     let mut params = HashMap::new();
     params.insert("category", child.as_str());
     let items: Option<Vec<RelatedEntity>> = api
-        .get_protected("/relations", &get_access_token(jar), Some(params))
+        .get_protected("/relations", guard.access_token(), Some(params))
         .await
         .unwrap();
     RawHtml(Template::render(
@@ -95,6 +95,22 @@ async fn create_link(api: &State<ApiClient>, rel: Form<Relation>) -> Redirect {
     Redirect::to(redirect)
 }
 
+#[get("/<category>")]
+async fn list_by_type(
+    guard: Guard,
+    category: &str,
+    api: &State<ApiClient>,
+) -> RawJson<String> {
+    let mut params = HashMap::new();
+    params.insert("category", category);
+    let entities: Option<Vec<RelatedEntity>> = api.get_protected("/relations", guard.access_token(), Some(params))
+    .await
+    .unwrap();
+    RawJson(serde_json::to_string(
+        &entities
+    ).unwrap())
+}
+
 pub fn get_routes() -> Vec<Route> {
-    routes![create_link_html, create_link]
+    routes![create_link_html, create_link, list_by_type]
 }

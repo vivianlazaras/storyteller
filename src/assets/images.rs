@@ -5,13 +5,14 @@ use image::{DynamicImage, ImageError, ImageFormat, ImageReader};
 use nom_exif::{ExifIter, MediaParser, MediaSource};
 use rocket::response::content::RawHtml;
 use rocket::{
-    response::Redirect,
     FromForm, Route, State,
     form::Form,
     fs::{NamedFile, TempFile},
     get,
     http::ContentType,
-    post, routes,
+    post,
+    response::Redirect,
+    routes,
     tokio::{
         fs,
         fs::File,
@@ -29,7 +30,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExifTagRender {
     tag: String,
-    value: String
+    value: String,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImageRender {
@@ -289,11 +290,7 @@ async fn upload_image<'r>(
     let parent = form.parent.clone();
     let category = form.category.clone();
 
-    if let Some(builder) = form
-        .into_image_builder(&processor)
-        .await
-        .unwrap()
-    {
+    if let Some(builder) = form.into_image_builder(&processor).await.unwrap() {
         builder.build(&api, guard.access_token()).await.unwrap();
     };
     let url = format!("/{}/{}", category, parent);
@@ -310,10 +307,14 @@ async fn get_image(id: Uuid, processor: &State<ImageProcessor>) -> Option<NamedF
 #[get("/info/<id>")]
 async fn get_info(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml<Template> {
     let url = format!("/assets/images/{}", id);
-    let image: ImageRender = api.get_protected(url, guard.access_token(), None).await.unwrap();
-    RawHtml(
-        Template::render("images/image", context!(title: "image info", image ))
-    )
+    let image: ImageRender = api
+        .get_protected(url, guard.access_token(), None)
+        .await
+        .unwrap();
+    RawHtml(Template::render(
+        "images/image",
+        context!(title: "image info", image ),
+    ))
 }
 
 pub fn get_routes() -> Vec<Route> {

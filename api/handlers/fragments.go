@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type CreateStoryFragment struct {
+type FragmentBuilder struct {
 	Parent		*string			`json:"parent"`
 	Category	*string			`json:"category"`
 	Content     string          `json:"content"`
@@ -24,6 +24,16 @@ type FragmentUpdate struct {
 	ID			uuid.UUID	`json:"id"`
 	Name		string		`json:"name"`
 	Content		string		`json:"content"`
+}
+
+type FragmentRender struct {
+	ID		uuid.UUID	`json:"id"`
+	Name	string		`json:"name"`
+	Description	string	`json:"description"`
+	Content	string		`json:"content"`
+	Images	[]model.Image `json:"images"`
+	Created		string	`json:"created"`
+	LastEdited	string	`json:"last_edited"`
 }
 
 func RegisterFragmentRoutes(r *gin.Engine) *gin.Engine {
@@ -49,7 +59,7 @@ func GetFragments(c *gin.Context) {
 	c.JSON(http.StatusOK, fragments)
 }
 
-func linkFragment(fragment *CreateStoryFragment, id uuid.UUID) error {
+func linkFragment(fragment *FragmentBuilder, id uuid.UUID) error {
 	if fragment.Category != nil && fragment.Parent != nil {
 		relation := model.Relation{
 			Parent:         *fragment.Parent,
@@ -99,9 +109,9 @@ func selectFragmentsByStory(db *gorm.DB, parentID uuid.UUID) ([]model.Fragment, 
 	return fragments, err
 }*/
 
-func selectFragmentsByEntity(db *gorm.DB, parentID uuid.UUID) ([]model.Fragment, error) {
-
+func selectFragmentsByEntity(db *gorm.DB, parentID uuid.UUID) ([]FragmentRender, error) {
 	var fragments []model.Fragment
+
 	err := db.
 		Model(&model.Fragment{}).
 		Joins("JOIN relations ON relations.child = fragments.id").
@@ -109,7 +119,35 @@ func selectFragmentsByEntity(db *gorm.DB, parentID uuid.UUID) ([]model.Fragment,
 		Order("fragments.last_edited ASC").
 		Find(&fragments).Error
 
-	return fragments, err
+	if err != nil {
+		return nil, err
+	}
+
+	var results []FragmentRender
+	for _, frag := range fragments {
+		var images []model.Image
+		err := db.
+			Model(&model.Image{}).
+			Joins("JOIN relations ON relations.child = images.id").
+			Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", frag.ID, "fragments", "images").
+			Find(&images).Error
+		if err != nil {
+			return nil, err
+		}
+
+		render := FragmentRender{
+			ID:          uuid.MustParse(frag.ID),
+			Name:        frag.Name,
+			Description: frag.Description,
+			Content:     frag.Content,
+			Images:      images,
+			Created:     time.Unix(int64(frag.Created), 0).UTC().Format(time.RFC3339),
+			LastEdited:  time.Unix(int64(frag.LastEdited), 0).UTC().Format(time.RFC3339),
+		}
+		results = append(results, render)
+	}
+
+	return results, nil
 }
 
 func GetFragmentById(c *gin.Context) {
@@ -122,7 +160,7 @@ func GetFragmentById(c *gin.Context) {
 	c.JSON(http.StatusOK, fragment)
 }
 
-func CreateNewFragment(fragment *CreateStoryFragment, creatorID uuid.UUID) (model.Fragment, error) {
+func CreateNewFragment(fragment *FragmentBuilder, creatorID uuid.UUID) (model.Fragment, error) {
 	now := time.Now().Unix()
 	fragmentid := uuid.New()
 	
@@ -163,7 +201,7 @@ func CreateFragment(c *gin.Context) {
 	// also this is the best place to try and update timeline (if it exists)
 	user, err := auth.GetUserFromClaims(db.DB, c)
 
-	var fragment CreateStoryFragment
+	var fragment FragmentBuilder
 	if err := c.ShouldBindJSON(&fragment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request: " + err.Error(),

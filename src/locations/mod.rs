@@ -58,10 +58,7 @@ pub struct LocationBuilder {
 }
 
 #[get("/")]
-async fn list_places(
-    guard: Guard,
-    api: &State<ApiClient>,
-) -> RawHtml<Template> {
+async fn list_places(guard: Guard, api: &State<ApiClient>) -> RawHtml<Template> {
     let locations: Vec<Location> = match api
         .get_protected("/locations/", guard.access_token(), None)
         .await
@@ -77,11 +74,7 @@ async fn list_places(
 }
 
 #[get("/<id>")]
-async fn get_place(
-    guard: Guard,
-    api: &State<ApiClient>,
-    id: Uuid,
-) -> RawHtml<Template> {
+async fn get_place(guard: Guard, api: &State<ApiClient>, id: Uuid) -> RawHtml<Template> {
     let url = format!("/locations/{}", id);
     let location: Location = api
         .get_protected(&url, guard.access_token(), None)

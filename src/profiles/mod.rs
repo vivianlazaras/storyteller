@@ -108,7 +108,6 @@ impl LoginBuilder {
 
 #[post("/login", data = "<form>")]
 async fn login(api: &State<ApiClient>, form: Form<LoginForm>, jar: &CookieJar<'_>) -> Redirect {
-    
     let login = form.into_inner();
     let redirect = login.redirect.clone();
     let access_token: String = match api.post("/login", "", None, login).await {
@@ -126,7 +125,7 @@ async fn login(api: &State<ApiClient>, form: Form<LoginForm>, jar: &CookieJar<'_
     );
     match redirect {
         Some(redirect) => Redirect::to(redirect),
-        None => Redirect::to("/profiles/profile")
+        None => Redirect::to("/profiles/profile"),
     }
 }
 

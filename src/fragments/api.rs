@@ -23,16 +23,17 @@ impl<'a> FragmentBuilder<'a> {
     }
 }
 
+/*
 impl StoryFragment {
     pub fn render(self) -> FragmentRender {
         FragmentRender {
             id: self.id,
             name: self.name,
             content: self.content,
-            image: None,
             created: crate::epoch_to_human(self.created),
             // I'll handle last edited when I have edit's implemented
             last_edited: String::from("unimplemented"),
         }
     }
 }
+*/

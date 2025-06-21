@@ -26,7 +26,6 @@ impl fmt::Display for ApiError {
 
 impl Error for ApiError {}
 
-
 // Custom error
 #[derive(Debug)]
 pub enum FrontendError {
@@ -44,4 +43,3 @@ impl fmt::Display for FrontendError {
 }
 
 impl Error for FrontendError {}
-

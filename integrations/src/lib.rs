@@ -1,6 +1,7 @@
 pub mod loader;
 pub mod error;
 pub mod data;
+pub mod net;
 use uuid::Uuid;
 
 use serde_derive::*;

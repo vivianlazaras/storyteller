@@ -14,7 +14,6 @@ import (
 	"math/big"
     "github.com/gin-gonic/gin"
     "github.com/vivianlazaras/storyteller/model"
-	"github.com/vivianlazaras/storyteller/db"
     "gorm.io/gorm"
 	"golang.org/x/crypto/bcrypt"
 
@@ -207,9 +206,10 @@ func JWTMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		
 		// Store claims in the context for handlers to access
 		c.Set("claims", claims)
-
+		/*
 		if c.Request.Method == http.MethodPut || c.Request.Method == http.MethodDelete {
 			idParam := c.Param("id")
 			if idParam == "" {
@@ -249,7 +249,7 @@ func JWTMiddleware() gin.HandlerFunc {
 				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "permission denied"})
 				return
 			}
-		}
+		}*/
 
 		c.Next()
 	}

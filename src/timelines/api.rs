@@ -12,14 +12,6 @@ pub struct TimelineRender {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "category", content = "moment")]
-pub enum MomentRender {
-    Fragment(StoryFragment),
-    Image(Image),
-    Note(Note),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Timeline {
     id: Uuid,
     name: String,
@@ -60,16 +52,16 @@ impl Timeline {
 }
 
 #[derive(Serialize, Debug, Clone)]
-pub enum TimelineGenerator {
-    Fragments(Vec<Uuid>),
-    Story(Uuid),
+pub struct TimelineGenerator {
+    source: Uuid,
+    category: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct TimelineBuilder {
     name: String,
     description: Option<String>,
-    generator: Option<TimelineGenerator>,
+    generator: TimelineGenerator,
 }
 
 /// this type represents an individual link within a timeline
