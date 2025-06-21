@@ -131,7 +131,7 @@ func CreateNewLocation(tx *gorm.DB, builder LocationBuilder) (model.Location, er
 	}
 
 	if builder.Thumbnail != nil {
-
+		builder.Thumbnail.Parent = &location.ID
 		images, imgerr := CreateNewImage(tx, *builder.Thumbnail)
 		if imgerr != nil {
 			fmt.Printf("image error: %s", imgerr)

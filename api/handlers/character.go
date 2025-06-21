@@ -140,6 +140,7 @@ func CreateNewCharacter(tx *gorm.DB, builder *CharacterBuilder, creatorID uuid.U
 	}
 
 	if builder.Thumbnail != nil {
+		builder.Thumbnail.Parent = &character.ID
 		images, imgerr := CreateNewImage(tx, *builder.Thumbnail)
 		if imgerr != nil {
 			tx.Rollback()
