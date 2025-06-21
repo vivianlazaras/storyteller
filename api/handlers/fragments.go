@@ -59,7 +59,7 @@ func GetFragments(c *gin.Context) {
 	c.JSON(http.StatusOK, fragments)
 }
 
-func linkFragment(fragment *FragmentBuilder, id uuid.UUID) error {
+func linkFragment(tx *gorm.DB, fragment *FragmentBuilder, id uuid.UUID) error {
 	if fragment.Category != nil && fragment.Parent != nil {
 		relation := model.Relation{
 			Parent:         *fragment.Parent,
@@ -69,7 +69,7 @@ func linkFragment(fragment *FragmentBuilder, id uuid.UUID) error {
 			Description:    "",        // or you can add logic to populate this if needed
 		}
 
-		if err := db.DB.Create(&relation).Error; err != nil {
+		if err := tx.Create(&relation).Error; err != nil {
 			return fmt.Errorf("failed to create relation: %w", err)
 		}
 	}
@@ -160,7 +160,7 @@ func GetFragmentById(c *gin.Context) {
 	c.JSON(http.StatusOK, fragment)
 }
 
-func CreateNewFragment(fragment *FragmentBuilder, creatorID uuid.UUID) (model.Fragment, error) {
+func CreateNewFragment(tx *gorm.DB, fragment *FragmentBuilder, creatorID uuid.UUID) (model.Fragment, error) {
 	now := time.Now().Unix()
 	fragmentid := uuid.New()
 	
@@ -186,8 +186,8 @@ func CreateNewFragment(fragment *FragmentBuilder, creatorID uuid.UUID) (model.Fr
 		}
 	}
 
-	tagerr := InsertTagsForEntity(fragmentid, fragment.Tags)
-	linkerr := linkFragment(fragment, fragmentid)
+	tagerr := InsertTagsForEntity(tx, fragmentid, fragment.Tags)
+	linkerr := linkFragment(tx, fragment, fragmentid)
 	
 	if tagerr != nil {
 		return newfragment, tagerr
@@ -214,12 +214,19 @@ func CreateFragment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{ "error": "Internal Server Error: " + err.Error() })
 		return
 	}
-	newfragment, newerr := CreateNewFragment(&fragment, parsedUUID)
+
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create transaction"})
+		return
+	}
+	newfragment, newerr := CreateNewFragment(tx, &fragment, parsedUUID)
 	if newerr != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{ "error": "unkown panic" })
 		return
 	}
-
+	tx.Commit()
 	c.JSON(http.StatusOK, newfragment)
 }
 

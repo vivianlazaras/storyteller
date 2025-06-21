@@ -12,7 +12,7 @@ import (
 )
 
 func RegisterEntityRoutes(r *gin.Engine) *gin.Engine {
-	r.GET("/relations", auth.JWTMiddleware(), ListEntitiesByChildCategory)
+	r.GET("/relations", auth.JWTMiddleware(), ListEntitiesByCategory)
 	r.POST("/relations/", auth.JWTMiddleware(), CreateRelation)
 	return r
 }
@@ -131,15 +131,15 @@ func ListEntitiesByCategoryForGroup(db *gorm.DB, groupID uuid.UUID, category str
 	return entities, nil
 }
 
-func ListEntitiesByChildCategory(c *gin.Context) {
-	childCategory := c.Query("category")
+func ListEntitiesByCategory(c *gin.Context) {
+	category := c.Query("category")
 	user, uerr := auth.GetUserFromClaims(db.DB, c)
 	if uerr != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to get user"})
 		return
 	}
 
-	if childCategory == "" {
+	if category == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "child_category query parameter is required"})
 		return
 	}
@@ -147,23 +147,21 @@ func ListEntitiesByChildCategory(c *gin.Context) {
 	var entities []RelatedEntity
 	var query string
 
-	switch childCategory {
+	switch category {
 	case "characters", "stories", "fragments", "locations", "timelines":
 		query = fmt.Sprintf(`
 			SELECT e.id, e.name, e.description
 			FROM %s e
-			JOIN relations r ON r.child = e.id
 			JOIN entities ent ON ent.id = e.id
 			JOIN grouprel gr ON gr.group_id = ent.group_id
-			WHERE r.child_category = ?
 			AND gr.user_id = ?
-		`, childCategory)
+		`, category)
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unknown child_category"})
 		return
 	}
 
-	err := db.DB.Raw(query, childCategory, user.ID).Scan(&entities).Error
+	err := db.DB.Raw(query, user.ID).Scan(&entities).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -172,9 +170,21 @@ func ListEntitiesByChildCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, entities)
 }
 
-/// a utility function for setting entities.group_id using the user's default group
-func CreateNewEntity(db *gorm.DB, id uuid.UUID, userID uuid.UUID) {
+/// utility function to set group_id for entity
+func CreateNewEntity(db *gorm.DB, id uuid.UUID, group uuid.UUID) error {
+	// Perform the update on the entities table
+	result := db.Model(&model.Entity{}).
+		Where("id = ?", id).
+		Update("group_id", group)
 
+	// Check if the update succeeded
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 func CreateNewRelation(db *gorm.DB, relation *model.Relation) (*model.Relation, error) {

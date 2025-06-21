@@ -16,13 +16,8 @@ import (
 type TimelineBuilder struct {
 	Name        string              `json:"name"`
 	Description *string             `json:"description,omitempty"`
-	Generator   *TimelineGenerator  `json:"generator,omitempty"`
-}
-
-// Adjacently tagged enum workaround in Go
-type TimelineGenerator struct {
-	Source     *uuid.UUID	`json:"entity"`
-	ParentCategory	string	`json:"category"`
+	Source     	uuid.UUID	`json:"source"`
+	Category	string	`json:"category"`
 }
 
 type FullMoment struct {
@@ -60,25 +55,29 @@ func GetTimeline(c *gin.Context) {
 	}
 	// I need to find out how to automatically re-generate if updates have occured.
 
+	full, err := GetFullTimeline(db.DB, *timeline);
+
+	c.JSON(http.StatusOK, full)
+}
+
+func GetFullTimeline(db *gorm.DB, timeline model.Timeline) (FullTimeline, error) {
 	// Fetch the associated moments
 	var moments []model.Moment
-	if err := db.DB.
+	if err := db.
 		Where("timeline = ?", timeline.ID).
 		Order("idx ASC").
 		Find(&moments).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve moments"})
-		return
+		return FullTimeline{}, err
 	}
 
 	// Compose FullMoments by fetching their fragments
 	fullMoments := make([]FullMoment, 0, len(moments))
 	for _, moment := range moments {
 		var fragment model.Fragment
-		if err := db.DB.
+		if err := db.
 			Where("id = ?", moment.Fragment).
 			First(&fragment).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve fragment"})
-			return
+			return FullTimeline{}, err
 		}
 
 		fullMoments = append(fullMoments, FullMoment{
@@ -92,7 +91,7 @@ func GetTimeline(c *gin.Context) {
 	// Attempt to fetch the graph, if any
 	var graph model.Graph
 	var graphStr *string
-	if err := db.DB.
+	if err := db.
 		Where("entity = ?", timeline.ID).
 		Order("rendered DESC").
 		First(&graph).Error; err == nil {
@@ -109,7 +108,7 @@ func GetTimeline(c *gin.Context) {
 		Graph:       graphStr,
 	}
 
-	c.JSON(http.StatusOK, full)
+	return full, nil
 }
 
 func defaultTimeline(metadata string) model.Timeline {
@@ -163,6 +162,7 @@ func ListTimelines(c *gin.Context) {
 
 	// Fetch timelines accessible by this user
 	timelines, err := ListEntitiesByCategoryForGroup(db.DB, uuid.MustParse(user.DefaultGroup), "timelines")
+	
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch timelines: " + err.Error()})
 		return
@@ -173,7 +173,7 @@ func ListTimelines(c *gin.Context) {
 
 /// this function either generates from existing story, xor from fragments
 /// not both as the ordering would be much more complex to implement if both were supported
-func CreateNewTimeline(db *gorm.DB, builder TimelineBuilder) (model.Timeline, error) {
+func CreateNewTimeline(db *gorm.DB, user *model.User, builder TimelineBuilder) (model.Timeline, error) {
 	now := time.Now().Unix()
 	var description = ""
 	var timelineid = uuid.New()
@@ -186,6 +186,7 @@ func CreateNewTimeline(db *gorm.DB, builder TimelineBuilder) (model.Timeline, er
 		ID: timelineid.String(),
 		Name: builder.Name,
 		Description: description,
+		Source: builder.Source.String(),
 		Created: now,
 		LastEdited: now,
 	}
@@ -197,34 +198,38 @@ func CreateNewTimeline(db *gorm.DB, builder TimelineBuilder) (model.Timeline, er
 		return model.Timeline{}, tlerr
 	}
 
-	if builder.Generator != nil {
-		if builder.Generator.Source != nil {
-			var relation = model.Relation {
-				Parent: builder.Generator.Source.String(),
-				Child: timelineid.String(),
-				ParentCategory: builder.Generator.ParentCategory,
-				ChildCategory: "timelines",
-				Description: "",
-			}
-			_, result := CreateNewRelation(tx, &relation)
-			if result != nil {
-				return model.Timeline{}, result
-			}
-			fragments,serr := selectFragmentsByEntity(tx, *builder.Generator.Source);
-			if serr != nil {
-				tx.Rollback()
-				return model.Timeline{}, serr
-			}
-			for idx, fragment := range fragments {
-				_, merr := CreateMoment(tx, timelineid, fragment.ID, int64(idx))
-				if merr != nil {
-					tx.Rollback()
-					return model.Timeline{}, merr
-				}
-			}
+	var relation = model.Relation {
+		Parent: builder.Source.String(),
+		Child: timelineid.String(),
+		ParentCategory: builder.Category,
+		ChildCategory: "timelines",
+		Description: "",
+	}
+
+	_, result := CreateNewRelation(tx, &relation)
+	if result != nil {
+		tx.Rollback()
+		return model.Timeline{}, result
+	}
+
+	gerr := CreateNewEntity(tx, timelineid, uuid.MustParse(user.DefaultGroup))
+	if gerr != nil {
+		tx.Rollback()
+		return model.Timeline{}, gerr
+	}
+
+	fragments,serr := selectFragmentsByEntity(tx, builder.Source);
+	if serr != nil {
+		tx.Rollback()
+		return model.Timeline{}, serr
+	}
+
+	for idx, fragment := range fragments {
+		_, merr := CreateMoment(tx, timelineid, fragment.ID, int64(idx))
+		if merr != nil {
+			tx.Rollback()
+			return model.Timeline{}, merr
 		}
-	}else{
-		fmt.Printf("generator is null\n");
 	}
 
 	tx.Commit()
@@ -232,6 +237,12 @@ func CreateNewTimeline(db *gorm.DB, builder TimelineBuilder) (model.Timeline, er
 }
 
 func CreateTimeline(c *gin.Context) {
+	user, uerr := auth.GetUserFromClaims(db.DB, c);
+
+	if uerr != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": uerr})
+		return
+	}
 	fmt.Printf("in create timeline")
 	var builder TimelineBuilder
 	if err := c.ShouldBindJSON(&builder); err != nil {
@@ -242,11 +253,16 @@ func CreateTimeline(c *gin.Context) {
 	jsonData, _ := json.Marshal(builder)
 	fmt.Printf("received JSON: %s\n", jsonData)
 
-	timeline, tlerr := CreateNewTimeline(db.DB, builder)
+	timeline, tlerr := CreateNewTimeline(db.DB, user, builder)
 
 	if tlerr != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create timeline"})
 		return
 	}
-	c.JSON(http.StatusOK, timeline)
+
+	full, err := GetFullTimeline(db.DB, timeline)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get full timeline"})
+	}
+	c.JSON(http.StatusOK, full)
 }

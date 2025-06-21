@@ -8,6 +8,7 @@ import (
 	"github.com/vivianlazaras/storyteller/auth"
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
@@ -71,7 +72,7 @@ type StoryBuilder struct {
 	Group		*string			`json:"group"`
 }
 
-func CreateStoryFromParts(fragment *StoryBuilder, creatorID uuid.UUID) (model.Story, error) {
+func CreateNewStory(tx *gorm.DB, fragment *StoryBuilder, creatorID uuid.UUID) (model.Story, error) {
 	now := time.Now().Unix()
 	description := ""
 	image		:= ""
@@ -97,12 +98,12 @@ func CreateStoryFromParts(fragment *StoryBuilder, creatorID uuid.UUID) (model.St
 		Renderer:    string(fragment.Render),
 	}
 
-	dberr := db.DB.Create(&story).Error
+	dberr := tx.Create(&story).Error
 	if dberr != nil {
 		return model.Story{}, dberr
 	}
 
-	tagerr := InsertTagsForEntity(storyid, fragment.Tags)
+	tagerr := InsertTagsForEntity(tx, storyid, fragment.Tags)
 	
 	return story, tagerr
 }
@@ -122,12 +123,18 @@ func CreateStory(c *gin.Context) {
 	}
 
 	parsedUUID, err := uuid.Parse(user.ID)
-	story, err := CreateStoryFromParts(&parts, parsedUUID)
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create transaction"})
+		return
+	}
+	story, err := CreateNewStory(tx, &parts, parsedUUID)
 	if err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{ "error": "Internal Server Error: " + err.Error() })
 		return
 	}
-
+	tx.Commit()
 	c.JSON(http.StatusOK, story)
 }
 

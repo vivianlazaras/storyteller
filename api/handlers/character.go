@@ -132,16 +132,34 @@ func CreateNewCharacter(tx *gorm.DB, builder *CharacterBuilder, creatorID uuid.U
 		Created:     now,
 		LastEdited:  now,
 	}
+	
+	dberr := tx.Create(&character).Error
+	if dberr != nil {
+		tx.Rollback()
+		return model.Character{}, dberr
+	}
 
 	if builder.Thumbnail != nil {
-		_, imgerr := CreateNewImage(tx, *builder.Thumbnail)
+		images, imgerr := CreateNewImage(tx, *builder.Thumbnail)
 		if imgerr != nil {
+			tx.Rollback()
 			return model.Character{}, imgerr
+		}
+		if len(images) > 0 {
+			character.Thumbnail = images[0].ID
+			thumbID := images[0].ID
+			updateErr := tx.Model(&character).Update("thumbnail", thumbID).Error
+			if updateErr != nil {
+				fmt.Printf("thumbnail update error: %s", updateErr)
+				return model.Character{}, updateErr
+			}
+
+			// Reflect change in the return value
+			character.Thumbnail = thumbID
 		}
 	}
 
-	dberr := tx.Create(&character).Error
-	return character, dberr
+	return character, nil
 }
 
 func CreateCharacter(c *gin.Context) {
@@ -158,12 +176,21 @@ func CreateCharacter(c *gin.Context) {
 	}
 
 	parsedUUID, err := uuid.Parse(user.ID)
-	character, err := CreateNewCharacter(db.DB, &builder, parsedUUID)
+
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create transaction"})
+		return
+	}
+
+	character, err := CreateNewCharacter(tx, &builder, parsedUUID)
 	if err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{ "error": "Internal Server Error: " + err.Error() })
 		return
 	}
 
+	tx.Commit()
 	c.JSON(http.StatusOK, character)
 }
 

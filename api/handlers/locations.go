@@ -9,6 +9,7 @@ import (
 	"github.com/vivianlazaras/storyteller/model"
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/vivianlazaras/storyteller/auth"
+	"gorm.io/gorm"
 	
 )
 
@@ -24,8 +25,8 @@ type LocationBuilder struct {
 	ID				uuid.UUID		`json:"id"`
 	Name			string			`json:"name"`
 	Description		*string			`json:"description"`
-	Tags			[]model.Tag		`json:"tags"`
-	Thumbnail		*model.Image	`json:"thumbnail"`
+	Tags			[]string		`json:"tags"`
+	Thumbnail		*ImageBuilder	`json:"thumbnail"`
 }
 
 type LocationRender struct {
@@ -33,6 +34,9 @@ type LocationRender struct {
 	Name			string	`json:"name"`
 	Description		*string	`json:"description"`
 	Thumbnail		*model.Image	`json:"thumbnail"`
+	Images			[]model.Image	`json:"images"`
+	Tags			[]model.Tag		`json:"tags"`
+	Created			int64			`json:"created"`
 }
 
 func GetLocations(c *gin.Context) {
@@ -50,6 +54,34 @@ func GetLocations(c *gin.Context) {
 	c.JSON(http.StatusOK, locations)
 }
 
+func RenderLocation(tx *gorm.DB, location model.Location) (LocationRender, error) {
+	var locid = uuid.MustParse(location.ID)
+	tags, tagerr := SelectTagsByEntityID(locid)
+	if tagerr != nil {
+		return LocationRender{}, nil
+	}
+	
+	thumbnail, thmerr := db.GetByID[model.Image]("images", location.Thumbnail);
+	if thmerr != nil {
+		return LocationRender{}, thmerr
+	}
+
+	images, imgerr := GetImagesByParentID(tx, locid)
+	if imgerr != nil {
+		return LocationRender{}, imgerr
+	}
+
+	return LocationRender{
+		Thumbnail: thumbnail,
+		Tags:  tags,
+		ID: locid,
+		Name: location.Name,
+		Description: &location.Description,
+		Images: images,
+		Created: location.Created,
+	}, nil
+}
+
 func GetLocation(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -60,18 +92,22 @@ func GetLocation(c *gin.Context) {
 		return
 	}
 
-	// Query database
 	var location model.Location
 	if err := db.DB.First(&location, "id = ?", locationID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Location not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "location not found"})
 		return
 	}
 
+	render, rendererr := RenderLocation(db.DB, location)
+	if rendererr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": rendererr})
+		return
+	}
 	// Return result
-	c.JSON(http.StatusOK, location)
+	c.JSON(http.StatusOK, render)
 }
 
-func CreateNewLocation(builder LocationBuilder) (model.Location, error) {
+func CreateNewLocation(tx *gorm.DB, builder LocationBuilder) (model.Location, error) {
 	now := time.Now().Unix()
 
 	var description = ""
@@ -84,10 +120,46 @@ func CreateNewLocation(builder LocationBuilder) (model.Location, error) {
 		Name: builder.Name,
 		Description: description,
 		Created: now,
+		LastEdited: now,
 	}
 
-	err := db.DB.Create(&location).Error;
-	return location, err
+	err := tx.Create(&location).Error;
+	if err != nil {
+		//tx.Rollback()
+		fmt.Printf("location error: %s", err)
+		return model.Location{}, err
+	}
+
+	if builder.Thumbnail != nil {
+
+		images, imgerr := CreateNewImage(tx, *builder.Thumbnail)
+		if imgerr != nil {
+			fmt.Printf("image error: %s", imgerr)
+			//tx.Rollback()
+			return model.Location{}, imgerr
+		}
+		if len(images) > 0 {
+			location.Thumbnail = images[0].ID
+			thumbID := images[0].ID
+			updateErr := tx.Model(&location).Update("thumbnail", thumbID).Error
+			if updateErr != nil {
+				fmt.Printf("thumbnail update error: %s", updateErr)
+				return model.Location{}, updateErr
+			}
+
+			// Reflect change in the return value
+			location.Thumbnail = thumbID
+		}
+	}
+
+	tagerr := InsertTagsForEntity(tx, uuid.MustParse(location.ID), builder.Tags)
+	if tagerr != nil {
+		//tx.Rollback()
+		fmt.Printf("tagerr %s", tagerr)
+		return model.Location{}, tagerr
+	}
+	//tx.Commit()
+	return location, nil
 }
 
 func CreateLocation(c *gin.Context) {
@@ -99,11 +171,19 @@ func CreateLocation(c *gin.Context) {
 		return
 	}
 
-	location, dberr := CreateNewLocation(builder);
-	if dberr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create location"})
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create transaction"})
 		return
 	}
+
+	location, dberr := CreateNewLocation(tx, builder);
+	if dberr != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": dberr})
+		return
+	}
+	tx.Commit()
 	c.JSON(http.StatusOK, location)
 }
 

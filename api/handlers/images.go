@@ -172,14 +172,14 @@ type ImageRender struct {
 	Url			string			`json:"url"`
 }
 
-func CreateNewImage(db *gorm.DB, builder ImageBuilder) ([]model.Image, error) {
+func CreateNewImage(tx *gorm.DB, builder ImageBuilder) ([]model.Image, error) {
 	var description = ""
 	if builder.Description != nil {
 		description = *builder.Description
 	}
 
 	var images []model.Image
-	tx := db.Begin()
+	
 
 	for _, entry := range builder.Entries {
 		image := model.Image{
@@ -189,7 +189,6 @@ func CreateNewImage(db *gorm.DB, builder ImageBuilder) ([]model.Image, error) {
 		}
 
 		if err := tx.Create(&image).Error; err != nil {
-			tx.Rollback()
 			return images, err
 		}
 	
@@ -201,7 +200,6 @@ func CreateNewImage(db *gorm.DB, builder ImageBuilder) ([]model.Image, error) {
 				Value:   tag.Value,
 			}
 			if err := tx.Create(&exif).Error; err != nil {
-				tx.Rollback()
 				return images, err
 			}
 		}
@@ -215,7 +213,6 @@ func CreateNewImage(db *gorm.DB, builder ImageBuilder) ([]model.Image, error) {
 				ChildCategory:  "images",
 			}
 			if err := tx.Create(&relation).Error; err != nil {
-				tx.Rollback()
 				return images, err
 			}
 		}
@@ -228,15 +225,12 @@ func CreateNewImage(db *gorm.DB, builder ImageBuilder) ([]model.Image, error) {
 				Entity: image.ID,
 			}
 			if err := tx.Create(&tag).Error; err != nil {
-				tx.Rollback()
 				return images, err
 			}
 		}
 
 		images = append(images, image)
 	}
-
-	tx.Commit()
 
 	return images, nil
 }
@@ -248,12 +242,18 @@ func CreateImage(c *gin.Context) {
 		return
 	}
 
-	images, err := CreateNewImage(db.DB, builder)
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create transaction"})
+		return
+	}
+	images, err := CreateNewImage(tx, builder)
 	if err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create image: " + err.Error()})
 		return
 	}
-
+	tx.Commit()
 	c.JSON(http.StatusOK, images)
 }
 

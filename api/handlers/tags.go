@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
     "net/http"
+	"gorm.io/gorm"
 )
 
 func RegisterTagRoutes(r *gin.Engine) *gin.Engine {
@@ -13,14 +14,14 @@ func RegisterTagRoutes(r *gin.Engine) *gin.Engine {
 	return r
 }
 
-func InsertTagsForEntity(entityID uuid.UUID, tags []string) error {
+func InsertTagsForEntity(tx *gorm.DB, entityID uuid.UUID, tags []string) error {
 	for _, tag := range tags {
 		var newtag = model.Tag {
 			ID: uuid.New().String(),
 			Value: tag,
 			Entity: entityID.String(),
 		}
-		err := db.DB.Create(&newtag).Error
+		err := tx.Create(&newtag).Error
 		if err != nil {
 			return err
 		}
