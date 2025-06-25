@@ -70,6 +70,7 @@ impl<'l> RelationBuilder<'l> {
 use rocket_dyn_templates::{Template, context};
 #[get("/create?<id>&<parent>&<child>")]
 async fn create_link_html(
+    guard: Guard,
     api: &State<ApiClient>,
     id: Uuid,
     parent: String,
@@ -88,10 +89,10 @@ async fn create_link_html(
 }
 
 #[post("/", data = "<rel>")]
-async fn create_link(api: &State<ApiClient>, rel: Form<Relation>) -> Redirect {
+async fn create_link(guard: Guard, api: &State<ApiClient>, rel: Form<Relation>) -> Redirect {
     let relation = rel.into_inner();
     let redirect = format!("/{}/{}", relation.parent_category, relation.parent);
-    let _: Relation = api.post("/relations/", "", None, relation).await.unwrap();
+    let _: Relation = api.post("/relations/", guard.access_token(), None, relation).await.unwrap();
     Redirect::to(redirect)
 }
 

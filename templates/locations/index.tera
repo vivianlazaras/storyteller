@@ -13,6 +13,10 @@
                 <a class="brief" href="/locations/{{ location.id }}">
                     <div class="place-card card">
                         <h3 class="name">{{ location.name }}</h3>
+                        {% if location.thumbnail.url is defined %}
+                            <img width="200px" src="{{ location.thumbnail.url }}" alt="Image">
+                        {% endif %}
+                        
                         <p class="description">{{ location.description }}</p>
                     </div>
                 </a>

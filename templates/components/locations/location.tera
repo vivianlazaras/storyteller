@@ -1,13 +1,31 @@
+{% import "components/images/index" as images %}
 {% macro location(location) %}
 <div class="location">
     <div class="entitylink">
         <h3>
             {{ location.name }}
         </h3>
-        <div id="{{ location.id }}">
-            <div class="created">Created: {{ location.created }}</div>
-            <p>{{ location.description }}</p>
+        <div class="created">Created: {{ location.created }}</div>
+        {% if location.thumbnail.url is defined %}
+        <a href="/locations/{{ location.id }}">
+            <img src="{{location.thumbnail.url}}" class="entityimage" width="400"/>
+        </a>
+        {% endif %}
+        <div class="description" id="description">
+            {{ location.description }}
         </div>
+        {% if location.tags is defined and location.tags %}
+            {% for tag in location.tags %}
+                <span class="tag">{{ tag.value }}</span>
+            {% endfor %}
+        {% endif %}
+        <a href="/assets/images/upload?category=locations&parent={{ location.id }}">Upload Images</a>
+        <div id="images" class="images">
+            {% if location.images is defined and location.images and location.images | length > 0 %}
+                {{ images::gallery(images=location.images) }}
+            {% endif %}
+        </div>    
+        
     </div>
 </div>
 {% endmacro location %}

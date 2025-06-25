@@ -63,7 +63,9 @@
   }
 
   // Pre-populate selected items
-  {% for item in selected %}
-    appendItem("{{ item }}");
-  {% endfor %}
+  {% if selected is defined %}
+    {% for item in selected %}
+      appendItem("{{ item }}");
+    {% endfor %}
+  {% endif %}
 </script>

@@ -1,33 +1,26 @@
 use crate::ApiClient;
 use crate::assets::images::ImageForm;
 use crate::auth::Guard;
-use crate::model::Location;
+use crate::model::{Location, Tag};
 use rocket::fs::TempFile;
-
+use crate::assets::images::{ImageBuilder, ImageProcessor};
 use rocket::{
     FromForm, Route, State, delete, form::Form, get, post, put, response::Redirect,
     response::content::RawHtml, routes,
 };
+use crate::model::Image;
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LocationRender {
-    id: Uuid,
-    name: String,
-    description: Option<String>,
-    created: String,
-}
-
-impl Location {
-    pub fn render(self) -> LocationRender {
-        LocationRender {
-            id: self.id,
-            name: self.name,
-            description: self.description,
-            created: crate::epoch_to_human(self.created),
-        }
-    }
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub images: Option<Vec<Image>>,
+    pub thumbnail: Option<Image>,
+    pub tags: Option<Vec<Tag>>,
+    pub created: Option<i64>,
 }
 
 #[derive(Debug, FromForm)]
@@ -37,16 +30,38 @@ pub struct LocationForm<'r> {
     tags: Option<Vec<String>>,
     images: Option<Vec<TempFile<'r>>>,
     imagetags: Option<Vec<String>>,
-    category: String,
 }
 
 impl<'r> LocationForm<'r> {
-    pub fn to_builder(&self) -> LocationBuilder {
-        LocationBuilder {
+    pub async fn to_builder(&self, processor: &ImageProcessor) -> anyhow::Result<LocationBuilder> {
+        Ok(LocationBuilder {
             name: self.name.clone(),
             description: self.description.clone(),
             tags: self.tags.as_ref().unwrap_or(&Vec::new()).to_vec(),
-        }
+            thumbnail: self.into_image_builder(processor).await?,
+        })
+    }
+}
+
+impl<'r> ImageForm<'r> for LocationForm<'r> {
+    fn images(&self) -> Option<&Vec<TempFile<'r>>> {
+        self.images.as_ref()
+    }
+
+    fn description(&self) -> Option<&str> {
+        self.description.as_deref()
+    }
+
+    fn tags(&self) -> &[String] {
+        self.tags.as_deref().unwrap_or(&[])
+    }
+
+    fn category(&self) -> &str {
+        "locations"
+    }
+
+    fn parent(&self) -> Option<Uuid> {
+        None
     }
 }
 
@@ -55,11 +70,12 @@ pub struct LocationBuilder {
     name: String,
     description: Option<String>,
     tags: Vec<String>,
+    thumbnail: Option<ImageBuilder>,
 }
 
 #[get("/")]
 async fn list_places(guard: Guard, api: &State<ApiClient>) -> RawHtml<Template> {
-    let locations: Vec<Location> = match api
+    let locations: Vec<LocationRender> = match api
         .get_protected("/locations/", guard.access_token(), None)
         .await
         .unwrap()
@@ -76,22 +92,23 @@ async fn list_places(guard: Guard, api: &State<ApiClient>) -> RawHtml<Template> 
 #[get("/<id>")]
 async fn get_place(guard: Guard, api: &State<ApiClient>, id: Uuid) -> RawHtml<Template> {
     let url = format!("/locations/{}", id);
-    let location: Location = api
+    let location: LocationRender = api
         .get_protected(&url, guard.access_token(), None)
         .await
         .unwrap();
-    let render = location.render();
+    println!("location: {:?}", location);
     RawHtml(Template::render(
         "locations/location",
-        context! {title: render.name.clone(), location: render },
+        context! {title: location.name.clone(), location },
     ))
 }
 
 #[get("/create")]
-async fn create_place_html() -> RawHtml<Template> {
+async fn create_place_html(api: &State<ApiClient>) -> RawHtml<Template> {
+    let options = api.get_top_tags(10, 0).await.unwrap();
     RawHtml(Template::render(
         "locations/create",
-        context! { title: "create a setting" },
+        context! { title: "create a setting", options },
     ))
 }
 
@@ -100,9 +117,10 @@ async fn create_place<'r>(
     guard: Guard,
     api: &State<ApiClient>,
     form: Form<LocationForm<'r>>,
+    processor: &State<ImageProcessor>,
 ) -> Redirect {
     let locationform = form.into_inner();
-    let location = locationform.to_builder();
+    let location = locationform.to_builder(processor).await.unwrap();
     let loc: Location = api
         .post("/locations/", guard.access_token(), None, &location)
         .await

@@ -3,7 +3,7 @@ use rocket::{Route, routes};
 use std::path::{Path, PathBuf};
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
-
+use graphviz::theme::GraphTheme;
 /// for now a structure of having main, desktop, and mobile will work
 /// in future versions I will likely want to clean this up to provide default media
 /// queries and a way to use said media queries
@@ -56,6 +56,7 @@ pub struct Theme {
     main: String,
     mobile: String,
     desktop: String,
+    graphs: GraphTheme,
 }
 
 impl Theme {
@@ -65,6 +66,7 @@ impl Theme {
             mobile,
             main,
             desktop,
+            graphs: GraphTheme::default()
         }
     }
 }

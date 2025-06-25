@@ -4,6 +4,7 @@ use crate::assets::images::{ImageBuilder, ImageData, ImageForm};
 use crate::get_access_token;
 use crate::{ApiClient, assets::images::ImageProcessor, auth::Guard, model::Character};
 use anyhow::Result;
+use std::collections::HashMap;
 use rocket::{
     Route, State,
     form::{Form, FromForm},
@@ -94,7 +95,7 @@ async fn get_tree(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml<Tem
     let (graph, index_map) = Character::family_tree(id, &api, guard.access_token())
         .await
         .unwrap();
-    let svg = render_graph(graph);
+    let svg = render_graph(graph, HashMap::new());
     RawHtml(Template::render(
         "characters/tree",
         context! { title: character.name, tree: svg },

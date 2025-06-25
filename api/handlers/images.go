@@ -6,14 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/vivianlazaras/storyteller/db"
+	"github.com/vivianlazaras/storyteller/auth"
 	"github.com/vivianlazaras/storyteller/model"
 	"gorm.io/gorm"
 	"fmt"
 )
 
 func RegisterImageRoutes(r *gin.Engine) *gin.Engine {
-	r.POST("/assets/images/", CreateImage)
-	r.GET("/assets/images/:id", GetImage)
+	r.POST("/assets/images/", auth.JWTMiddleware(), CreateImage)
+	r.GET("/assets/images/:id", auth.JWTMiddleware(), GetImage)
+	r.GET("assets/images/", auth.JWTMiddleware(), ListImages)
 	return r
 }
 
@@ -359,4 +361,29 @@ func GetImage(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, render)
+}
+
+func ListImages(c *gin.Context) {
+	user, err := auth.GetUserFromClaims(db.DB, c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	var images []model.Image
+
+	imgerr := db.DB.
+		Table("images").
+		Joins("JOIN relations ON relations.child = images.id AND relations.child_category = ?", "images").
+		Joins("JOIN entities ON relations.parent = entities.id").
+		Joins("JOIN grouprel ON grouprel.group_id = entities.group_id").
+		Joins("JOIN users ON users.id = grouprel.user_id").
+		Where("users.id = ?", user.ID).
+		Scan(&images).Error
+
+	if imgerr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": imgerr})
+		return
+	}
+	c.JSON(http.StatusOK, images)
 }

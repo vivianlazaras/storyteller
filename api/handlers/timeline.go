@@ -41,7 +41,7 @@ func RegisterTimelineRoutes(r *gin.Engine) *gin.Engine {
 	// with timelines through stories, or characters
 	r.GET("/timelines", auth.JWTMiddleware(), ListTimelines)
     r.GET("/timelines/:id", auth.JWTMiddleware(), GetTimeline)
-	r.POST("/timelines", CreateTimeline)
+	r.POST("/timelines", auth.JWTMiddleware(), CreateTimeline)
 
 	return r
 }
@@ -240,7 +240,7 @@ func CreateTimeline(c *gin.Context) {
 	user, uerr := auth.GetUserFromClaims(db.DB, c);
 
 	if uerr != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": uerr})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": uerr.Error()})
 		return
 	}
 	fmt.Printf("in create timeline")

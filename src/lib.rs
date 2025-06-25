@@ -32,4 +32,5 @@ pub mod render;
 pub mod search;
 pub mod themes;
 pub mod timelines;
+pub mod patterns;
 pub use api::*;

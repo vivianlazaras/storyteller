@@ -42,6 +42,7 @@ type LocationRender struct {
 func GetLocations(c *gin.Context) {
 	// grab all stories where public = true
 	var locations []model.Location
+	var renders []LocationRender
     err := db.DB.
         Where("entities.active = ?", true).
         Joins("JOIN entities ON entities.id = locations.id").
@@ -51,19 +52,33 @@ func GetLocations(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-	c.JSON(http.StatusOK, locations)
+
+	for _, location := range locations {
+		render, renderr := RenderLocation(db.DB, location)
+		if renderr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": renderr})
+			return
+		}
+		renders = append(renders, render)
+		
+	}
+	c.JSON(http.StatusOK, renders)
 }
 
 func RenderLocation(tx *gorm.DB, location model.Location) (LocationRender, error) {
 	var locid = uuid.MustParse(location.ID)
+	var thumbnail *model.Image = nil
 	tags, tagerr := SelectTagsByEntityID(locid)
 	if tagerr != nil {
 		return LocationRender{}, nil
 	}
 	
-	thumbnail, thmerr := db.GetByID[model.Image]("images", location.Thumbnail);
-	if thmerr != nil {
-		return LocationRender{}, thmerr
+	if location.Thumbnail != "" {
+		image, thmerr := db.GetByID[model.Image]("images", location.Thumbnail);
+		if thmerr != nil {
+			return LocationRender{}, thmerr
+		}
+		thumbnail = image
 	}
 
 	images, imgerr := GetImagesByParentID(tx, locid)

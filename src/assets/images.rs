@@ -317,6 +317,17 @@ async fn get_info(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml<Tem
     ))
 }
 
+#[get("/")]
+async fn list_images(guard: Guard, api: &State<ApiClient>) -> RawHtml<Template> {
+    let images: Option<Vec<Image>> = api.get_protected("/assets/images", guard.access_token(), None).await.unwrap();
+    RawHtml(
+        Template::render(
+            "images/index",
+            context!( title: "image list", images )
+        )
+    )
+}
+
 pub fn get_routes() -> Vec<Route> {
-    routes![get_image, upload_html, upload_image, get_info]
+    routes![get_image, upload_html, upload_image, get_info, list_images]
 }

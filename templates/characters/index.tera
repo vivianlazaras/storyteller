@@ -10,13 +10,15 @@
         
         {% for character in characters %}
             <a class="brief" href="/characters/{{ character.id }}">
+            
             <div class="char-card card">
+                <h3>
+                    {{ character.name }}
+                </h3>
             {% if character.thumbnail.url is defined %}
               <img width="200px" src="{{ character.thumbnail.url }}" alt="Image">
             {% endif %}
-            <h3>
-                {{ character.name }}
-            </h3>
+            
             <p class="description">
                 {{ character.description }}
             </p>

@@ -15,6 +15,7 @@ type Character struct {
 	Created     int64  `gorm:"column:created;default:unix_now()" json:"created"`
 	LastEdited  int64  `gorm:"column:last_edited;default:unix_now()" json:"last_edited"`
 	Thumbnail   string `gorm:"column:thumbnail" json:"thumbnail"`
+	Gender      string `gorm:"column:gender;not null;default:female" json:"gender"`
 }
 
 // TableName Character's table name
