@@ -241,3 +241,5 @@ func CheckPermissions(user uuid.UUID, entity uuid.UUID, op Operation) bool {
 }
 
 func DeleteEntity() {}
+
+/// need to create a setGroup function

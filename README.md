@@ -9,18 +9,21 @@ Each entity represents a fundamental of story creation
 4. When - Timelines
 5. How - Methods
 6. Why - Motivations
-7. Connection - Links/Relationships
-How every piece fits together, the space between who, what, where, when, how, and why.
-8. Interpretation - Interpretation 
+7. Patterns - Patterns (recurring event types)
+8. Interpretation - Interpretation
 How the user recieves and reinterprets the story 
 
 ## Database backends
-1. sled (lightweight pure rust key value store)
-2. redis (not implemented, but planned for higher availability)
+1. Postgresql
+currently this code has only been tested with postgresql but in theory
+any database that is supported by gorm should work.
 
 ## Future Plans
 1. Complete token exchange allowing the API to be exposed to the WAN for homeserver federation.
 2. import timelines from immich.
+3. Create a wasmtime based plugin system.
+4. Use OpenPose + OpenMVG or similar software to generate 3D models from images of people.
+5. Implement a format for providing datasets to enrich stories, such as climate change data, map data, etc to provide custom visual components.
 
 
 ## Would Be Cool One Day
