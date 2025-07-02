@@ -24,7 +24,11 @@ any database that is supported by gorm should work.
 3. Create a wasmtime based plugin system.
 4. Use OpenPose + OpenMVG or similar software to generate 3D models from images of people.
 5. Implement a format for providing datasets to enrich stories, such as climate change data, map data, etc to provide custom visual components.
-
+6. Explicit Group Management.
+7. Image Albums.
+8. Character Groups / Organizations.
+9. Ability to Merge fragments.
+10. Standardize graph representation to allow user's to use dot format to define custom graphs.
 
 ## Would Be Cool One Day
 1. Have an AI generate tag suggestions based on story content.

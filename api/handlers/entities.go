@@ -12,7 +12,7 @@ import (
 )
 
 func RegisterEntityRoutes(r *gin.Engine) *gin.Engine {
-	r.GET("/relations", auth.JWTMiddleware(), ListEntitiesByCategory)
+	r.GET("/relations/:category", auth.JWTMiddleware(), ListEntitiesByCategory)
 	r.POST("/relations/", auth.JWTMiddleware(), CreateRelation)
 	return r
 }
@@ -132,7 +132,7 @@ func ListEntitiesByCategoryForGroup(db *gorm.DB, groupID uuid.UUID, category str
 }
 
 func ListEntitiesByCategory(c *gin.Context) {
-	category := c.Query("category")
+	category := c.Param("category")
 	user, uerr := auth.GetUserFromClaims(db.DB, c)
 	if uerr != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to get user"})

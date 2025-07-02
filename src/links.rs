@@ -76,10 +76,11 @@ async fn create_link_html(
     parent: String,
     child: String,
 ) -> RawHtml<Template> {
-    let mut params = HashMap::new();
-    params.insert("category", child.as_str());
+    //let mut params = HashMap::new();
+    //params.insert("category", child.as_str());
+    let url = format!("/relations/{}", child);
     let items: Option<Vec<RelatedEntity>> = api
-        .get_protected("/relations", guard.access_token(), Some(params))
+        .get_protected(&url, guard.access_token(), None)
         .await
         .unwrap();
     RawHtml(Template::render(
@@ -102,9 +103,8 @@ async fn list_by_type(
     category: &str,
     api: &State<ApiClient>,
 ) -> RawJson<String> {
-    let mut params = HashMap::new();
-    params.insert("category", category);
-    let entities: Option<Vec<RelatedEntity>> = api.get_protected("/relations", guard.access_token(), Some(params))
+    let url = format!("/relations/{}", category);
+    let entities: Option<Vec<RelatedEntity>> = api.get_protected(url, guard.access_token(), None)
     .await
     .unwrap();
     RawJson(serde_json::to_string(

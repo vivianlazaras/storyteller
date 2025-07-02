@@ -96,6 +96,7 @@ async fn rocket() -> _ {
         .manage(validator)
         .mount("/", routes![index])
         .manage(processor)
+        .mount("/assets/graphs/", storyteller::assets::graphs::get_routes())
         .mount("/stories", storyteller::stories::get_routes())
         .mount("/characters", storyteller::characters::get_routes())
         .mount("/timelines", storyteller::timelines::get_routes())

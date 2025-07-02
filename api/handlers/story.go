@@ -109,10 +109,12 @@ func CreateNewStory(tx *gorm.DB, fragment *StoryBuilder, creatorID uuid.UUID) (m
 }
 
 func CreateStory(c *gin.Context) {
-	
-	// I do need to handle automatic user creation if user not found
-	// aka handle settings
+	// Handle user retrieval from JWT claims
 	user, err := auth.GetUserFromClaims(db.DB, c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: " + err.Error()})
+		return
+	}
 
 	var parts StoryBuilder
 	if err := c.ShouldBindJSON(&parts); err != nil {
@@ -123,18 +125,41 @@ func CreateStory(c *gin.Context) {
 	}
 
 	parsedUUID, err := uuid.Parse(user.ID)
-	tx := db.DB.Begin()
-	if tx.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create transaction"})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
+
+	// Begin transaction
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create transaction"})
+		return
+	}
+
+	// Create new story
 	story, err := CreateNewStory(tx, &parts, parsedUUID)
 	if err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{ "error": "Internal Server Error: " + err.Error() })
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error: " + err.Error()})
 		return
 	}
-	tx.Commit()
+
+	// Update group_id in entities table for the created story
+	if err := tx.Model(&model.Entity{}).
+		Where("id = ?", story.ID).
+		Update("group_id", user.DefaultGroup).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update group_id: " + err.Error()})
+		return
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+		return
+	}
+
 	c.JSON(http.StatusOK, story)
 }
 

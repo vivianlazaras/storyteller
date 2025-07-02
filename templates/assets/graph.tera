@@ -1,0 +1,124 @@
+{% include "head" %}
+<body>
+    {% include "header" %}
+
+    <div id="contextmenu" style="display:none; position:absolute; background:white; border:1px solid #ccc; z-index:1000; padding:5px;">
+        <button onclick="openEntityPopup('fragments')">Add Fragment</button>
+        <button onclick="openEntityPopup('characters')">Add Character</button>
+        <button onclick="openEntityPopup('locations')">Add Location</button>
+        <button onclick="openEntityPopup('images')">Add Image</button>
+        <button onclick="openEntityPopup('albums')">Add Album</button>
+    </div>
+
+    <h1>Create A New Graph Manually.</h1>
+
+    <form action="/assets/graphs/" method="post">
+        <label for="name">Graph Name</label>
+        <input id="name" type="text" placeholder="Graph Name" name="name"/>
+        <div style="display: flex; gap: 20px;">
+            <textarea id="dot" name="dot" style="width:50%; height:400px;"></textarea>
+            <div style="width:50%;">
+                <h3>Graph Preview</h3>
+                <div id="graphPreview" style="border:1px solid #ccc; min-height:400px; overflow:auto;">
+                    <!-- SVG will appear here -->
+                </div>
+                <button type="button" onclick="updateGraphPreview()">Update Preview</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Popup for selecting and adding entity -->
+    <div id="entityPopup" style="display:none; position:fixed; top:20%; left:40%; background:white; border:1px solid #ccc; padding:10px; z-index:2000;">
+        <h3 id="popupTitle">Select Entity</h3>
+        <select id="entitySelect"></select>
+        <button onclick="addEntityToGraph()">Add</button>
+        <button onclick="closeEntityPopup()">Cancel</button>
+    </div>
+
+    <script>
+        let currentEntityType = '';
+        let textarea = document.getElementById('dot');
+
+        // Show context menu on right-click on textarea
+        textarea.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            let menu = document.getElementById('contextmenu');
+            menu.style.display = 'block';
+            menu.style.left = e.pageX + 'px';
+            menu.style.top = e.pageY + 'px';
+        });
+
+        // Hide context menu on click elsewhere
+        document.addEventListener('click', function() {
+            document.getElementById('contextmenu').style.display = 'none';
+        });
+
+        function openEntityPopup(entityType) {
+            currentEntityType = entityType;
+            document.getElementById('popupTitle').innerText = 'Select ' + entityType.charAt(0).toUpperCase() + entityType.slice(1);
+            fetch('/entities/' + entityType)
+                .then(res => res.json())
+                .then(data => {
+                    let select = document.getElementById('entitySelect');
+                    select.innerHTML = '';
+                    data.forEach(entity => {
+                        let option = document.createElement('option');
+                        option.value = entity.id;
+                        option.text = entity.name;
+                        select.add(option);
+                    });
+                    document.getElementById('entityPopup').style.display = 'block';
+                });
+        }
+
+        function closeEntityPopup() {
+            document.getElementById('entityPopup').style.display = 'none';
+        }
+
+        function addEntityToGraph() {
+            let select = document.getElementById('entitySelect');
+            let entityId = select.value;
+            let entityName = select.options[select.selectedIndex].text;
+
+            let insertText = `${entityId} [label="${entityName}"];\n`;
+            insertAtCursor(textarea, insertText);
+
+            closeEntityPopup();
+        }
+
+        function insertAtCursor(myField, myValue) {
+            if (document.selection) {
+                myField.focus();
+                let sel = document.selection.createRange();
+                sel.text = myValue;
+            } else if (myField.selectionStart || myField.selectionStart === 0) {
+                let startPos = myField.selectionStart;
+                let endPos = myField.selectionEnd;
+                myField.value = myField.value.substring(0, startPos)
+                    + myValue
+                    + myField.value.substring(endPos, myField.value.length);
+                myField.selectionStart = myField.selectionEnd = startPos + myValue.length;
+            } else {
+                myField.value += myValue;
+            }
+        }
+
+        // 🧩 Update preview: send DOT text to server and render SVG
+        function updateGraphPreview() {
+            let dotText = textarea.value;
+            fetch('/assets/graphs/preview', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ dot: dotText })
+            })
+            .then(res => res.text())
+            .then(svg => {
+                document.getElementById('graphPreview').innerHTML = svg;
+            })
+            .catch(err => {
+                console.error('Error rendering graph:', err);
+                document.getElementById('graphPreview').innerHTML = '<p style="color:red;">Failed to render graph</p>';
+            });
+        }
+    </script>
+</body>

@@ -8,6 +8,12 @@ use uuid::Uuid;
 use graphviz::style::shape::NodeShape;
 use std::collections::HashMap;
 
+use rocket::{get, post, FromForm, form::Form, response::content::RawHtml};
+use rocket_dyn_templates::{Template, context};
+
+use crate::auth::Guard;
+use rocket::{routes, Route};
+
 pub struct GraphManager {
     graph_dir: PathBuf,
 }
@@ -48,3 +54,26 @@ impl GraphManager {
 
     }
 }*/
+
+#[derive(Debug, Clone, FromForm)]
+pub struct GraphForm {
+    name: String,
+    description: Option<String>,
+    dot: String,
+}
+
+#[get("/create")]
+async fn create_html(guard: Guard) -> RawHtml<Template> {
+    RawHtml(
+        Template::render("graphs/create", context!{ title: "create a new graph" })
+    )
+}
+
+#[post("/", data = "<form>")]
+async fn create(guard: Guard, form: Form<GraphForm>) {
+    unimplemented!();
+}
+
+pub fn get_routes() -> Vec<Route> {
+    routes![create_html, create]
+}
