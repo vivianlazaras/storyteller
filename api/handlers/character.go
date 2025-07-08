@@ -191,7 +191,21 @@ func CreateCharacter(c *gin.Context) {
 		return
 	}
 
-	tx.Commit()
+	// Update group_id in entities table for the created story
+	if err := tx.Model(&model.Entity{}).
+		Where("id = ?", character.ID).
+		Update("group_id", user.DefaultGroup).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update group_id: " + err.Error()})
+		return
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+		return
+	}
+
 	c.JSON(http.StatusOK, character)
 }
 

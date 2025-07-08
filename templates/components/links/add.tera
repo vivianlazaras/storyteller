@@ -3,7 +3,7 @@
     <a class="actionlink" href="/{{ childCategory }}/create?category={{ parentCategory }}&id={{ id }}">
       Create {{ name }}
     </a>
-    <a class="actionlink" href="/links/create?parent={{ parentCategory }}&child={{ childCategory }}&id={{ id }}">
+    <a class="actionlink" href="/relations/create?parent={{ parentCategory }}&child={{ childCategory }}&id={{ id }}">
       Add Existing {{ name }}
     </a>
 </div>

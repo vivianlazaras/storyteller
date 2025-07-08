@@ -178,6 +178,11 @@ func CreateNewLocation(tx *gorm.DB, builder LocationBuilder) (model.Location, er
 }
 
 func CreateLocation(c *gin.Context) {
+	user, uerr := auth.GetUserFromClaims(db.DB, c)
+	if uerr != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{ "error": uerr})
+		return
+	}
 	var builder LocationBuilder
 	if err := c.ShouldBindJSON(&builder); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -198,7 +203,21 @@ func CreateLocation(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": dberr})
 		return
 	}
-	tx.Commit()
+
+	// Update group_id in entities table for the created story
+	if err := tx.Model(&model.Entity{}).
+		Where("id = ?", location.ID).
+		Update("group_id", user.DefaultGroup).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update group_id: " + err.Error()})
+		return
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+		return
+	}
 	c.JSON(http.StatusOK, location)
 }
 

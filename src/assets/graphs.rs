@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use uuid::Uuid;
 use graphviz::style::shape::NodeShape;
 use std::collections::HashMap;
+use rocket::serde::json::Json;
 
 use rocket::{get, post, FromForm, form::Form, response::content::RawHtml};
 use rocket_dyn_templates::{Template, context};
@@ -28,22 +29,26 @@ pub fn strip_svg_dimensions(svg: &str) -> String {
     svg_no_height.to_string().replace("&#45;", "-")
 }
 
-pub(crate) fn render_graph(graph: DiGraph<String, &'static str>, idmap: HashMap<usize, Uuid>) -> String {
-    let graph_str = format!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
-    println!("graph: {}", graph_str);
+fn render_str(graph_str: &str) -> String {
     let context = Context::new();
     let mut gvGraph = Graph::new(graph_str, &context);
-    for (idx, id) in idmap.into_iter() {
+    /*for (idx, id) in idmap.into_iter() {
         let node_id = format!("{}", idx);
         gvGraph.set_attr_on_node(&node_id,CommonAttr::Id(id.to_string())).unwrap();
         gvGraph.set_attr_on_node(&node_id, NodeAttr::Style(NodeStyle::Filled)).unwrap();
         gvGraph.set_attr_on_node(&node_id, NodeAttr::FillColor(Color::CORAL)).unwrap();
-    }
+    }*/
     gvGraph.set_layout(Layout::Dot);
-    let svg_slice = context.render(&gvGraph, OutputFormat::Svg);
+    let svg_slice = context.render(&gvGraph, OutputFormat::Svg).unwrap();
     let svg = String::from_utf8_lossy(&svg_slice);
     //println!("svg: {}", svg);
     strip_svg_dimensions(&svg.to_string())
+}
+
+pub(crate) fn render_graph(graph: DiGraph<String, &'static str>, idmap: HashMap<usize, Uuid>) -> String {
+    let graph_str = format!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
+    println!("graph: {}", graph_str);
+    render_str(&graph_str)
 }
 
 /*
@@ -54,6 +59,11 @@ impl GraphManager {
 
     }
 }*/
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphData {
+    dot: String,
+}
 
 #[derive(Debug, Clone, FromForm)]
 pub struct GraphForm {
@@ -74,6 +84,13 @@ async fn create(guard: Guard, form: Form<GraphForm>) {
     unimplemented!();
 }
 
+#[post("/preview", format = "json", data = "<data>")]
+async fn preview_graph(guard: Guard, data: Json<GraphData>) -> String {
+    let text = data.into_inner().dot;
+    let svg = render_str(&text);
+    svg
+}
+
 pub fn get_routes() -> Vec<Route> {
-    routes![create_html, create]
+    routes![create_html, create, preview_graph]
 }

@@ -26,7 +26,7 @@ pub mod api;
 pub mod assets;
 pub mod auth;
 pub mod fragments;
-pub mod links;
+pub mod relations;
 pub mod notes;
 pub mod render;
 pub mod search;

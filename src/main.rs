@@ -12,6 +12,8 @@ use storyteller::Config;
 use structopt::StructOpt;
 use tokio::{fs::File, io::AsyncReadExt};
 use ubyte::ByteUnit;
+use rocket::{Response, fairing::{Info, Fairing, Kind}};
+use rocket::http::{ContentType, Header};
 #[derive(Debug, Clone, StructOpt)]
 pub struct Args {
     #[structopt(short, long)]
@@ -49,6 +51,28 @@ async fn load_config<P: AsRef<Path>>(path: P) -> Result<Config, std::io::Error> 
     let mut contents = String::new();
     file.read_to_string(&mut contents).await?;
     Ok(serde_json::from_str(&contents).unwrap())
+}
+
+// Fairing to add custom mime type
+pub struct WasmContentTypeFairing;
+
+#[rocket::async_trait]
+impl Fairing for WasmContentTypeFairing {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add .wasm Content-Type",
+            kind: Kind::Response
+        }
+    }
+
+    async fn on_response<'r>(&self, req: &'r Request<'_>, res: &mut Response<'r>) {
+        res.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+        if let Some(path) = req.uri().path().segments().last() {
+            if path.ends_with(".wasm") {
+                res.set_header(ContentType::new("application", "wasm"));
+            }
+        }
+    }
 }
 
 #[launch]
@@ -93,6 +117,7 @@ async fn rocket() -> _ {
     .unwrap();
     let rocket = rocket::custom(rocketconfig)
         .manage(api)
+        .attach(WasmContentTypeFairing)
         .manage(validator)
         .mount("/", routes![index])
         .manage(processor)
@@ -101,7 +126,7 @@ async fn rocket() -> _ {
         .mount("/characters", storyteller::characters::get_routes())
         .mount("/timelines", storyteller::timelines::get_routes())
         .mount("/locations", storyteller::locations::get_routes())
-        .mount("/links", storyteller::links::get_routes())
+        .mount("/relations", storyteller::relations::get_routes())
         .mount("/fragments", storyteller::fragments::get_routes())
         .register("/", catchers![unauthorized, notfound])
         .attach(Template::fairing())

@@ -1,7 +1,7 @@
 use crate::ApiClient;
 use crate::auth::Guard;
 use crate::fragments::api::FragmentBuilder;
-use crate::links::RelatedEntity;
+use crate::relations::RelatedEntity;
 use crate::timelines::api::Timeline;
 use rocket::fs::TempFile;
 use rocket::http::CookieJar;
