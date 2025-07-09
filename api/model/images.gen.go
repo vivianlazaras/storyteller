@@ -4,13 +4,17 @@
 
 package model
 
+import (
+	"github.com/google/uuid"
+)
+
 const TableNameImage = "images"
 
 // Image mapped from table <images>
 type Image struct {
-	ID          string `gorm:"column:id;primaryKey" json:"id"`
-	URL         string `gorm:"column:url;not null" json:"url"`
-	Description string `gorm:"column:description" json:"description"`
+	ID          *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
+	URL         string     `gorm:"column:url;type:text;not null" json:"url"`
+	Description *string    `gorm:"column:description;type:text" json:"description"`
 }
 
 // TableName Image's table name

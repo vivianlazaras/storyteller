@@ -4,14 +4,18 @@
 
 package model
 
+import (
+	"github.com/google/uuid"
+)
+
 const TableNameMoment = "moments"
 
 // Moment mapped from table <moments>
 type Moment struct {
-	ID       string `gorm:"column:id;primaryKey" json:"id"`
-	Timeline string `gorm:"column:timeline" json:"timeline"`
-	Idx      int64  `gorm:"column:idx;not null" json:"idx"`
-	Fragment string `gorm:"column:fragment" json:"fragment"`
+	ID       *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
+	Timeline *uuid.UUID `gorm:"column:timeline;type:uuid" json:"timeline"`
+	Idx      int64      `gorm:"column:idx;type:bigint;not null" json:"idx"`
+	Fragment *uuid.UUID `gorm:"column:fragment;type:uuid" json:"fragment"`
 }
 
 // TableName Moment's table name

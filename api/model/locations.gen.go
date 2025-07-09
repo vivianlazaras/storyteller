@@ -4,16 +4,20 @@
 
 package model
 
+import (
+	"github.com/google/uuid"
+)
+
 const TableNameLocation = "locations"
 
 // Location mapped from table <locations>
 type Location struct {
-	ID          string `gorm:"column:id;primaryKey" json:"id"`
-	Name        string `gorm:"column:name;not null" json:"name"`
-	Description string `gorm:"column:description" json:"description"`
-	Created     int64  `gorm:"column:created;default:unix_now()" json:"created"`
-	Thumbnail   string `gorm:"column:thumbnail" json:"thumbnail"`
-	LastEdited  int64  `gorm:"column:last_edited;default:unix_now()" json:"last_edited"`
+	ID          *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
+	Name        string     `gorm:"column:name;type:text;not null" json:"name"`
+	Description *string    `gorm:"column:description;type:text" json:"description"`
+	Created     *int64     `gorm:"column:created;type:bigint;default:unix_now()" json:"created"`
+	Thumbnail   *uuid.UUID `gorm:"column:thumbnail;type:uuid" json:"thumbnail"`
+	LastEdited  *int64     `gorm:"column:last_edited;type:bigint;default:unix_now()" json:"last_edited"`
 }
 
 // TableName Location's table name

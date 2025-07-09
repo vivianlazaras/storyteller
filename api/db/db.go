@@ -3,6 +3,7 @@ package db
 import (
 	"log"
 	"gorm.io/gorm"
+	"gorm.io/gen"
 	"gorm.io/driver/postgres"
 	"net/http"
 	"fmt"
@@ -18,6 +19,32 @@ func InitDB() *gorm.DB {
     if err != nil {
         log.Fatalf("Failed to connect to database: %v", err)
     }
+
+	g := gen.NewGenerator(gen.Config{
+		OutPath:      "./dao",
+		FieldNullable:     true,
+		FieldCoverable:    true,
+		FieldSignable:     true,
+		FieldWithIndexTag: true,
+		FieldWithTypeTag:  true,
+	  })
+	
+	  // Tell gen how to map database types to Go types
+	  g.WithDataTypeMap(map[string]func(columnType gorm.ColumnType) string{
+		"uuid": func(columnType gorm.ColumnType) string {
+		  // pointer to uuid.UUID
+		  return "uuid.UUID"
+		},
+	  })
+	
+	  // Ensure generated code imports the uuid package
+	  g.WithImportPkgPath("github.com/google/uuid")
+	
+	  g.UseDB(database)
+	  g.ApplyBasic(
+		g.GenerateAllTable()...,
+	  )
+	  g.Execute()
 
     DB = database
     return DB

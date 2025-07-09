@@ -4,16 +4,20 @@
 
 package model
 
+import (
+	"github.com/google/uuid"
+)
+
 const TableNameTimeline = "timelines"
 
 // Timeline mapped from table <timelines>
 type Timeline struct {
-	ID          string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
-	Created     int64  `gorm:"column:created" json:"created"`
-	LastEdited  int64  `gorm:"column:last_edited" json:"last_edited"`
-	Description string `gorm:"column:description" json:"description"`
-	Name        string `gorm:"column:name;not null;default:default" json:"name"`
-	Source      string `gorm:"column:source" json:"source"`
+	ID          **uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Created     *int64      `gorm:"column:created;type:bigint" json:"created"`
+	LastEdited  *int64      `gorm:"column:last_edited;type:bigint" json:"last_edited"`
+	Description *string     `gorm:"column:description;type:text" json:"description"`
+	Name        *string     `gorm:"column:name;type:text;not null;default:default" json:"name"`
+	Source      *uuid.UUID  `gorm:"column:source;type:uuid" json:"source"`
 }
 
 // TableName Timeline's table name

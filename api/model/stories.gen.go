@@ -4,18 +4,22 @@
 
 package model
 
+import (
+	"github.com/google/uuid"
+)
+
 const TableNameStory = "stories"
 
 // Story mapped from table <stories>
 type Story struct {
-	ID          string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
-	Name        string `gorm:"column:name;not null" json:"name"`
-	Description string `gorm:"column:description" json:"description"`
-	Renderer    string `gorm:"column:renderer" json:"renderer"`
-	Metadata    string `gorm:"column:metadata" json:"metadata"`
-	Created     int64  `gorm:"column:created;default:unix_now()" json:"created"`
-	LastEdited  int64  `gorm:"column:last_edited;default:unix_now()" json:"last_edited"`
-	Image       string `gorm:"column:image" json:"image"`
+	ID          **uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Name        string      `gorm:"column:name;type:text;not null" json:"name"`
+	Description *string     `gorm:"column:description;type:text" json:"description"`
+	Renderer    *string     `gorm:"column:renderer;type:text" json:"renderer"`
+	Metadata    *uuid.UUID  `gorm:"column:metadata;type:uuid" json:"metadata"`
+	Created     *int64      `gorm:"column:created;type:bigint;default:unix_now()" json:"created"`
+	LastEdited  *int64      `gorm:"column:last_edited;type:bigint;default:unix_now()" json:"last_edited"`
+	Image       *string     `gorm:"column:image;type:text" json:"image"`
 }
 
 // TableName Story's table name

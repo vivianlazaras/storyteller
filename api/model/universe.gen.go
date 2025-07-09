@@ -4,16 +4,20 @@
 
 package model
 
+import (
+	"github.com/google/uuid"
+)
+
 const TableNameUniverse = "universe"
 
 // Universe mapped from table <universe>
 type Universe struct {
-	ID          string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
-	Name        string `gorm:"column:name;not null" json:"name"`
-	Description string `gorm:"column:description" json:"description"`
-	Metadata    string `gorm:"column:metadata" json:"metadata"`
-	Created     int64  `gorm:"column:created" json:"created"`
-	LastEdited  int64  `gorm:"column:last_edited" json:"last_edited"`
+	ID          **uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Name        string      `gorm:"column:name;type:text;not null" json:"name"`
+	Description *string     `gorm:"column:description;type:text" json:"description"`
+	Metadata    *uuid.UUID  `gorm:"column:metadata;type:uuid" json:"metadata"`
+	Created     *int64      `gorm:"column:created;type:bigint" json:"created"`
+	LastEdited  *int64      `gorm:"column:last_edited;type:bigint" json:"last_edited"`
 }
 
 // TableName Universe's table name

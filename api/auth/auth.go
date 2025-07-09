@@ -16,7 +16,7 @@ import (
     "github.com/vivianlazaras/storyteller/model"
     "gorm.io/gorm"
 	"golang.org/x/crypto/bcrypt"
-
+	"github.com/google/uuid"
     "github.com/golang-jwt/jwt/v5"
 )
 
@@ -24,15 +24,15 @@ var jwtSigningKey *rsa.PrivateKey;
 var JWTPubKey     rsa.PublicKey;
 
 // GetUserIDFromContext extracts the user ID from OIDC claims in Gin context
-func GetUserIDFromContext(c *gin.Context) (string, error) {
+func GetUserIDFromContext(c *gin.Context) (*uuid.UUID, error) {
 	claimsVal, exists := c.Get("claims")
 	if !exists {
-		return "", errors.New("no claims found in context")
+		return nil, errors.New("no claims found in context")
 	}
 
 	claims, ok := claimsVal.(*OIDCClaims)
 	if !ok {
-		return "", errors.New("invalid claims type in context")
+		return nil, errors.New("invalid claims type in context")
 	}
 
 	return claims.Sub, nil
@@ -85,7 +85,7 @@ func GetUserByEmail(db *gorm.DB, email string) (*model.User, error) {
 }
 
 type OIDCClaims struct {
-    Sub     string  `json:"sub"`   // Subject (user ID)
+    Sub     *uuid.UUID  `json:"sub"`   // Subject (user ID)
     Email   string  `json:"email"` // Optional additional claim
     Iss     string  `json:"iss"`
     Aud     string  `json:"aud"`
@@ -94,12 +94,19 @@ type OIDCClaims struct {
 
 func AuthenticateAndIssueToken(db *gorm.DB, email, password string) (string, error) {
     user, err := GetUserByEmail(db, email)
+	var hashedPassword string
     if err != nil {
         return "", err
     }
 
+	if user.PasswordHash != nil {
+		hashedPassword = *user.PasswordHash
+	}else{
+		return "", fmt.Errorf("no password found for user")
+	}
+
     // Verify password
-    if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+    if err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)); err != nil {
         return "", errors.New("invalid password")
     }
 

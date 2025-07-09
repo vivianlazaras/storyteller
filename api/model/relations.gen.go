@@ -4,15 +4,19 @@
 
 package model
 
+import (
+	"github.com/google/uuid"
+)
+
 const TableNameRelation = "relations"
 
 // Relation mapped from table <relations>
 type Relation struct {
-	Parent         string `gorm:"column:parent;primaryKey" json:"parent"`
-	Child          string `gorm:"column:child;primaryKey" json:"child"`
-	Description    string `gorm:"column:description" json:"description"`
-	ParentCategory string `gorm:"column:parent_category;primaryKey" json:"parent_category"`
-	ChildCategory  string `gorm:"column:child_category;primaryKey" json:"child_category"`
+	Parent         *uuid.UUID `gorm:"column:parent;type:uuid;primaryKey" json:"parent"`
+	Child          *uuid.UUID `gorm:"column:child;type:uuid;primaryKey" json:"child"`
+	Description    *string    `gorm:"column:description;type:text" json:"description"`
+	ParentCategory string     `gorm:"column:parent_category;type:text;primaryKey" json:"parent_category"`
+	ChildCategory  string     `gorm:"column:child_category;type:text;primaryKey" json:"child_category"`
 }
 
 // TableName Relation's table name

@@ -4,20 +4,24 @@
 
 package model
 
+import (
+	"github.com/google/uuid"
+)
+
 const TableNameDataset = "datasets"
 
 // Dataset mapped from table <datasets>
 type Dataset struct {
-	ID            string `gorm:"column:id;primaryKey" json:"id"`
-	Name          string `gorm:"column:name;not null" json:"name"`
-	Description   string `gorm:"column:description" json:"description"`
-	Created       int64  `gorm:"column:created;default:unix_now()" json:"created"`
-	Disaggregated bool   `gorm:"column:disaggregated" json:"disaggregated"`
-	Source        string `gorm:"column:source;not null" json:"source"`
-	Format        string `gorm:"column:format;default:json" json:"format"`
-	Renderable    bool   `gorm:"column:renderable" json:"renderable"`
-	Comment       string `gorm:"column:comment" json:"comment"`
-	HumanSubject  bool   `gorm:"column:human_subject;not null" json:"human_subject"`
+	ID            *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
+	Name          string     `gorm:"column:name;type:text;not null" json:"name"`
+	Description   *string    `gorm:"column:description;type:text" json:"description"`
+	Created       *int64     `gorm:"column:created;type:bigint;default:unix_now()" json:"created"`
+	Disaggregated *bool      `gorm:"column:disaggregated;type:boolean" json:"disaggregated"`
+	Source        string     `gorm:"column:source;type:text;not null" json:"source"`
+	Format        *string    `gorm:"column:format;type:text;default:json" json:"format"`
+	Renderable    *bool      `gorm:"column:renderable;type:boolean" json:"renderable"`
+	Comment       *string    `gorm:"column:comment;type:text" json:"comment"`
+	HumanSubject  bool       `gorm:"column:human_subject;type:boolean;not null" json:"human_subject"`
 }
 
 // TableName Dataset's table name

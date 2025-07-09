@@ -4,15 +4,19 @@
 
 package model
 
+import (
+	"github.com/google/uuid"
+)
+
 const TableNameGraph = "graphs"
 
 // Graph mapped from table <graphs>
 type Graph struct {
-	ID       string `gorm:"column:id;primaryKey" json:"id"`
-	Entity   string `gorm:"column:entity" json:"entity"`
-	Rendered int64  `gorm:"column:rendered;default:unix_now()" json:"rendered"`
-	DotData  string `gorm:"column:dot_data;not null" json:"dot_data"`
-	Created  int64  `gorm:"column:created;default:unix_now()" json:"created"`
+	ID       *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
+	Entity   *uuid.UUID `gorm:"column:entity;type:uuid" json:"entity"`
+	Rendered *int64     `gorm:"column:rendered;type:bigint;default:unix_now()" json:"rendered"`
+	DotData  string     `gorm:"column:dot_data;type:text;not null" json:"dot_data"`
+	Created  *int64     `gorm:"column:created;type:bigint;default:unix_now()" json:"created"`
 }
 
 // TableName Graph's table name

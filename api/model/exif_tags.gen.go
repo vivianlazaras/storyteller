@@ -4,14 +4,18 @@
 
 package model
 
+import (
+	"github.com/google/uuid"
+)
+
 const TableNameExifTag = "exif_tags"
 
 // ExifTag mapped from table <exif_tags>
 type ExifTag struct {
-	ID    string `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
-	Image string `gorm:"column:image" json:"image"`
-	Tag   int32  `gorm:"column:tag;not null" json:"tag"`
-	Value string `gorm:"column:value;not null" json:"value"`
+	ID    **uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Image *uuid.UUID  `gorm:"column:image;type:uuid" json:"image"`
+	Tag   int32       `gorm:"column:tag;type:integer;not null" json:"tag"`
+	Value string      `gorm:"column:value;type:text;not null" json:"value"`
 }
 
 // TableName ExifTag's table name
