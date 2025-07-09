@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/vivianlazaras/storyteller/model"
+	"github.com/vivianlazaras/storyteller/auth"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -69,6 +70,11 @@ func CreateNewNote(db *gorm.DB, builder NoteBuilder) (model.Note, error) {
 
 func CreateNote(c *gin.Context) {
 
+	user, err := auth.GetUserFromClaims(db.DB, c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: " + err.Error()})
+		return
+	}
 	// I should really add an assertion of category here, but it's fine for now
 	
 	var builder NoteBuilder
@@ -76,9 +82,31 @@ func CreateNote(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to parse note creation json"})
 	}
 
-	note, err := CreateNewNote(db.DB, builder)
+	// Begin transaction
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create transaction"})
+		return
+	}
+
+	note, err := CreateNewNote(tx, builder)
 	if err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "inernal server error creating note"})
+	}
+
+	if err := tx.Model(&model.Entity{}).
+		Where("id = ?", note.ID).
+		Update("group_id", user.DefaultGroup).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update group_id: " + err.Error()})
+		return
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+		return
 	}
 
 	c.JSON(http.StatusOK, note)
