@@ -12,11 +12,11 @@ import (
 )
 
 func RegisterNoteRoutes(r *gin.Engine) *gin.Engine {
-	r.POST("/notes/", CreateNote)
-	r.PUT("/notes/complete/:id", CompleteNote)
-	r.PUT("/notes/:id", EditNote)
-	r.GET("/notes/", ListNotes)
-	r.DELETE("/notes/:id", DeleteNote)
+	r.POST("/notes/", auth.JWTMiddleware(), CreateNote)
+	r.PUT("/notes/complete/:id", auth.JWTMiddleware(), CompleteNote)
+	r.PUT("/notes/:id", auth.JWTMiddleware(), EditNote)
+	r.GET("/notes/", auth.JWTMiddleware(), ListNotes)
+	r.DELETE("/notes/:id", auth.JWTMiddleware(), DeleteNote)
 	return r
 } 
 
@@ -28,7 +28,7 @@ type NoteBuilder struct {
 	Category	string		`json:"category"`
 }
 
-func CreateNewNote(db *gorm.DB, builder NoteBuilder) (model.Note, error) {
+func CreateNewNote(tx *gorm.DB, builder NoteBuilder) (model.Note, error) {
 	now := time.Now().Unix()
 	description := ""
 
@@ -51,17 +51,13 @@ func CreateNewNote(db *gorm.DB, builder NoteBuilder) (model.Note, error) {
 		ChildCategory: "notes",
 	}
 
-	tx := db.Begin()
-
-	err := db.Create(&newnote).Error
+	err := tx.Create(&newnote).Error
 	if err != nil {
-		tx.Rollback()
 		return model.Note{}, err
 	}
 
 	_, relresult := CreateNewRelation(tx, &relation)
 	if relresult != nil {
-		tx.Rollback()
 		return model.Note{}, relresult
 	}
 
