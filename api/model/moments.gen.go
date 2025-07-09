@@ -12,10 +12,10 @@ const TableNameMoment = "moments"
 
 // Moment mapped from table <moments>
 type Moment struct {
-	ID       *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
-	Timeline *uuid.UUID `gorm:"column:timeline;type:uuid" json:"timeline"`
-	Idx      int64      `gorm:"column:idx;type:bigint;not null" json:"idx"`
-	Fragment *uuid.UUID `gorm:"column:fragment;type:uuid" json:"fragment"`
+	ID       uuid.UUID  `gorm:"column:id;primaryKey" json:"id"`
+	Timeline uuid.UUID  `gorm:"column:timeline;not null" json:"timeline"`
+	Idx      int64      `gorm:"column:idx;not null" json:"idx"`
+	Fragment *uuid.UUID `gorm:"column:fragment" json:"fragment"`
 }
 
 // TableName Moment's table name

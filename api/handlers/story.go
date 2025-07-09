@@ -26,7 +26,7 @@ func GetStories(c *gin.Context) {
 		return
 	}
 
-	if user.DefaultGroup == "" {
+	if user.DefaultGroup == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "default group is null"})
 		return
 	}
@@ -74,11 +74,7 @@ type StoryBuilder struct {
 
 func CreateNewStory(tx *gorm.DB, fragment *StoryBuilder, creatorID uuid.UUID) (model.Story, error) {
 	now := time.Now().Unix()
-	description := ""
-	image		:= ""
-	if fragment.Description != nil {
-		description = *fragment.Description
-	}
+	
 
 	metadata, err := createDefaultMetadata(creatorID)
 	if err != nil {
@@ -86,16 +82,16 @@ func CreateNewStory(tx *gorm.DB, fragment *StoryBuilder, creatorID uuid.UUID) (m
 	}
 
 	var storyid = uuid.New();
-
+	var fragment_render = string(fragment.Render)
 	var story = model.Story {
-		ID:          storyid.String(),
-		Metadata:	 metadata.ID,
+		ID:          storyid,
+		Metadata:	 &metadata.ID,
 		Name:        fragment.Title,
-		Description: description,
-		Image:		 image,
+		Description: fragment.Description,
+		Image:		 fragment.Image,
 		Created:     now,
-		LastEdited:  now,
-		Renderer:    string(fragment.Render),
+		LastEdited:  &now,
+		Renderer:    &fragment_render,
 	}
 
 	dberr := tx.Create(&story).Error
@@ -124,7 +120,7 @@ func CreateStory(c *gin.Context) {
 		return
 	}
 
-	parsedUUID, err := uuid.Parse(user.ID)
+	parsedUUID := user.ID
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return

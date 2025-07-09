@@ -12,11 +12,11 @@ const TableNameLicense = "licenses"
 
 // License mapped from table <licenses>
 type License struct {
-	ID          *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
-	Name        string     `gorm:"column:name;type:text;not null" json:"name"`
-	Description *string    `gorm:"column:description;type:text" json:"description"`
-	Public      *bool      `gorm:"column:public;type:boolean" json:"public"`
-	Content     *string    `gorm:"column:content;type:text" json:"content"`
+	ID          uuid.UUID `gorm:"column:id;primaryKey" json:"id"`
+	Name        string    `gorm:"column:name;not null" json:"name"`
+	Description *string   `gorm:"column:description" json:"description"`
+	Public      *bool     `gorm:"column:public" json:"public"`
+	Content     *string   `gorm:"column:content" json:"content"`
 }
 
 // TableName License's table name

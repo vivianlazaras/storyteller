@@ -12,9 +12,9 @@ const TableNameImage = "images"
 
 // Image mapped from table <images>
 type Image struct {
-	ID          *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
-	URL         string     `gorm:"column:url;type:text;not null" json:"url"`
-	Description *string    `gorm:"column:description;type:text" json:"description"`
+	ID          uuid.UUID `gorm:"column:id;primaryKey" json:"id"`
+	URL         string    `gorm:"column:url;not null" json:"url"`
+	Description *string   `gorm:"column:description" json:"description"`
 }
 
 // TableName Image's table name

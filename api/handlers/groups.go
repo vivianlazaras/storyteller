@@ -3,7 +3,6 @@ package handlers
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"github.com/vivianlazaras/storyteller/db"
 	"github.com/vivianlazaras/storyteller/model"
 )
 
@@ -11,7 +10,7 @@ import (
 // if not found it will create it, this will be used as the default value
 // when creating metadata for unshared objects. This is a workaround because go tries to
 // insert '' for empty string
-func getNullGroup() (string, error) {
+/*func getNullGroup() (string, error) {
 	var results []string
 
 	err := db.DB.Raw(`
@@ -38,7 +37,7 @@ func getNullGroup() (string, error) {
 
 	dberr := db.DB.Create(nullGroup).Error
 	return nullGroup.ID, dberr
-}
+}*/
 
 func GetGroupsForUser(db *gorm.DB, userID uuid.UUID) ([]model.Group, error) {
 	var groups []model.Group

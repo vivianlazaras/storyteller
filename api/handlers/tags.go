@@ -17,9 +17,9 @@ func RegisterTagRoutes(r *gin.Engine) *gin.Engine {
 func InsertTagsForEntity(tx *gorm.DB, entityID uuid.UUID, tags []string) error {
 	for _, tag := range tags {
 		var newtag = model.Tag {
-			ID: uuid.New().String(),
+			ID: uuid.New(),
 			Value: tag,
-			Entity: entityID.String(),
+			Entity: entityID,
 		}
 		err := tx.Create(&newtag).Error
 		if err != nil {

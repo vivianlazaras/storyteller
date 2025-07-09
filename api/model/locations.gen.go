@@ -12,12 +12,12 @@ const TableNameLocation = "locations"
 
 // Location mapped from table <locations>
 type Location struct {
-	ID          *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
-	Name        string     `gorm:"column:name;type:text;not null" json:"name"`
-	Description *string    `gorm:"column:description;type:text" json:"description"`
-	Created     *int64     `gorm:"column:created;type:bigint;default:unix_now()" json:"created"`
-	Thumbnail   *uuid.UUID `gorm:"column:thumbnail;type:uuid" json:"thumbnail"`
-	LastEdited  *int64     `gorm:"column:last_edited;type:bigint;default:unix_now()" json:"last_edited"`
+	ID          uuid.UUID  `gorm:"column:id;primaryKey" json:"id"`
+	Name        string     `gorm:"column:name;not null" json:"name"`
+	Description *string    `gorm:"column:description" json:"description"`
+	Created     int64      `gorm:"column:created;not null;default:unix_now()" json:"created"`
+	Thumbnail   *uuid.UUID `gorm:"column:thumbnail" json:"thumbnail"`
+	LastEdited  *int64     `gorm:"column:last_edited;default:unix_now()" json:"last_edited"`
 }
 
 // TableName Location's table name

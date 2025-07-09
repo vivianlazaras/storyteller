@@ -12,14 +12,14 @@ const TableNameFragment = "fragments"
 
 // Fragment mapped from table <fragments>
 type Fragment struct {
-	ID          *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
-	Metadata    *uuid.UUID `gorm:"column:metadata;type:uuid" json:"metadata"`
-	Idx         int32      `gorm:"column:idx;type:integer;not null" json:"idx"`
-	Content     string     `gorm:"column:content;type:text;not null" json:"content"`
-	Name        string     `gorm:"column:name;type:text;not null" json:"name"`
-	LastEdited  *int64     `gorm:"column:last_edited;type:bigint;default:unix_now()" json:"last_edited"`
-	Created     *int64     `gorm:"column:created;type:bigint;default:unix_now()" json:"created"`
-	Description *string    `gorm:"column:description;type:text" json:"description"`
+	ID          uuid.UUID  `gorm:"column:id;primaryKey" json:"id"`
+	Metadata    *uuid.UUID `gorm:"column:metadata" json:"metadata"`
+	Idx         int32      `gorm:"column:idx;not null" json:"idx"`
+	Content     string     `gorm:"column:content;not null" json:"content"`
+	Name        string     `gorm:"column:name;not null" json:"name"`
+	LastEdited  *int64     `gorm:"column:last_edited;default:unix_now()" json:"last_edited"`
+	Created     *int64     `gorm:"column:created;default:unix_now()" json:"created"`
+	Description *string    `gorm:"column:description" json:"description"`
 }
 
 // TableName Fragment's table name

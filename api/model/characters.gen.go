@@ -12,14 +12,14 @@ const TableNameCharacter = "characters"
 
 // Character mapped from table <characters>
 type Character struct {
-	ID          **uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	Name        string      `gorm:"column:name;type:text;not null" json:"name"`
-	Description *string     `gorm:"column:description;type:text" json:"description"`
-	Metadata    *uuid.UUID  `gorm:"column:metadata;type:uuid" json:"metadata"`
-	Created     *int64      `gorm:"column:created;type:bigint;default:unix_now()" json:"created"`
-	LastEdited  *int64      `gorm:"column:last_edited;type:bigint;default:unix_now()" json:"last_edited"`
-	Thumbnail   *uuid.UUID  `gorm:"column:thumbnail;type:uuid" json:"thumbnail"`
-	Gender      *string     `gorm:"column:gender;type:text;not null;default:female" json:"gender"`
+	ID          uuid.UUID  `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
+	Name        string     `gorm:"column:name;not null" json:"name"`
+	Description *string    `gorm:"column:description" json:"description"`
+	Metadata    *uuid.UUID `gorm:"column:metadata" json:"metadata"`
+	Created     *int64     `gorm:"column:created;default:unix_now()" json:"created"`
+	LastEdited  *int64     `gorm:"column:last_edited;default:unix_now()" json:"last_edited"`
+	Thumbnail   *uuid.UUID `gorm:"column:thumbnail" json:"thumbnail"`
+	Gender      string     `gorm:"column:gender;not null;default:female" json:"gender"`
 }
 
 // TableName Character's table name

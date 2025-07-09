@@ -33,7 +33,7 @@ type CharacterRender struct {
 }
 
 func renderCharacter(tx *gorm.DB, character model.Character) (CharacterRender, error) {
-	var charid = uuid.MustParse(character.ID)
+	var charid = character.ID
 	tags, tagerr := SelectTagsByEntityID(charid)
 	if tagerr != nil {
 		return CharacterRender{}, nil
@@ -54,7 +54,7 @@ func renderCharacter(tx *gorm.DB, character model.Character) (CharacterRender, e
 		Tags:  tags,
 		ID: charid,
 		Name: character.Name,
-		Description: &character.Description,
+		Description: character.Description,
 		Images: images,
 	}, nil
 }
@@ -98,12 +98,6 @@ func GetCharacter(c *gin.Context) {
 		return
 	}
 
-	metadata, err := db.GetByID[model.Metadatum]("metadata", character.Metadata)
-	if metadata.Public != true {
-		c.JSON(http.StatusNotFound, model.Character{})
-		return
-	}
-
 	render, renderr := renderCharacter(db.DB, *character)
 
 	if renderr != nil {
@@ -114,10 +108,7 @@ func GetCharacter(c *gin.Context) {
 
 func CreateNewCharacter(tx *gorm.DB, builder *CharacterBuilder, creatorID uuid.UUID) (model.Character, error) {
 	now := time.Now().Unix()
-	description := ""
-	if builder.Description != nil {
-		description = *builder.Description
-	}
+	
 
 	metadata, err := createDefaultMetadata(creatorID)
 	if err != nil {
@@ -125,12 +116,12 @@ func CreateNewCharacter(tx *gorm.DB, builder *CharacterBuilder, creatorID uuid.U
 	}
 
 	var character = model.Character{
-		ID:          uuid.New().String(),
-		Metadata:	 metadata.ID,
+		ID:          uuid.New(),
+		Metadata:	 &metadata.ID,
 		Name:        builder.Name,
-		Description: description,
-		Created:     now,
-		LastEdited:  now,
+		Description: builder.Description,
+		Created:     &now,
+		LastEdited:  &now,
 	}
 	
 	dberr := tx.Create(&character).Error
@@ -147,7 +138,7 @@ func CreateNewCharacter(tx *gorm.DB, builder *CharacterBuilder, creatorID uuid.U
 			return model.Character{}, imgerr
 		}
 		if len(images) > 0 {
-			character.Thumbnail = images[0].ID
+			character.Thumbnail = &images[0].ID
 			thumbID := images[0].ID
 			updateErr := tx.Model(&character).Update("thumbnail", thumbID).Error
 			if updateErr != nil {
@@ -156,7 +147,7 @@ func CreateNewCharacter(tx *gorm.DB, builder *CharacterBuilder, creatorID uuid.U
 			}
 
 			// Reflect change in the return value
-			character.Thumbnail = thumbID
+			character.Thumbnail = &thumbID
 		}
 	}
 
@@ -176,7 +167,7 @@ func CreateCharacter(c *gin.Context) {
 		return
 	}
 
-	parsedUUID, err := uuid.Parse(user.ID)
+	parsedUUID := user.ID
 
 	tx := db.DB.Begin()
 	if tx.Error != nil {
@@ -242,7 +233,7 @@ func GetCharactersByStory(c *gin.Context) {
 
 	for _, character := range characters {
 		var thumbnail *model.Image
-		if character.Thumbnail != "" {
+		if character.Thumbnail != nil {
 			var img model.Image
 			if err := db.DB.First(&img, "id = ?", character.Thumbnail).Error; err == nil {
 				thumbnail = &img
@@ -252,9 +243,9 @@ func GetCharactersByStory(c *gin.Context) {
 		}
 
 		render := CharacterRender{
-			ID:          uuid.MustParse(character.ID),
+			ID:          character.ID,
 			Name:        character.Name,
-			Description: &character.Description,
+			Description: character.Description,
 			Thumbnail:   thumbnail,
 		}
 		characterRenders = append(characterRenders, render)
@@ -281,7 +272,7 @@ func GetCharacterTree(c *gin.Context) {
 type CharacterNode struct {
 	ID          uuid.UUID       `json:"id"`
 	Name        string          `json:"name"`
-	Description string          `json:"description"`
+	Description *string          `json:"description"`
 	Children    []CharacterNode `json:"children"`
 }
 
@@ -299,7 +290,7 @@ func FetchCharacterTree(db *gorm.DB, parentID uuid.UUID, visited map[uuid.UUID]b
 	}
 
 	node := CharacterNode{
-		ID:          uuid.MustParse(character.ID),
+		ID:          character.ID,
 		Name:        character.Name,
 		Description: character.Description,
 		Children:    []CharacterNode{},

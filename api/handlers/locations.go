@@ -66,14 +66,14 @@ func GetLocations(c *gin.Context) {
 }
 
 func RenderLocation(tx *gorm.DB, location model.Location) (LocationRender, error) {
-	var locid = uuid.MustParse(location.ID)
+	var locid = location.ID
 	var thumbnail *model.Image = nil
 	tags, tagerr := SelectTagsByEntityID(locid)
 	if tagerr != nil {
 		return LocationRender{}, nil
 	}
 	
-	if location.Thumbnail != "" {
+	if location.Thumbnail != nil {
 		image, thmerr := db.GetByID[model.Image]("images", location.Thumbnail);
 		if thmerr != nil {
 			return LocationRender{}, thmerr
@@ -91,7 +91,7 @@ func RenderLocation(tx *gorm.DB, location model.Location) (LocationRender, error
 		Tags:  tags,
 		ID: locid,
 		Name: location.Name,
-		Description: &location.Description,
+		Description: location.Description,
 		Images: images,
 		Created: location.Created,
 	}, nil
@@ -125,17 +125,12 @@ func GetLocation(c *gin.Context) {
 func CreateNewLocation(tx *gorm.DB, builder LocationBuilder) (model.Location, error) {
 	now := time.Now().Unix()
 
-	var description = ""
-	if builder.Description != nil {
-		description = *builder.Description
-	}
-
 	var location = model.Location {
-		ID: uuid.New().String(),
+		ID: uuid.New(),
 		Name: builder.Name,
-		Description: description,
+		Description: builder.Description,
 		Created: now,
-		LastEdited: now,
+		LastEdited: &now,
 	}
 
 	err := tx.Create(&location).Error;
@@ -154,7 +149,7 @@ func CreateNewLocation(tx *gorm.DB, builder LocationBuilder) (model.Location, er
 			return model.Location{}, imgerr
 		}
 		if len(images) > 0 {
-			location.Thumbnail = images[0].ID
+			location.Thumbnail = &images[0].ID
 			thumbID := images[0].ID
 			updateErr := tx.Model(&location).Update("thumbnail", thumbID).Error
 			if updateErr != nil {
@@ -163,11 +158,11 @@ func CreateNewLocation(tx *gorm.DB, builder LocationBuilder) (model.Location, er
 			}
 
 			// Reflect change in the return value
-			location.Thumbnail = thumbID
+			location.Thumbnail = &thumbID
 		}
 	}
 
-	tagerr := InsertTagsForEntity(tx, uuid.MustParse(location.ID), builder.Tags)
+	tagerr := InsertTagsForEntity(tx, location.ID, builder.Tags)
 	if tagerr != nil {
 		//tx.Rollback()
 		fmt.Printf("tagerr %s", tagerr)
@@ -246,7 +241,7 @@ func GetLocationsByStory(c *gin.Context) {
 
 	for _, loc := range locations {
 		var thumbnail *model.Image
-		if loc.Thumbnail != "" {
+		if loc.Thumbnail != nil {
 			var img model.Image
 			if err := db.DB.First(&img, "id = ?", loc.Thumbnail).Error; err == nil {
 				thumbnail = &img
@@ -256,9 +251,9 @@ func GetLocationsByStory(c *gin.Context) {
 		}
 
 		render := LocationRender{
-			ID:          uuid.MustParse(loc.ID),
+			ID:          loc.ID,
 			Name:        loc.Name,
-			Description: &loc.Description,
+			Description: loc.Description,
 			Thumbnail:   thumbnail,
 		}
 		locationRenders = append(locationRenders, render)

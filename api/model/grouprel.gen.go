@@ -12,10 +12,10 @@ const TableNameGrouprel = "grouprel"
 
 // Grouprel mapped from table <grouprel>
 type Grouprel struct {
-	ID          **uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	GroupID     *uuid.UUID  `gorm:"column:group_id;type:uuid" json:"group_id"`
-	UserID      *uuid.UUID  `gorm:"column:user_id;type:uuid" json:"user_id"`
-	Description *string     `gorm:"column:description;type:text" json:"description"`
+	ID          uuid.UUID  `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
+	GroupID     *uuid.UUID `gorm:"column:group_id" json:"group_id"`
+	UserID      *uuid.UUID `gorm:"column:user_id" json:"user_id"`
+	Description *string    `gorm:"column:description" json:"description"`
 }
 
 // TableName Grouprel's table name

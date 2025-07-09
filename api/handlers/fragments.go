@@ -13,7 +13,7 @@ import (
 )
 
 type FragmentBuilder struct {
-	Parent		*string			`json:"parent"`
+	Parent		*uuid.UUID			`json:"parent"`
 	Category	*string			`json:"category"`
 	Content     string          `json:"content"`
 	Name		string			`json:"name"`
@@ -29,7 +29,7 @@ type FragmentUpdate struct {
 type FragmentRender struct {
 	ID		uuid.UUID	`json:"id"`
 	Name	string		`json:"name"`
-	Description	string	`json:"description"`
+	Description	*string	`json:"description"`
 	Content	string		`json:"content"`
 	Images	[]model.Image `json:"images"`
 	Created		string	`json:"created"`
@@ -63,10 +63,10 @@ func linkFragment(tx *gorm.DB, fragment *FragmentBuilder, id uuid.UUID) error {
 	if fragment.Category != nil && fragment.Parent != nil {
 		relation := model.Relation{
 			Parent:         *fragment.Parent,
-			Child:          id.String(),
+			Child:          id,
 			ParentCategory: *fragment.Category,
 			ChildCategory:  "fragments", // assuming child is always a fragment
-			Description:    "",        // or you can add logic to populate this if needed
+			Description:    nil,        // or you can add logic to populate this if needed
 		}
 
 		if err := tx.Create(&relation).Error; err != nil {
@@ -136,13 +136,13 @@ func selectFragmentsByEntity(db *gorm.DB, parentID uuid.UUID) ([]FragmentRender,
 		}
 
 		render := FragmentRender{
-			ID:          uuid.MustParse(frag.ID),
+			ID:          frag.ID,
 			Name:        frag.Name,
 			Description: frag.Description,
 			Content:     frag.Content,
 			Images:      images,
-			Created:     time.Unix(int64(frag.Created), 0).UTC().Format(time.RFC3339),
-			LastEdited:  time.Unix(int64(frag.LastEdited), 0).UTC().Format(time.RFC3339),
+			Created:     time.Unix(int64(*frag.Created), 0).UTC().Format(time.RFC3339),
+			LastEdited:  time.Unix(int64(*frag.LastEdited), 0).UTC().Format(time.RFC3339),
 		}
 		results = append(results, render)
 	}
@@ -171,12 +171,12 @@ func CreateNewFragment(tx *gorm.DB, fragment *FragmentBuilder, creatorID uuid.UU
 	}
 
 	var newfragment = model.Fragment {
-		ID: 		fragmentid.String(),
-		Metadata:	metadata.ID,
+		ID: 		fragmentid,
+		Metadata:	&metadata.ID,
 		Content:	fragment.Content,
 		Name:		fragment.Name,
-		LastEdited:	now,
-		Created:	now,
+		LastEdited:	&now,
+		Created:	&now,
 	}
 
 	if fragment.Name != "" {
@@ -209,7 +209,7 @@ func CreateFragment(c *gin.Context) {
 		return
 	}
 
-	parsedUUID, err := uuid.Parse(user.ID)
+	parsedUUID := user.ID
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{ "error": "Internal Server Error: " + err.Error() })
 		return
@@ -245,7 +245,7 @@ func CreateFragment(c *gin.Context) {
 	c.JSON(http.StatusOK, newfragment)
 }
 
-func UpdateFragment(db *gorm.DB, update FragmentUpdate, userID string) error {
+func UpdateFragment(db *gorm.DB, update FragmentUpdate, userID uuid.UUID) error {
 	
 	tx := db.Begin()
 	if tx.Error != nil {
@@ -267,19 +267,19 @@ func UpdateFragment(db *gorm.DB, update FragmentUpdate, userID string) error {
 	}
 
 	// Step 3: Create a group ID to associate these edits
-	groupID := uuid.New().String()
+	groupID := uuid.New()
 	now := time.Now().Unix()
 
 	// Step 4: Create one Edit per change
 	for _, line := range diff {
 		edit := model.Edit{
-			ID:        uuid.New().String(),
-			UpdateID:   groupID,
-			Date:      now,
-			Editor:    userID,
+			ID:        uuid.New(),
+			UpdateID:  &groupID,
+			Date:      &now,
+			Editor:    &userID,
 			Value:     line.Value,
 			Prevvalue: line.Previous,
-			Entity:    fragment.ID,
+			Entity:    &fragment.ID,
 			Field:     "content",
 			Change:    line.Change,
 		}

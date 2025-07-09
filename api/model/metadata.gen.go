@@ -12,11 +12,11 @@ const TableNameMetadatum = "metadata"
 
 // Metadatum mapped from table <metadata>
 type Metadatum struct {
-	ID      **uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	Creator *uuid.UUID  `gorm:"column:creator;type:uuid" json:"creator"`
-	License *uuid.UUID  `gorm:"column:license;type:uuid" json:"license"`
-	Public  *bool       `gorm:"column:public;type:boolean;default:true" json:"public"`
-	Active  *bool       `gorm:"column:active;type:boolean;default:true" json:"active"`
+	ID      uuid.UUID  `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
+	Creator *uuid.UUID `gorm:"column:creator" json:"creator"`
+	License *uuid.UUID `gorm:"column:license" json:"license"`
+	Public  bool       `gorm:"column:public;not null;default:true" json:"public"`
+	Active  bool       `gorm:"column:active;not null;default:true" json:"active"`
 }
 
 // TableName Metadatum's table name

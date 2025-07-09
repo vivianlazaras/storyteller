@@ -12,16 +12,16 @@ const TableNameEdit = "edits"
 
 // Edit mapped from table <edits>
 type Edit struct {
-	ID        *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
-	Date      *int64     `gorm:"column:date;type:bigint" json:"date"`
-	Editor    *uuid.UUID `gorm:"column:editor;type:uuid" json:"editor"`
-	Comment   *string    `gorm:"column:comment;type:text" json:"comment"`
-	Value     string     `gorm:"column:value;type:text;not null" json:"value"`
-	Prevvalue *string    `gorm:"column:prevvalue;type:text" json:"prevvalue"`
-	Entity    *uuid.UUID `gorm:"column:entity;type:uuid" json:"entity"`
-	Field     *string    `gorm:"column:field;type:text" json:"field"`
-	Change    *string    `gorm:"column:change;type:character varying(10)" json:"change"`
-	UpdateID  *uuid.UUID `gorm:"column:update_id;type:uuid" json:"update_id"`
+	ID        uuid.UUID  `gorm:"column:id;primaryKey" json:"id"`
+	Date      *int64     `gorm:"column:date" json:"date"`
+	Editor    *uuid.UUID `gorm:"column:editor" json:"editor"`
+	Comment   *string    `gorm:"column:comment" json:"comment"`
+	Value     string     `gorm:"column:value;not null" json:"value"`
+	Prevvalue string     `gorm:"column:prevvalue;not null" json:"prevvalue"`
+	Entity    *uuid.UUID `gorm:"column:entity" json:"entity"`
+	Field     string     `gorm:"column:field;not null" json:"field"`
+	Change    string     `gorm:"column:change;not null" json:"change"`
+	UpdateID  *uuid.UUID `gorm:"column:update_id" json:"update_id"`
 }
 
 // TableName Edit's table name

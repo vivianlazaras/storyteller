@@ -10,9 +10,9 @@ import (
 func defaultMetadata(creatorID uuid.UUID) model.Metadatum {
 
 	return model.Metadatum {
-		ID: uuid.New().String(),
-		Creator: creatorID.String(),
-		License: "",
+		ID: uuid.New(),
+		Creator: &creatorID,
+		License: nil,
 		Public: false,
 	}
 }
@@ -24,12 +24,12 @@ func createMetadata(metadata *model.Metadatum) error {
 
 func createDefaultMetadata(creatorID uuid.UUID) (model.Metadatum, error) {
 	var metadata = defaultMetadata(creatorID)
-	license, err := createDefaultLicense()
+	/*license, err := createDefaultLicense()
 	if err != nil {
 		return model.Metadatum{}, err
-	}
+	}*/
 
-	metadata.License = license.ID
+	metadata.License = nil
 	merr := createMetadata(&metadata)
 	return metadata, merr
 }

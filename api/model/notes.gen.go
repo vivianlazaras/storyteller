@@ -12,12 +12,12 @@ const TableNameNote = "notes"
 
 // Note mapped from table <notes>
 type Note struct {
-	ID          *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
-	Name        string     `gorm:"column:name;type:text;not null" json:"name"`
-	Description *string    `gorm:"column:description;type:text" json:"description"`
-	Created     *int64     `gorm:"column:created;type:bigint;default:unix_now()" json:"created"`
-	Completed   *int64     `gorm:"column:completed;type:bigint" json:"completed"`
-	Deadline    *int64     `gorm:"column:deadline;type:bigint" json:"deadline"`
+	ID          uuid.UUID `gorm:"column:id;primaryKey" json:"id"`
+	Name        string    `gorm:"column:name;not null" json:"name"`
+	Description *string   `gorm:"column:description" json:"description"`
+	Created     int64     `gorm:"column:created;not null;default:unix_now()" json:"created"`
+	Completed   *int64    `gorm:"column:completed" json:"completed"`
+	Deadline    *int64    `gorm:"column:deadline" json:"deadline"`
 }
 
 // TableName Note's table name

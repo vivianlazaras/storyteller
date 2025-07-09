@@ -30,8 +30,8 @@ type FullMoment struct {
 type FullTimeline struct {
 	ID			uuid.UUID 	`json:"id"`
 	Name		string	`json:"name"`
-	Description	string	`json:"description"`
-	Created		int64	`json:"created"`
+	Description	*string	`json:"description"`
+	Created		*int64	`json:"created"`
 	Moments		[]FullMoment	`json:"moments"`
 	Graph		*string	`json:"graph"`
 }
@@ -81,8 +81,8 @@ func GetFullTimeline(db *gorm.DB, timeline model.Timeline) (FullTimeline, error)
 		}
 
 		fullMoments = append(fullMoments, FullMoment{
-			ID:       uuid.MustParse(moment.ID),
-			Timeline: uuid.MustParse(moment.Timeline),
+			ID:       moment.ID,
+			Timeline: moment.Timeline,
 			Fragment: fragment,
 			Idx:      moment.Idx,
 		})
@@ -100,7 +100,7 @@ func GetFullTimeline(db *gorm.DB, timeline model.Timeline) (FullTimeline, error)
 
 	// Build and return the FullTimeline
 	full := FullTimeline{
-		ID:          uuid.MustParse(timeline.ID),
+		ID:          timeline.ID,
 		Name:        timeline.Name,
 		Description: timeline.Description,
 		Created:     timeline.Created,
@@ -115,9 +115,9 @@ func defaultTimeline(metadata string) model.Timeline {
 	now := time.Now().Unix()
 
 	return model.Timeline{
-		ID:         uuid.New().String(),
-		Created:    now,
-		LastEdited: now,
+		ID:         uuid.New(),
+		Created:    &now,
+		LastEdited: &now,
 	}
 
 }
@@ -142,10 +142,11 @@ func DeleteTimeline(c *gin.Context) {
 }
 
 func CreateMoment(db *gorm.DB, timeline uuid.UUID, fragment uuid.UUID, idx int64) (model.Moment, error) {
+	//var fragment_str = fragment.String()
 	var moment = model.Moment {
-		ID: uuid.New().String(),
-		Timeline: timeline.String(),
-		Fragment: fragment.String(),
+		ID: uuid.New(),
+		Timeline: timeline,
+		Fragment: &fragment,
 		Idx: idx * 8,
 	}
 
@@ -160,8 +161,13 @@ func ListTimelines(c *gin.Context) {
 		return
 	}
 
+	if user.DefaultGroup == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized, default group unset"})
+		return
+	}
+
 	// Fetch timelines accessible by this user
-	timelines, err := ListEntitiesByCategoryForGroup(db.DB, uuid.MustParse(user.DefaultGroup), "timelines")
+	timelines, err := ListEntitiesByCategoryForGroup(db.DB, *user.DefaultGroup, "timelines")
 	
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch timelines: " + err.Error()})
@@ -175,20 +181,21 @@ func ListTimelines(c *gin.Context) {
 /// not both as the ordering would be much more complex to implement if both were supported
 func CreateNewTimeline(db *gorm.DB, user *model.User, builder TimelineBuilder) (model.Timeline, error) {
 	now := time.Now().Unix()
-	var description = ""
 	var timelineid = uuid.New()
-	if builder.Description != nil {
-		description = *builder.Description
+	
+	if user.DefaultGroup == nil {
+		return model.Timeline{}, fmt.Errorf("missing user's default_group")
 	}
 
 	tx := db.Begin()
+	//var builder_str = builder.Source.String()
 	var timeline = model.Timeline {
-		ID: timelineid.String(),
+		ID: timelineid,
 		Name: builder.Name,
-		Description: description,
-		Source: builder.Source.String(),
-		Created: now,
-		LastEdited: now,
+		Description: builder.Description,
+		Source: &builder.Source,
+		Created: &now,
+		LastEdited: &now,
 	}
 
 	tlerr := tx.Create(&timeline).Error
@@ -199,11 +206,11 @@ func CreateNewTimeline(db *gorm.DB, user *model.User, builder TimelineBuilder) (
 	}
 
 	var relation = model.Relation {
-		Parent: builder.Source.String(),
-		Child: timelineid.String(),
+		Parent: builder.Source,
+		Child: timelineid,
 		ParentCategory: builder.Category,
 		ChildCategory: "timelines",
-		Description: "",
+		Description: nil,
 	}
 
 	_, result := CreateNewRelation(tx, &relation)
@@ -212,7 +219,7 @@ func CreateNewTimeline(db *gorm.DB, user *model.User, builder TimelineBuilder) (
 		return model.Timeline{}, result
 	}
 
-	gerr := CreateNewEntity(tx, timelineid, uuid.MustParse(user.DefaultGroup))
+	gerr := CreateNewEntity(tx, timelineid, *user.DefaultGroup)
 	if gerr != nil {
 		tx.Rollback()
 		return model.Timeline{}, gerr

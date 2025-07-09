@@ -12,10 +12,10 @@ const TableNameGroup = "groups"
 
 // Group mapped from table <groups>
 type Group struct {
-	ID          **uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	Name        *string     `gorm:"column:name;type:text" json:"name"`
-	Description *string     `gorm:"column:description;type:text" json:"description"`
-	Permissions *string     `gorm:"column:permissions;type:text[];default:ARRAY['create" json:"permissions"`
+	ID          uuid.UUID `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
+	Name        *string   `gorm:"column:name" json:"name"`
+	Description *string   `gorm:"column:description" json:"description"`
+	Permissions *string   `gorm:"column:permissions;default:ARRAY['create" json:"permissions"`
 }
 
 // TableName Group's table name

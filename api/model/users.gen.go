@@ -12,16 +12,16 @@ const TableNameUser = "users"
 
 // User mapped from table <users>
 type User struct {
-	ID           **uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	Fname        string      `gorm:"column:fname;type:text;not null" json:"fname"`
-	Lname        string      `gorm:"column:lname;type:text;not null" json:"lname"`
-	Subject      *uuid.UUID  `gorm:"column:subject;type:uuid" json:"subject"`
-	Email        string      `gorm:"column:email;type:text;not null" json:"email"`
-	PasswordHash *string     `gorm:"column:password_hash;type:text" json:"password_hash"`
-	ProfileImage *string     `gorm:"column:profile_image;type:text" json:"profile_image"`
-	DefaultGroup *uuid.UUID  `gorm:"column:default_group;type:uuid" json:"default_group"`
-	Gender       *string     `gorm:"column:gender;type:text;not null;default:female" json:"gender"`
-	Sex          *string     `gorm:"column:sex;type:text;not null;default:f" json:"sex"`
+	ID           uuid.UUID  `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
+	Fname        string     `gorm:"column:fname;not null" json:"fname"`
+	Lname        string     `gorm:"column:lname;not null" json:"lname"`
+	Subject      *uuid.UUID `gorm:"column:subject" json:"subject"`
+	Email        string     `gorm:"column:email;not null" json:"email"`
+	PasswordHash *string    `gorm:"column:password_hash" json:"password_hash"`
+	ProfileImage *string    `gorm:"column:profile_image" json:"profile_image"`
+	DefaultGroup *uuid.UUID `gorm:"column:default_group" json:"default_group"`
+	Gender       string     `gorm:"column:gender;not null;default:female" json:"gender"`
+	Sex          string     `gorm:"column:sex;not null;default:f" json:"sex"`
 }
 
 // TableName User's table name

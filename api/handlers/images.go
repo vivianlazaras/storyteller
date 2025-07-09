@@ -158,7 +158,7 @@ type ImageBuilder struct {
 	Description *string    	`json:"description"`
 	Tags        []string   	`json:"tags"`
 	Category    string     	`json:"category"`
-	Parent		*string		`json:"parent"`
+	Parent		*uuid.UUID		`json:"parent"`
 }
 
 type ExifTagRender struct {
@@ -175,19 +175,15 @@ type ImageRender struct {
 }
 
 func CreateNewImage(tx *gorm.DB, builder ImageBuilder) ([]model.Image, error) {
-	var description = ""
-	if builder.Description != nil {
-		description = *builder.Description
-	}
 
 	var images []model.Image
 	
 
 	for _, entry := range builder.Entries {
 		image := model.Image{
-			ID:          uuid.New().String(),
+			ID:          uuid.New(),
 			URL:         entry.Url,
-			Description: description,
+			Description: builder.Description,
 		}
 
 		if err := tx.Create(&image).Error; err != nil {
@@ -222,7 +218,7 @@ func CreateNewImage(tx *gorm.DB, builder ImageBuilder) ([]model.Image, error) {
 		// Save tags (relations to tag table entries)
 		for _, tagValue := range builder.Tags {
 			tag := model.Tag{
-				ID:     uuid.New().String(),
+				ID:     uuid.New(),
 				Value:  tagValue,
 				Entity: image.ID,
 			}
@@ -353,9 +349,9 @@ func GetImage(c *gin.Context) {
 
 	// Build render response
 	render := ImageRender{
-		ID:          uuid.MustParse(image.ID),
+		ID:         image.ID,
 		Url:		image.URL,
-		Description: &image.Description,
+		Description: image.Description,
 		Tags:        tags,
 		ExifTags:   exifTags,
 	}

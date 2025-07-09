@@ -110,10 +110,11 @@ func AuthenticateAndIssueToken(db *gorm.DB, email, password string) (string, err
         return "", errors.New("invalid password")
     }
 
+	var parsedSubject = *user.Subject;
     // Create OIDC-style claims
     expiration := time.Now().Add(time.Hour)
     claims := OIDCClaims{
-        Sub:   user.Subject,
+        Sub:   &parsedSubject,
         Email: user.Email,
         Aud:   "storyteller",
         Iss:    "http://localhost:8442",

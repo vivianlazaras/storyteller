@@ -30,22 +30,18 @@ type NoteBuilder struct {
 
 func CreateNewNote(tx *gorm.DB, builder NoteBuilder) (model.Note, error) {
 	now := time.Now().Unix()
-	description := ""
 
-	if builder.Description != nil {
-		description = *builder.Description
-	}
 
 	newnote := model.Note {
-		ID: uuid.New().String(),
+		ID: uuid.New(),
 		Name: builder.Name,
-		Description: description,
+		Description: builder.Description,
 		Created: now,
 	}
 
 	// now that note should be linked through the Relations table
 	var relation = model.Relation {
-		Parent: builder.Parent.String(),
+		Parent: builder.Parent,
 		ParentCategory: builder.Category,
 		Child: newnote.ID,
 		ChildCategory: "notes",

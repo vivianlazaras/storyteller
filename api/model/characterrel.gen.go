@@ -12,10 +12,10 @@ const TableNameCharacterrel = "characterrel"
 
 // Characterrel mapped from table <characterrel>
 type Characterrel struct {
-	ID         *uuid.UUID `gorm:"column:id;type:uuid;primaryKey" json:"id"`
-	EdgeWeight *string    `gorm:"column:edge_weight;type:text" json:"edge_weight"`
-	Character  *uuid.UUID `gorm:"column:character;type:uuid" json:"character"`
-	Other      *uuid.UUID `gorm:"column:other;type:uuid" json:"other"`
+	ID         uuid.UUID  `gorm:"column:id;primaryKey" json:"id"`
+	EdgeWeight *string    `gorm:"column:edge_weight" json:"edge_weight"`
+	Character  *uuid.UUID `gorm:"column:character" json:"character"`
+	Other      *uuid.UUID `gorm:"column:other" json:"other"`
 }
 
 // TableName Characterrel's table name
