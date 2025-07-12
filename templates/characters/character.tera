@@ -9,7 +9,7 @@
             <button class="deletebtn" type="submit">Delete</button>
 
         </form>
-        
+        <a href="/characters/edit/{{ character.id }}">Edit</a>
         {{ macros::character(character=character) }}
     </div>
 </body>

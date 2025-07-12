@@ -16,6 +16,7 @@ type Grouprel struct {
 	GroupID     *uuid.UUID `gorm:"column:group_id" json:"group_id"`
 	UserID      *uuid.UUID `gorm:"column:user_id" json:"user_id"`
 	Description *string    `gorm:"column:description" json:"description"`
+	Permissions *string    `gorm:"column:permissions" json:"permissions"`
 }
 
 // TableName Grouprel's table name

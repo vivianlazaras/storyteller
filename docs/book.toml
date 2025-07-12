@@ -1,0 +1,6 @@
+[book]
+authors = ["Vivian Lazaras"]
+language = "en"
+multilingual = false
+src = "src"
+title = "StoryTeller Docs"

@@ -15,7 +15,6 @@ type Group struct {
 	ID          uuid.UUID `gorm:"column:id;primaryKey;default:gen_random_uuid()" json:"id"`
 	Name        *string   `gorm:"column:name" json:"name"`
 	Description *string   `gorm:"column:description" json:"description"`
-	Permissions *string   `gorm:"column:permissions;default:ARRAY['create" json:"permissions"`
 }
 
 // TableName Group's table name

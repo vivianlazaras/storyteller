@@ -34,3 +34,4 @@ pub mod themes;
 pub mod timelines;
 pub mod patterns;
 pub use api::*;
+mod tests;

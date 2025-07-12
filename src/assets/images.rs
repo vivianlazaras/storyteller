@@ -150,9 +150,9 @@ impl ImageProcessor {
         for image in image_data.images.iter() {
             // if user doesn't select a file the input will exist still, but it won't have a name
             // this checks if the name exists to see if a file was actually selected for upload
-            /*if image.name().is_none() {
+            if image.name().is_none() {
                 continue;
-            }*/
+            }
             let name = Uuid::new_v4().to_string();
             let save_path = self.image_dir.join(&name);
 

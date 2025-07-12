@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"github.com/vivianlazaras/storyteller/model"
+    "errors"
+    "gorm.io/gorm"
 )
 
 // this function looks for a group named null with no members
@@ -51,4 +52,38 @@ func GetGroupsForUser(db *gorm.DB, userID uuid.UUID) ([]model.Group, error) {
 		return nil, err
 	}
 	return groups, nil
+}
+
+func CreateGroup(tx *gorm.DB, userID uuid.UUID, name string, description *string) (model.Group, error) {
+    if name == "" {
+        return model.Group{}, errors.New("group name cannot be empty")
+    }
+
+    // Initialize the group
+    group := model.Group{
+        Name:        &name,
+        Description: description,
+    }
+
+	// Create the group
+	if err := tx.Create(&group).Error; err != nil {
+		return model.Group{}, err
+	}
+
+	// Create the group relationship linking the user to the group as creator/owner
+	groupRel := model.Grouprel{
+		GroupID:     &group.ID,
+		UserID:      &userID,
+		Permissions: strPtr(`{"create","read","delete","update"}`), // or whatever default permissions
+	}
+
+	if err := tx.Create(&groupRel).Error; err != nil {
+		return model.Group{}, err
+	}
+
+    return group, nil
+}
+
+func strPtr(s string) *string {
+    return &s
 }

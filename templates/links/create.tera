@@ -4,7 +4,7 @@
 {% include "header" %}
 
 <div id="content">
-    <form action="/links/" method="post">
+    <form action="/relations/" method="post">
         <h1>Add {{category}}</h1>
         <label for="category" value="{{category}}"/>
         <select id="child" name="child">

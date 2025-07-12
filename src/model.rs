@@ -89,8 +89,8 @@ pub struct Note {
     id: Uuid,
     name: String,
     description: Option<String>,
-    created: i64,
-    completed: i64,
+    created: Option<i64>,
+    completed: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
