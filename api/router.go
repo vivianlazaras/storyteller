@@ -4,6 +4,7 @@ import (
     "github.com/gin-gonic/gin"
 	"github.com/vivianlazaras/storyteller/handlers"
     "github.com/vivianlazaras/storyteller/auth"
+    "github.com/vivianlazaras/storyteller/config"
     "fmt"
     "io/ioutil"
 )
@@ -16,7 +17,7 @@ func ReadFileAsString(path string) (string, error) {
 	return string(data), nil
 }
 
-func SetupRouter(config *Config) (*gin.Engine, error) {
+func SetupRouter(config *config.Config) (*gin.Engine, error) {
     r := gin.Default()
 
     handlers.RegisterStoryRoutes(r)

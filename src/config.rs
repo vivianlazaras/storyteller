@@ -41,7 +41,7 @@ pub struct ServerConfig {
     certFile: Option<PathBuf>,
     keyFile: Option<PathBuf>,
     self_hosted_auth: Option<bool>,
-    oidc: OIDCConfig,
+    oidc: Vec<OIDCConfig>,
 }
 
 impl ServerConfig {
@@ -60,7 +60,7 @@ impl Default for ServerConfig {
             certFile: None,
             keyFile: None,
             self_hosted_auth: Some(true),
-            oidc: OIDCConfig::default(),
+            oidc: Vec::new(),
         }
     }
 }
@@ -115,7 +115,7 @@ impl Config {
         &self.api.endpoint()
     }
 
-    pub fn oidc(&self) -> &rocket_oidc::OIDCConfig {
+    pub fn oidc(&self) -> &Vec<rocket_oidc::OIDCConfig> {
         &self.server.oidc
     }
 

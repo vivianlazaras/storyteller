@@ -3,13 +3,14 @@ package main
 import (
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/vivianlazaras/storyteller/auth"
+	"github.com/vivianlazaras/storyteller/config"
 	"log"
 	"fmt"
 )
 
 func main() {
 	var path = "../config.json"
-	config, err := LoadConfig(path)
+	config, err := config.LoadConfig(path)
 	if err != nil {
 		fmt.Printf("failed to laod config exiting");
 		return
@@ -21,7 +22,7 @@ func main() {
 			fmt.Printf("Private KeyFile required for self hosted authentication")
 			return
 		}
-		var autherr = auth.InitAuth(*config.Api.Server.KeyFile)
+		var autherr = auth.InitAuth(config.Api.Server.Oidc, *config.Api.Server.KeyFile)
 		if autherr != nil {
 			fmt.Printf("failed loading private keyfile: " + autherr.Error())
 			return

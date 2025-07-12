@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"encoding/json"
@@ -18,7 +18,7 @@ type DBConfig struct {
 type OIDCConfig struct {
 	ClientID string		`json:"client_id"`
 	SecretFile string	`json:"client_secret"`
-	IssuerUrl string	`json:"issuer_url"`
+	IssuerURL string	`json:"issuer_url"`
 	Redirect string		`json:"redirect"`
 }
 
@@ -31,7 +31,7 @@ type ServerConfig struct {
 	KeyFile	 *string	`json:"keyFile"`
 	// if the go API should be handling issuing JWTs
 	SelfHostedAuth bool		`json:"self_hosted_auth"`
-	Oidc	 *OIDCConfig `json:"oidc"`
+	Oidc	 *[]OIDCConfig `json:"oidc"`
 }
 
 type APISettings struct {

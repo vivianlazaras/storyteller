@@ -108,13 +108,18 @@ async fn rocket() -> _ {
     println!("api endpoint: {}", url);
     let api = ApiClient::new(&url).await.unwrap();
     let decoding_key = api.get_jwt_pubkey().await.unwrap();
-    let validator = rocket_oidc::client::Validator::from_pubkey(
+
+    let mut validator = rocket_oidc::client::Validator::from_pubkey(
         config.api_endpoint().to_string(),
         "storyteller".to_string(),
         "RS256".to_string(),
         decoding_key,
     )
     .unwrap();
+    for oidc in config.oidc().iter() {
+        validator.extend_from_oidc(&oidc.issuer_url, "storyteller", "RS256").await.unwrap();
+    }
+
     let rocket = rocket::custom(rocketconfig)
         .manage(api)
         .attach(WasmContentTypeFairing)
@@ -137,7 +142,7 @@ async fn rocket() -> _ {
         .mount("/search", storyteller::search::get_routes());
 
     //rocket_oidc::register_validator(rocket, validator);
-    rocket_oidc::setup(rocket, config.oidc().clone())
+    rocket_oidc::setup(rocket, config.oidc().iter().next().unwrap().clone())
         .await
         .unwrap()
 }

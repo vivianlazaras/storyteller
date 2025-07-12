@@ -3,17 +3,20 @@ package auth
 import (
     "time"
 	"errors"
+	"encoding/json"
+	"encoding/base64"
     "fmt"
     "os"
+	"sync"
     "strings"
     "net/http"
     "crypto/rsa"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/pem"
 	"math/big"
     "github.com/gin-gonic/gin"
     "github.com/vivianlazaras/storyteller/model"
+    "github.com/vivianlazaras/storyteller/config"
     "gorm.io/gorm"
 	"golang.org/x/crypto/bcrypt"
 	"github.com/google/uuid"
@@ -22,6 +25,7 @@ import (
 
 var jwtSigningKey *rsa.PrivateKey;
 var JWTPubKey     rsa.PublicKey;
+var mu sync.Mutex
 
 // GetUserIDFromContext extracts the user ID from OIDC claims in Gin context
 func GetUserIDFromContext(c *gin.Context) (*uuid.UUID, error) {
@@ -43,20 +47,119 @@ func RegisterAuthRoutes(r *gin.Engine) *gin.Engine {
     return r
 }
 
-func InitAuth(path string) error {
-    key, err := LoadJWTSigningKey(path)
-    //fmt.Printf("loading private key: ", key)
+// JWK represents a simplified JSON Web Key (you can extend this if needed).
+type JWK struct {
+	Kid string `json:"kid"`
+	Kty string `json:"kty"`
+	Alg string `json:"alg"`
+	Use string `json:"use"`
+	N   string `json:"n,omitempty"`
+	E   string `json:"e,omitempty"`
+	// Add other fields if your use case requires
+}
+
+// JWKS is a JSON Web Key Set.
+type JWKS struct {
+	Keys []JWK `json:"keys"`
+}
+
+// DiscoveryDoc represents the OIDC discovery document.
+type DiscoveryDoc struct {
+	JWKSURI string `json:"jwks_uri"`
+}
+
+var oidcPubKeys map[string]map[string][]JWK
+var localIssuer string = "http://localhost:8442"
+var localKid string = "primary"
+var localAlg string = "RS256"
+
+func BuildRSAPublicKey(nStr, eStr string) (*rsa.PublicKey, error) {
+	nBytes, err := base64.RawURLEncoding.DecodeString(nStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode N: %v", err)
+	}
+	eBytes, err := base64.RawURLEncoding.DecodeString(eStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode E: %v", err)
+	}
+	n := new(big.Int).SetBytes(nBytes)
+
+	// e is usually small: 65537 (0x10001)
+	e := new(big.Int).SetBytes(eBytes).Int64()
+	return &rsa.PublicKey{N: n, E: int(e)}, nil
+}
+
+// GetOIDCPubKeys discovers and stores the JWKS keys for each issuer.
+func GetOIDCPubKeys(configs []config.OIDCConfig) {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	for _, cfg := range configs {
+		discoveryURL := fmt.Sprintf("%s/.well-known/openid-configuration", cfg.IssuerURL)
+
+		// Step 1: Fetch the discovery document
+		resp, err := client.Get(discoveryURL)
+		if err != nil {
+			fmt.Printf("Error fetching discovery document for %s: %v\n", cfg.IssuerURL, err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			fmt.Printf("Unexpected status code from discovery document for %s: %d\n", cfg.IssuerURL, resp.StatusCode)
+			continue
+		}
+
+		var discovery DiscoveryDoc
+		if err := json.NewDecoder(resp.Body).Decode(&discovery); err != nil {
+			fmt.Printf("Failed to parse discovery document for %s: %v\n", cfg.IssuerURL, err)
+			continue
+		}
+
+		// Step 2: Fetch the JWKS
+		resp, err = client.Get(discovery.JWKSURI)
+		if err != nil {
+			fmt.Printf("Error fetching JWKS for %s: %v\n", cfg.IssuerURL, err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			fmt.Printf("Unexpected status code from JWKS endpoint for %s: %d\n", cfg.IssuerURL, resp.StatusCode)
+			continue
+		}
+
+		var jwks JWKS
+		if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
+			fmt.Printf("Failed to parse JWKS for %s: %v\n", cfg.IssuerURL, err)
+			continue
+		}
+
+		mu.Lock()
+		if _, ok := oidcPubKeys[cfg.IssuerURL]; !ok {
+			oidcPubKeys[cfg.IssuerURL] = make(map[string][]JWK)
+		}
+		for _, key := range jwks.Keys {
+			oidcPubKeys[cfg.IssuerURL][key.Alg] = append(oidcPubKeys[cfg.IssuerURL][key.Alg], key)
+		}
+		mu.Unlock()
+	}
+}
+
+func InitAuth(oidc *[]config.OIDCConfig, path string) error {
+    oidcPubKeys = make(map[string]map[string][]JWK)
+	key, err := LoadJWTSigningKey(path)
     if err != nil {
-        fmt.Printf("failed to load private key from file\n " + err.Error())
-        return err
+        return fmt.Errorf("failed to load private key: %w", err)
     }
 
     block, _ := pem.Decode(key)
-	if block == nil || block.Type != "PRIVATE KEY" {
-		return fmt.Errorf("operation failed: %s", "failed to decode private key " + block.Type)
-	}
+    if block == nil || block.Type != "PRIVATE KEY" {
+        return fmt.Errorf("failed to decode private key, got block type: %v", block.Type)
+    }
 
-	parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+    parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
     if err != nil {
         return fmt.Errorf("invalid PKCS#8 RSA private key: %w", err)
     }
@@ -66,9 +169,37 @@ func InitAuth(path string) error {
         return fmt.Errorf("parsed key is not an RSA private key")
     }
 
-	pub := rsaKey.PublicKey
+    // Store keys globally
     jwtSigningKey = rsaKey
-    JWTPubKey = pub
+    JWTPubKey = rsaKey.PublicKey
+
+    // Add local public key to oidcPubKeys
+    mu.Lock()
+    if _, ok := oidcPubKeys[localIssuer]; !ok {
+        oidcPubKeys[localIssuer] = make(map[string][]JWK)
+    }
+
+    // Encode modulus N and exponent E to base64url
+    n := base64.RawURLEncoding.EncodeToString(rsaKey.PublicKey.N.Bytes())
+    e := base64.RawURLEncoding.EncodeToString(big.NewInt(int64(rsaKey.PublicKey.E)).Bytes())
+
+    localJWK := JWK{
+        Kid: localKid,
+        Alg: localAlg,
+        Kty: "RSA",
+        Use: "sig",
+        N:   n,
+        E:   e,
+    }
+
+    oidcPubKeys[localIssuer][localAlg] = append(oidcPubKeys[localIssuer][localAlg], localJWK)
+    mu.Unlock()
+
+    // Optionally: also call GetOIDCPubKeys for remote issuers
+    if oidc != nil {
+        GetOIDCPubKeys(*oidc)
+    }
+
     return nil
 }
 
@@ -94,40 +225,41 @@ type OIDCClaims struct {
 
 func AuthenticateAndIssueToken(db *gorm.DB, email, password string) (string, error) {
     user, err := GetUserByEmail(db, email)
-	var hashedPassword string
     if err != nil {
         return "", err
     }
 
-	if user.PasswordHash != nil {
-		hashedPassword = *user.PasswordHash
-	}else{
-		return "", fmt.Errorf("no password found for user")
-	}
+    if user.PasswordHash == nil {
+        return "", fmt.Errorf("no password found for user")
+    }
 
-    // Verify password
-    if err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)); err != nil {
+    if err := bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(password)); err != nil {
         return "", errors.New("invalid password")
     }
 
-	var parsedSubject = *user.Subject;
-    // Create OIDC-style claims
+    if user.Subject == nil {
+        return "", fmt.Errorf("user subject is nil")
+    }
+
     expiration := time.Now().Add(time.Hour)
     claims := OIDCClaims{
-        Sub:   &parsedSubject,
+        Sub:   user.Subject, // *string
         Email: user.Email,
         Aud:   "storyteller",
-        Iss:    "http://localhost:8442",
+        Iss:   localIssuer,
         RegisteredClaims: jwt.RegisteredClaims{
             ExpiresAt: jwt.NewNumericDate(expiration),
             IssuedAt:  jwt.NewNumericDate(time.Now()),
         },
     }
 
+    // Create token with claims and explicitly set kid in header
     token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+    token.Header["kid"] = localKid
+
     signedToken, err := token.SignedString(jwtSigningKey)
     if err != nil {
-        return "", err
+        return "", fmt.Errorf("failed to sign token: %w", err)
     }
 
     return signedToken, nil
@@ -163,32 +295,122 @@ func base64URL(b []byte) string {
 	return base64.RawURLEncoding.EncodeToString(b)
 }
 
-// ValidateToken verifies the JWT's signature and standard claims
-func ValidateToken(tokenString string) (*OIDCClaims, error) {
-	// Parse token and validate signature
-	token, err := jwt.ParseWithClaims(tokenString, &OIDCClaims{}, func(token *jwt.Token) (any, error) {
-		// Ensure the token uses the expected signing method
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+func FindPublicKey(issuer, kid, alg string) (*JWK, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	algMap, ok := oidcPubKeys[issuer]
+	if !ok {
+		return nil, fmt.Errorf("unknown issuer: %s", issuer)
+	}
+	keys, ok := algMap[alg]
+	if !ok {
+		return nil, fmt.Errorf("no keys for algorithm: %s", alg)
+	}
+
+	for _, key := range keys {
+		if key.Kid == kid {
+			return &key, nil
 		}
-		return &JWTPubKey, nil
+	}
+	return nil, fmt.Errorf("no key found for kid: %s", kid)
+}
+
+type TokenHeader struct {
+	Alg string `json:"alg"`
+	Kid string `json:"kid"`
+}
+
+// parseTokenHeader decodes the JWT header part
+func parseTokenHeader(token string) (*TokenHeader, error) {
+	parts := strings.Split(token, ".")
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("invalid token format")
+	}
+	headerBytes, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode token header: %v", err)
+	}
+	var header TokenHeader
+	if err := json.Unmarshal(headerBytes, &header); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal token header: %v", err)
+	}
+	return &header, nil
+}
+
+type TokenPayload struct {
+	Iss string `json:"iss"`
+}
+
+func parseTokenPayload(token string) (*TokenPayload, error) {
+	parts := strings.Split(token, ".")
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("invalid token format")
+	}
+	payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode token payload: %v", err)
+	}
+	var payload TokenPayload
+	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal token payload: %v", err)
+	}
+	return &payload, nil
+}
+
+func ValidateToken(tokenString string) (*OIDCClaims, error) {
+	// Step 1: Parse header to get kid and alg
+	header, err := parseTokenHeader(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 2: Parse payload to get iss
+	payload, err := parseTokenPayload(tokenString)
+	if err != nil {
+		return nil, err
+	}
+	issuer := payload.Iss
+
+	// Step 3: Find the matching JWK
+	key, err := FindPublicKey(issuer, header.Kid, header.Alg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 4: Build rsa.PublicKey from JWK
+	pubKey, err := BuildRSAPublicKey(key.N, key.E)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 5: Parse and validate the token
+	token, err := jwt.ParseWithClaims(tokenString, &OIDCClaims{}, func(token *jwt.Token) (any, error) {
+		// Optional: check alg matches expected
+		if alg, ok := token.Header["alg"].(string); !ok || alg != key.Alg {
+			return nil, fmt.Errorf("unexpected signing algorithm: got %v, expected %v", alg, key.Alg)
+		}
+		return pubKey, nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("token parsing failed: %w", err)
 	}
 
-	// Validate claims
 	claims, ok := token.Claims.(*OIDCClaims)
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid token or claims")
 	}
 
-	// Additional OIDC-style checks (issuer, audience, expiration)
-	if claims.Iss != "http://localhost:8442" {
+	// Step 6: Additional checks (issuer, audience, expiration, etc.)
+	// adjust as needed
+	if claims.Iss != issuer {
 		return nil, fmt.Errorf("invalid issuer: %s", claims.Iss)
 	}
 	if claims.Aud != "storyteller" {
 		return nil, fmt.Errorf("invalid audience: %s", claims.Aud)
+	}
+	if claims.ExpiresAt != nil && claims.ExpiresAt.Time.Before(time.Now()) {
+		return nil, errors.New("token is expired")
 	}
 
 	return claims, nil
@@ -200,9 +422,11 @@ func JWTMiddleware() gin.HandlerFunc {
 		// Get the Authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			fmt.Printf("failed to get auth header")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or malformed Authorization header"})
 			return
 		}
+
 
 		// Extract token string
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
@@ -210,7 +434,8 @@ func JWTMiddleware() gin.HandlerFunc {
 		// Validate token
 		claims, err := ValidateToken(tokenString)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			fmt.Printf("failed to validate token: %s", err)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
 			return
 		}
 
