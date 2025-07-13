@@ -215,11 +215,45 @@ func GetUserByEmail(db *gorm.DB, email string) (*model.User, error) {
     return &user, nil
 }
 
+type StringList []string
+
+func NewStringList(s string) StringList {
+    return StringList{s}
+}
+
+func (s *StringList) UnmarshalJSON(data []byte) error {
+    // Try to unmarshal as single string
+    var single string
+    if err := json.Unmarshal(data, &single); err == nil {
+        *s = []string{single}
+        return nil
+    }
+
+    // Else, try to unmarshal as []string
+    var list []string
+    if err := json.Unmarshal(data, &list); err == nil {
+        *s = list
+        return nil
+    }
+
+    // Neither worked; return error
+    return fmt.Errorf("StringList: invalid JSON, expected string or []string: %s", string(data))
+}
+
+func (s *StringList) Contains(value string) bool {
+    for _, v := range *s {
+        if v == value {
+            return true
+        }
+    }
+    return false
+}
+
 type OIDCClaims struct {
     Sub     *uuid.UUID  `json:"sub"`   // Subject (user ID)
     Email   string  `json:"email"` // Optional additional claim
     Iss     string  `json:"iss"`
-    Aud     string  `json:"aud"`
+    Aud     StringList  `json:"aud"`
     jwt.RegisteredClaims        // includes exp, iat, etc.
 }
 
@@ -245,7 +279,7 @@ func AuthenticateAndIssueToken(db *gorm.DB, email, password string) (string, err
     claims := OIDCClaims{
         Sub:   user.Subject, // *string
         Email: user.Email,
-        Aud:   "storyteller",
+        Aud:   NewStringList("storyteller"),
         Iss:   localIssuer,
         RegisteredClaims: jwt.RegisteredClaims{
             ExpiresAt: jwt.NewNumericDate(expiration),
@@ -406,7 +440,7 @@ func ValidateToken(tokenString string) (*OIDCClaims, error) {
 	if claims.Iss != issuer {
 		return nil, fmt.Errorf("invalid issuer: %s", claims.Iss)
 	}
-	if claims.Aud != "storyteller" {
+	if !claims.Aud.Contains("storyteller") {
 		return nil, fmt.Errorf("invalid audience: %s", claims.Aud)
 	}
 	if claims.ExpiresAt != nil && claims.ExpiresAt.Time.Before(time.Now()) {
