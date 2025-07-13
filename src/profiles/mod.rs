@@ -6,6 +6,7 @@ use crate::ApiClient;
 use crate::auth::*;
 use bcrypt::BcryptError;
 use bcrypt::DEFAULT_COST;
+use rocket_oidc::client::IssuerData;
 use bcrypt::hash;
 use rocket::response::{Redirect, content::RawHtml};
 use rocket::{
@@ -117,12 +118,8 @@ async fn login(api: &State<ApiClient>, form: Form<LoginForm>, jar: &CookieJar<'_
         }
         Err(e) => return Redirect::to("/profiles/login"),
     };
-    jar.add(
-        Cookie::build(("access_token", access_token))
-            .secure(false)
-            .http_only(true) // good practice
-            .same_site(SameSite::Lax), // or SameSite::Strict, if you prefer
-    );
+    rocket_oidc::login(jar, access_token, "http://localhost:8442", "RS256").unwrap();
+    
     match redirect {
         Some(redirect) => Redirect::to(redirect),
         None => Redirect::to("/profiles/profile"),

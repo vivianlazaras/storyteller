@@ -9,6 +9,4 @@ pub struct UserGuard {
     pub sub: String,
     pub picture: Option<String>,
     pub email_verified: Option<bool>,
-    #[serde(deserialize_with = "single_or_vec")]
-    pub aud: Vec<String>,
 }

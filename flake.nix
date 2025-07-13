@@ -32,7 +32,7 @@
           pname = "storyteller-api";
           version = "0.1.0";
           src = ./api;
-          vendorHash = "sha256-YduyX9vfYX7cVVotCCxXnX4uYuaxVs5IpMFaRChBfdA=";
+          vendorHash = "sha256-UvgZE4gGd5rYazQV+2/ZkGlcrIwsdKwnZ4BOV1KSTmM=";
         };
 
         # Static Graphviz build derivation

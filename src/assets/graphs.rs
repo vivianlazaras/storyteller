@@ -1,11 +1,11 @@
 use crate::api::ApiClient;
-use graphviz::style::{NodeAttr, NodeStyle, CommonAttr, color::Color};
-use graphviz::*;
+use wrappedviz::style::{NodeAttr, NodeStyle, CommonAttr, color::Color};
+use wrappedviz::*;
 use petgraph::{dot::Config, dot::Dot, graph::DiGraph};
 use regex::Regex;
 use std::path::PathBuf;
 use uuid::Uuid;
-use graphviz::style::shape::NodeShape;
+use wrappedviz::style::shape::NodeShape;
 use std::collections::HashMap;
 use rocket::serde::json::Json;
 

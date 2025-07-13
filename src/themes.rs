@@ -3,7 +3,7 @@ use rocket::{Route, routes};
 use std::path::{Path, PathBuf};
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
-use graphviz::theme::GraphTheme;
+use wrappedviz::theme::GraphTheme;
 /// for now a structure of having main, desktop, and mobile will work
 /// in future versions I will likely want to clean this up to provide default media
 /// queries and a way to use said media queries
