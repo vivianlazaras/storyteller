@@ -12,4 +12,3 @@ pub struct DataSetInfo {
     disaggregated: bool,
     human_subject: bool,
 }
-

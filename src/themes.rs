@@ -66,7 +66,7 @@ impl Theme {
             mobile,
             main,
             desktop,
-            graphs: GraphTheme::default()
+            graphs: GraphTheme::default(),
         }
     }
 }

@@ -43,3 +43,5 @@ impl fmt::Display for FrontendError {
 }
 
 impl Error for FrontendError {}
+
+pub type LazyError = anyhow::Error;

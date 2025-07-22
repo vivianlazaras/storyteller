@@ -28,6 +28,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
+use crate::errors::LazyError;
+use crate::assets::graphs::{Renderable, Entity, EntityExt, render_children};
+use wrappedviz::rgraph::Node;
+use wrappedviz::style::*;
+use wrappedviz::*;
+
 impl Character {
     /// # Note
     /// This is an expensive function, the api server has to recursively build the tree
@@ -132,6 +138,60 @@ pub struct CharacterRender {
     pub name: String,
     pub description: Option<String>,
     pub images: Option<Vec<Image>>,
+}
+
+impl CharacterRender {
+    pub fn build_node(&self) -> Node {
+        let mut node = Node::new(self.id.to_string(), self.name.clone());
+        node.set_attr(NodeAttr::Shape(NodeShape::Triangle));
+        if let Some(description) = &self.description {
+            node.set_attr(CommonAttr::Tooltip(description.clone()));
+        } else {
+            node.set_attr(CommonAttr::Tooltip("see more info".to_string()))
+        }
+        node.set_attr(CommonAttr::Class("character".to_string()));
+        node
+    }
+}
+
+impl Entity for CharacterRender {
+    type Error = LazyError;
+    fn id(&self) -> Uuid {
+        self.id
+    }
+}
+
+#[rocket::async_trait]
+impl<G: CompatGraph<Node = wrappedviz::rgraph::Node> + Send> Renderable<G> for CharacterRender {
+    type Err = crate::errors::LazyError;
+
+    async fn render(
+        &self,
+        api: &ApiClient,
+        access_token: &str,
+        graph: &mut G,
+        visited: &mut Vec<Uuid>,
+    ) -> Result<(), LazyError> {
+        if visited.contains(&self.id) {
+            return Ok(());
+        }
+
+        visited.push(self.id);
+        graph.add_node(self.build_node());
+
+        let request = self.request(api, access_token);
+
+        let fragments = self.fragments(request.clone()).await?;
+        let characters = self.characters(request.clone()).await?;
+        let locations = self.locations(request.clone()).await?;
+
+        render_children(&self.id, &fragments, "fragment", api, access_token, graph, visited).await?;
+        render_children(&self.id, &characters, "character", api, access_token, graph, visited).await?;
+        render_children(&self.id, &locations, "location", api, access_token, graph, visited).await?;
+
+        Ok(())
+    }
+
 }
 
 fn build_family_tree(

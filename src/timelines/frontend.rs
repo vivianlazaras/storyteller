@@ -5,11 +5,11 @@ use crate::relations::RelatedEntity;
 use crate::timelines::api::Timeline;
 use rocket::fs::TempFile;
 use rocket::http::CookieJar;
+use rocket::response::Redirect;
 use rocket::response::content::RawHtml;
-use rocket::{Route, FromForm, State, form::Form, get, post, routes};
+use rocket::{FromForm, Route, State, form::Form, get, post, routes};
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
-use rocket::response::Redirect;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromForm)]
 pub struct TimelineForm {
@@ -26,7 +26,7 @@ async fn get_timeline(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml
         .get_protected(&url, guard.access_token(), None)
         .await
         .unwrap();
-    
+
     let render = timeline.render();
     RawHtml(Template::render(
         "timelines/timeline",
@@ -59,9 +59,16 @@ async fn create_html(guard: Guard, api: &State<ApiClient>) -> RawHtml<Template> 
 }
 
 #[post("/", data = "<form>")]
-async fn create_timeline(guard: Guard, api: &State<ApiClient>, form: Form<TimelineForm>) -> Redirect {
+async fn create_timeline(
+    guard: Guard,
+    api: &State<ApiClient>,
+    form: Form<TimelineForm>,
+) -> Redirect {
     let form = form.into_inner();
-    let timeline: Timeline = api.post("/timelines", guard.access_token(), None, &form).await.unwrap();
+    let timeline: Timeline = api
+        .post("/timelines", guard.access_token(), None, &form)
+        .await
+        .unwrap();
     Redirect::to(format!("/{}/{}", form.category, form.source))
 }
 pub fn get_routes() -> Vec<Route> {

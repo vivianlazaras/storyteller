@@ -6,4 +6,3 @@ pub struct Pattern {
     name: String,
     description: Option<String>,
 }
-

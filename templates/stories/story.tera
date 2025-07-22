@@ -67,7 +67,6 @@ function list_toggle(id) {
         </div>
       {% endfor %}
     </div>
-    {{ links::add_entity(name="Character", parentCategory="stories", childCategory="characters", id=story.id ) }}
     
     <div id="locs" class="locs entitylist">
       {% for location in locations %}

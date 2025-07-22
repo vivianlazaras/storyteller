@@ -4,7 +4,6 @@ use crate::assets::images::{ImageBuilder, ImageData, ImageForm};
 use crate::get_access_token;
 use crate::{ApiClient, assets::images::ImageProcessor, auth::Guard, model::Character};
 use anyhow::Result;
-use std::collections::HashMap;
 use rocket::{
     Route, State,
     form::{Form, FromForm},
@@ -17,6 +16,7 @@ use rocket::{
 };
 use rocket_dyn_templates::{Template, context};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use uuid::Uuid;
 
 #[post("/", data = "<form>")]

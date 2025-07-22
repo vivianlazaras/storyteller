@@ -93,23 +93,21 @@ async fn create_link_html(
 async fn create_link(guard: Guard, api: &State<ApiClient>, rel: Form<Relation>) -> Redirect {
     let relation = rel.into_inner();
     let redirect = format!("/{}/{}", relation.parent_category, relation.parent);
-    let _: Relation = api.post("/relations/", guard.access_token(), None, relation).await.unwrap();
+    let _: Relation = api
+        .post("/relations/", guard.access_token(), None, relation)
+        .await
+        .unwrap();
     Redirect::to(redirect)
 }
 
 #[get("/<category>")]
-async fn list_by_type(
-    guard: Guard,
-    category: &str,
-    api: &State<ApiClient>,
-) -> RawJson<String> {
+async fn list_by_type(guard: Guard, category: &str, api: &State<ApiClient>) -> RawJson<String> {
     let url = format!("/relations/{}", category);
-    let entities: Option<Vec<RelatedEntity>> = api.get_protected(url, guard.access_token(), None)
-    .await
-    .unwrap();
-    RawJson(serde_json::to_string(
-        &entities
-    ).unwrap())
+    let entities: Option<Vec<RelatedEntity>> = api
+        .get_protected(url, guard.access_token(), None)
+        .await
+        .unwrap();
+    RawJson(serde_json::to_string(&entities).unwrap())
 }
 
 pub fn get_routes() -> Vec<Route> {

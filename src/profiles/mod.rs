@@ -6,7 +6,6 @@ use crate::ApiClient;
 use crate::auth::*;
 use bcrypt::BcryptError;
 use bcrypt::DEFAULT_COST;
-use rocket_oidc::client::IssuerData;
 use bcrypt::hash;
 use rocket::response::{Redirect, content::RawHtml};
 use rocket::{
@@ -17,6 +16,7 @@ use rocket::{
     post, routes,
 };
 use rocket_oidc::auth::AuthGuard;
+use rocket_oidc::client::IssuerData;
 
 pub fn hash_password(plain: &str) -> Result<String, bcrypt::BcryptError> {
     // Hash the password using bcrypt with the default cost (12)
@@ -51,8 +51,8 @@ async fn account() -> Redirect {
     Redirect::to("/profiles/login")
 }
 
-#[get("/login?<redirect>")]
-async fn login_page(redirect: Option<String>) -> RawHtml<Template> {
+#[get("/login?<redirect>&<state>")]
+async fn login_page(redirect: Option<String>, state: Option<String>) -> RawHtml<Template> {
     RawHtml(Template::render(
         "profiles/login",
         context!( title: "login", redirect, oidc_url: "/auth/keycloak" ),
@@ -110,7 +110,7 @@ impl LoginBuilder {
 #[post("/login", data = "<form>")]
 async fn login(api: &State<ApiClient>, form: Form<LoginForm>, jar: &CookieJar<'_>) -> Redirect {
     let login = form.into_inner();
-    let redirect = login.redirect.clone();
+    //let redirect = login.redirect.clone();
     let access_token: String = match api.post("/login", "", None, login).await {
         Ok(token) => {
             // login has succeeded server should've responded with a signed json web token
@@ -118,12 +118,14 @@ async fn login(api: &State<ApiClient>, form: Form<LoginForm>, jar: &CookieJar<'_
         }
         Err(e) => return Redirect::to("/profiles/login"),
     };
-    rocket_oidc::login(jar, access_token, "http://localhost:8442", "RS256").unwrap();
-    
-    match redirect {
+    // not implemented yet but this will return the requested route and state id if they exist as query params
+    let redirect = rocket_oidc::login(jar, access_token, "http://localhost:8442", "RS256").unwrap();
+
+    /*match redirect {
         Some(redirect) => Redirect::to(redirect),
         None => Redirect::to("/profiles/profile"),
-    }
+    };*/
+    Redirect::to("/profiles/profile")
 }
 
 #[get("/logout")]

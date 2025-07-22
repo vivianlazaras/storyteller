@@ -3,7 +3,12 @@ extern crate rocket;
 use rocket::Request;
 use rocket::data::Limits;
 use rocket::fs::FileServer;
+use rocket::http::{ContentType, Header};
 use rocket::response::{Redirect, content::RawHtml};
+use rocket::{
+    Response,
+    fairing::{Fairing, Info, Kind},
+};
 use rocket_dyn_templates::{Template, context};
 use std::path::Path;
 use std::path::PathBuf;
@@ -12,8 +17,6 @@ use storyteller::Config;
 use structopt::StructOpt;
 use tokio::{fs::File, io::AsyncReadExt};
 use ubyte::ByteUnit;
-use rocket::{Response, fairing::{Info, Fairing, Kind}};
-use rocket::http::{ContentType, Header};
 #[derive(Debug, Clone, StructOpt)]
 pub struct Args {
     #[structopt(short, long)]
@@ -22,6 +25,12 @@ pub struct Args {
     config_file: Option<PathBuf>,
 }
 
+use dashmap::DashMap;
+use uuid::Uuid;
+
+type RequestCache = DashMap<Uuid, String>;
+
+// there's no reason to store state in query param bc the only state the html page has is the template render which would be insecure.
 #[catch(401)]
 fn unauthorized(req: &rocket::Request<'_>) -> Redirect {
     let attempted_path = req.uri().to_string();
@@ -61,7 +70,7 @@ impl Fairing for WasmContentTypeFairing {
     fn info(&self) -> Info {
         Info {
             name: "Add .wasm Content-Type",
-            kind: Kind::Response
+            kind: Kind::Response,
         }
     }
 
@@ -117,11 +126,15 @@ async fn rocket() -> _ {
     )
     .unwrap();
     for oidc in config.oidc().iter() {
-        validator.extend_from_oidc(&oidc.issuer_url, "storyteller", "RS256").await.unwrap();
+        validator
+            .extend_from_oidc(&oidc.issuer_url, "storyteller", "RS256")
+            .await
+            .unwrap();
     }
 
     let rocket = rocket::custom(rocketconfig)
         .manage(api)
+        .manage(RequestCache::new())
         .attach(WasmContentTypeFairing)
         .manage(validator)
         .mount("/", routes![index])

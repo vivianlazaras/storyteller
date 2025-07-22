@@ -3,7 +3,7 @@ use anyhow::Result;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use jsonwebtoken::DecodingKey;
-use reqwest::{Client, Url};
+use reqwest::{Client, Method, Url};
 use rocket::http::CookieJar;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::collections::HashMap;
@@ -94,6 +94,7 @@ impl ApiClient {
         }
     }
 
+    #[deprecated]
     pub async fn get<'a, T, P>(&self, route: P, params: Option<Map<'a>>) -> Result<T>
     where
         T: DeserializeOwned,
@@ -141,6 +142,7 @@ impl ApiClient {
         decoding_key_from_jwk(keys)
     }
 
+    #[deprecated]
     pub async fn get_protected<'a, T: DeserializeOwned, P: AsRef<str>>(
         &self,
         route: P,
@@ -158,6 +160,123 @@ impl ApiClient {
         let parsed = response.json::<T>().await?;
         Ok(parsed)
     }
+
+    pub fn empty_request<'a>(&'a self) -> ApiRequest<'a> {
+        ApiRequest {
+            method: Method::GET,
+            route: "",
+            client: &self.client,
+            base_url: &self.url,
+            params: None,
+            access_token: None,
+        }
+    }
+
+    pub fn request<'a>(&'a self, route: &'a str) -> ApiRequest<'a> {
+        ApiRequest {
+            method: Method::GET,
+            route,
+            client: &self.client,
+            base_url: &self.url,
+            params: None,
+            access_token: None,
+        }
+    }
+
+    /*pub fn post<'a, T>(&'a self, route: &'a str, payload: T) -> ApiRequest<'a>
+    where
+        T: Serialize + Send + Sync + 'a,
+    {
+        self.request(route)
+            .method(Method::POST)
+            .data(payload)
+    }*/
+}
+
+// -------------------- ApiRequest --------------------
+
+#[derive(Debug, Clone)]
+pub struct ApiRequest<'a> {
+    method: Method,
+    route: &'a str,
+    client: &'a Client,
+    base_url: &'a Url,
+    params: Option<Map<'a>>,
+    access_token: Option<&'a str>,
+    //body: Option<Box<dyn serde::Serialize + Send + Sync + 'a>>,
+}
+
+impl<'a> ApiRequest<'a> {
+    pub fn method(mut self, method: Method) -> Self {
+        self.method = method;
+        self
+    }
+
+    pub fn route(mut self, route: &'a str) -> Self {
+        self.route = route;
+        self
+    }
+
+    pub fn params(mut self, params: Map<'a>) -> Self {
+        self.params = Some(params);
+        self
+    }
+
+    pub fn access_token(mut self, token: &'a str) -> Self {
+        self.access_token = Some(token);
+        self
+    }
+
+    /*pub fn data<T: Serialize + 'a + Send + Sync>(mut self, data: T) -> Self {
+        self.body = Some(Box::new(data));
+        self
+    }*/
+
+    pub async fn send<R: DeserializeOwned>(self) -> Result<R> {
+        let url = join_url(self.base_url.as_str(), self.route)?;
+        let mut req = self.client.request(self.method.clone(), url);
+
+        if let Some(params) = self.params {
+            req = req.query(&params);
+        }
+
+        if let Some(token) = self.access_token {
+            req = req.bearer_auth(token);
+        }
+
+        /*if let Some(body) = self.body {
+            req = req.json(&body);
+        }*/
+
+        let response = req.send().await?;
+
+        if response.status().is_success() {
+            Ok(response.json::<R>().await?)
+        } else {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            Err(anyhow::anyhow!("HTTP {}: {}", status, body))
+        }
+    }
+
+    /*pub async fn send_raw(self) -> Result<Response> {
+        let url = join_url(self.base_url.as_str(), self.route)?;
+        let mut req = self.client.request(self.method.clone(), url);
+
+        if let Some(params) = self.params {
+            req = req.query(&params);
+        }
+
+        if let Some(token) = self.access_token {
+            req = req.bearer_auth(token);
+        }
+
+        /*if let Some(body) = self.body {
+            req = req.json(&body);
+        }*/
+
+        Ok(req.send().await?)
+    }*/
 }
 
 pub fn normalize_newlines(input: &str) -> String {

@@ -1,8 +1,8 @@
 use crate::fragments::api::FragmentBuilder;
 use crate::model::StoryFragment;
 use petgraph::graph::DiGraph;
-use uuid::Uuid;
 use std::collections::HashMap;
+use uuid::Uuid;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TimelineRender {
     pub id: Uuid,

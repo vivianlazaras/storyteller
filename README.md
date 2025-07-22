@@ -1,6 +1,11 @@
 # StoryTeller
 This project is a tool for creating stories for tabletop, fiction writing, non fiction, video game design or any other kind of story.
 
+## Background
+"the great derangement" coined by Amitav Ghosh articulates a failure of imagination, and says in a clear concise manner how we can loose track of our stories, Stories, what we tell ourselves, what we chose to believe, and what we chose not to effects every aspect of our lives, the way we think, and how we exist in the world. In saying something as simple as "today will be a good day" we make that reality possible by effecting our framing in our own minds of the events throughout the day, if we are to live in the best world we can, we must take back our stories, this codebase provides tools for imagining and visualizing how stories fit together, it provides tools for building and hopefully in the future sharing stories, rather than just comments or short posts.
+
+Stories transcend time, they become folklore that become legends that become myths, they make our reality, so why not take back our histories, and our futures, by participating in our own stories. Not just as a momentary glimpse into a few scattered images of our lives, but a rich context, and description of our lives.
+
 ## Entity Model
 Each entity represents a fundamental of story creation
 1. Who - Characters

@@ -7,8 +7,8 @@ macro_rules! generate_post_integration_test {
     ) => {
         #[test]
         fn $test_name() {
-            use rocket::local::blocking::Client;
             use rocket::http::ContentType;
+            use rocket::local::blocking::Client;
             use std::time::{Duration, Instant};
 
             let rocket = crate::rocket(); // Your Rocket instance builder
@@ -22,12 +22,16 @@ macro_rules! generate_post_integration_test {
                 .expect("Failed to serialize form data to urlencoded");
 
             // Send POST request with form urlencoded content type
-            let response = client.post($route)
+            let response = client
+                .post($route)
                 .header(ContentType::Form)
                 .body(body)
                 .dispatch();
 
-            assert!(response.status().class().is_success(), "Response was not successful");
+            assert!(
+                response.status().class().is_success(),
+                "Response was not successful"
+            );
 
             let resp_body = response.into_string().expect("Response body");
         }

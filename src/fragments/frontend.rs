@@ -9,6 +9,13 @@ use rocket::response::content::RawHtml;
 use rocket::{FromForm, Route, State, form::Form, get, post, routes};
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
+use crate::errors::LazyError;
+
+use crate::assets::graphs::{Renderable, Entity, EntityExt, render_children};
+use wrappedviz::rgraph::Node;
+use wrappedviz::style::*;
+use wrappedviz::*;
+
 #[derive(Debug, FromForm)]
 pub struct CreateFragmentForm<'r> {
     image: Option<TempFile<'r>>,
@@ -41,6 +48,55 @@ pub struct FragmentRender {
     pub images: Option<Vec<Image>>,
     pub created: String,
     pub last_edited: String,
+}
+
+impl FragmentRender {
+    pub fn build_node(&self) -> Node {
+        let mut node = Node::new(self.id.to_string(), self.name.clone());
+        node.set_attr(NodeAttr::Shape(NodeShape::Square));
+        node.set_attr(CommonAttr::Tooltip("see more info".to_string()));
+        node.set_attr(CommonAttr::Class("fragment".to_string()));
+        node
+    }
+}
+
+impl Entity for FragmentRender {
+    type Error = LazyError;
+    fn id(&self) -> Uuid {
+        self.id
+    }
+}
+
+#[rocket::async_trait]
+impl<G: CompatGraph<Node = wrappedviz::rgraph::Node> + Send> Renderable<G> for FragmentRender {
+    type Err = crate::errors::LazyError;
+
+    async fn render(
+        &self,
+        api: &ApiClient,
+        access_token: &str,
+        graph: &mut G,
+        visited: &mut Vec<Uuid>,
+    ) -> Result<(), Self::Err> {
+        if visited.contains(&self.id) {
+            return Ok(());
+        }
+
+        visited.push(self.id);
+        let node = self.build_node();
+        graph.add_node(node);
+
+        let request = self.request(api, access_token);
+        let characters = self.characters(request.clone()).await?;
+        let locations = self.locations(request.clone()).await?;
+        let fragments = self.fragments(request.clone()).await?;
+
+        render_children(&self.id, &characters, "character", api, access_token, graph, visited).await?;
+        render_children(&self.id, &locations, "location", api, access_token, graph, visited).await?;
+        render_children(&self.id, &fragments, "fragment", api, access_token, graph, visited).await?;
+
+        Ok(())
+    }
 }
 
 #[post("/", data = "<form>")]

@@ -1,0 +1,387 @@
+
+error[E0195]: lifetime parameters or bounds on method `render` do not match the trait declaration
+   --> src/characters/api.rs:159:14
+    |
+159 |       async fn render(
+    |  ______________^
+160 | |         &self,
+161 | |         api: ApiClient,
+162 | |         access_token: &str,
+163 | |         graph: &mut G,
+164 | |         visited: &mut Vec<Uuid>,
+165 | |     ) -> Result<(), Self::Err> {
+    | |_____^ lifetimes do not match method in trait
+    |
+   ::: src/assets/graphs.rs:105:14
+    |
+105 |       async fn render(
+    |  ______________-
+106 | |         &self,
+107 | |         api: &ApiClient,
+108 | |         access_token: &str,
+109 | |         graph: &mut G,
+110 | |         visited: &mut Vec<Uuid>,
+111 | |     ) -> Result<(), Self::Err>;
+    | |_____- lifetimes in impl do not match this method in trait
+
+warning: unused variable: `character`
+  --> src/characters/frontend.rs:31:9
+   |
+31 |     let character = character_builder
+   |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_character`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `index_map`
+  --> src/characters/frontend.rs:95:17
+   |
+95 |     let (graph, index_map) = Character::family_tree(id, &api, guard.access_token())
+   |                 ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_index_map`
+
+warning: unused variable: `guard`
+   --> src/characters/frontend.rs:112:24
+    |
+112 | async fn delete_entity(guard: Guard, form: Form<DeleteRequest>, api: &State<ApiClient>) {}
+    |                        ^^^^^ help: if this is intentional, prefix it with an underscore: `_guard`
+
+warning: unused variable: `form`
+   --> src/characters/frontend.rs:112:38
+    |
+112 | async fn delete_entity(guard: Guard, form: Form<DeleteRequest>, api: &State<ApiClient>) {}
+    |                                      ^^^^ help: if this is intentional, prefix it with an underscore: `_form`
+
+warning: unused variable: `api`
+   --> src/characters/frontend.rs:112:65
+    |
+112 | async fn delete_entity(guard: Guard, form: Form<DeleteRequest>, api: &State<ApiClient>) {}
+    |                                                                 ^^^ help: if this is intentional, prefix it with an underscore: `_api`
+
+error[E0195]: lifetime parameters or bounds on method `render` do not match the trait declaration
+   --> src/locations/mod.rs:163:14
+    |
+163 |       async fn render(
+    |  ______________^
+164 | |         &self,
+165 | |         api: ApiClient,
+166 | |         access_token: &str,
+167 | |         graph: &mut G,
+168 | |         visited: &mut Vec<Uuid>,
+169 | |     ) -> Result<(), Self::Err> {
+    | |_____^ lifetimes do not match method in trait
+    |
+   ::: src/assets/graphs.rs:105:14
+    |
+105 |       async fn render(
+    |  ______________-
+106 | |         &self,
+107 | |         api: &ApiClient,
+108 | |         access_token: &str,
+109 | |         graph: &mut G,
+110 | |         visited: &mut Vec<Uuid>,
+111 | |     ) -> Result<(), Self::Err>;
+    | |_____- lifetimes in impl do not match this method in trait
+
+error[E0186]: method `id` has a `&self` declaration in the trait, but not in the impl
+   --> src/locations/mod.rs:173:5
+    |
+173 |     fn id() -> Uuid {
+    |     ^^^^^^^^^^^^^^^ expected `&self` in impl
+    |
+   ::: src/assets/graphs.rs:113:5
+    |
+113 |     fn id(&self) -> Uuid;
+    |     --------------------- `&self` used in trait
+
+warning: unused variable: `id`
+   --> src/locations/mod.rs:137:23
+    |
+137 | async fn update_place(id: Uuid) {
+    |                       ^^ help: if this is intentional, prefix it with an underscore: `_id`
+
+warning: unused variable: `id`
+   --> src/locations/mod.rs:142:23
+    |
+142 | async fn delete_place(id: Uuid) {
+    |                       ^^ help: if this is intentional, prefix it with an underscore: `_id`
+
+warning: unused variable: `state`
+  --> src/profiles/mod.rs:55:47
+   |
+55 | async fn login_page(redirect: Option<String>, state: Option<String>) -> RawHtml<Template> {
+   |                                               ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `e`
+   --> src/profiles/mod.rs:119:13
+    |
+119 |         Err(e) => return Redirect::to("/profiles/login"),
+    |             ^ help: if this is intentional, prefix it with an underscore: `_e`
+
+warning: unused variable: `redirect`
+   --> src/profiles/mod.rs:122:9
+    |
+122 |     let redirect = rocket_oidc::login(jar, access_token, "http://localhost:8442", "RS256").unwrap();
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_redirect`
+
+warning: use of deprecated associated function `rocket::http::Cookie::<'c>::named`: use `Cookie::build(name)` or `Cookie::from(name)`
+   --> src/profiles/mod.rs:133:24
+    |
+133 |     jar.remove(Cookie::named("access_token"));
+    |                        ^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: unused variable: `cookies`
+   --> src/stories/mod.rs:118:5
+    |
+118 |     cookies: &CookieJar<'_>,
+    |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cookies`
+
+warning: unused variable: `id`
+   --> src/stories/mod.rs:171:21
+    |
+171 | async fn edit_story(id: Uuid) {
+    |                     ^^ help: if this is intentional, prefix it with an underscore: `_id`
+
+warning: unused variable: `audio_data`
+   --> src/assets/audio/mod.rs:123:37
+    |
+123 |     pub async fn process<'a>(&self, audio_data: AudioData<'a>) -> Result<Option<AudioBuilder>> {
+    |                                     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_audio_data`
+
+warning: unused variable: `guard`
+  --> src/assets/graphs.rs:81:22
+   |
+81 | async fn create_html(guard: Guard) -> RawHtml<Template> {
+   |                      ^^^^^ help: if this is intentional, prefix it with an underscore: `_guard`
+
+warning: unused variable: `guard`
+  --> src/assets/graphs.rs:89:17
+   |
+89 | async fn create(guard: Guard, form: Form<GraphForm>) {
+   |                 ^^^^^ help: if this is intentional, prefix it with an underscore: `_guard`
+
+warning: unused variable: `form`
+  --> src/assets/graphs.rs:89:31
+   |
+89 | async fn create(guard: Guard, form: Form<GraphForm>) {
+   |                               ^^^^ help: if this is intentional, prefix it with an underscore: `_form`
+
+warning: unused variable: `guard`
+  --> src/assets/graphs.rs:94:24
+   |
+94 | async fn preview_graph(guard: Guard, data: Json<GraphData>) -> String {
+   |                        ^^^^^ help: if this is intentional, prefix it with an underscore: `_guard`
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+   --> src/assets/graphs.rs:138:66
+    |
+138 |             child.render(api, access_token, graph, visited).await?;
+    |             -----------------------------------------------------^ the trait `From<E>` is not implemented for `std::string::String`
+    |             |
+    |             this can't be annotated with `?` because it has type `Result<_, E>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+help: consider extending the `where` clause, but there might be an alternative better way to express this requirement
+    |
+131 |     G: CompatGraph, std::string::String: From<E>
+    |                     ++++++++++++++++++++++++++++
+
+error[E0308]: mismatched types
+   --> src/assets/graphs.rs:145:13
+    |
+143 |         graph.new_edge(
+    |               -------- arguments to this method are incorrect
+144 |             label,
+145 |             parent_id,
+    |             ^^^^^^^^^ expected `&str`, found `&Uuid`
+    |
+    = note: expected reference `&str`
+               found reference `&Uuid`
+note: method defined here
+   --> /home/cardinal/projects/maverics_respite/storyteller/graphviz/src/lib.rs:375:8
+    |
+375 |     fn new_edge<S: AsRef<str>, A: Into<EdgeAttribute>>(
+    |        ^^^^^^^^
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+   --> src/assets/graphs.rs:148:10
+    |
+143 |           graph.new_edge(
+    |  _______________-
+144 | |             label,
+145 | |             parent_id,
+146 | |             &child_id_str,
+147 | |             vec![],
+148 | |         )?;
+    | |         -^ the trait `From<<G as wrappedviz::CompatGraph>::Err>` is not implemented for `std::string::String`
+    | |_________|
+    |           this can't be annotated with `?` because it has type `Result<_, <G as wrappedviz::CompatGraph>::Err>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+help: consider extending the `where` clause, but there might be an alternative better way to express this requirement
+    |
+131 |     G: CompatGraph, std::string::String: From<<G as wrappedviz::CompatGraph>::Err>
+    |                     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0195]: lifetime parameters or bounds on method `render` do not match the trait declaration
+   --> src/fragments/frontend.rs:65:14
+    |
+65  |       async fn render(
+    |  ______________^
+66  | |         &self,
+67  | |         api: ApiClient,
+68  | |         access_token: &str,
+69  | |         graph: &mut G,
+70  | |         visited: &mut Vec<Uuid>,
+71  | |     ) -> Result<(), Self::Err> {
+    | |_____^ lifetimes do not match method in trait
+    |
+   ::: src/assets/graphs.rs:105:14
+    |
+105 |       async fn render(
+    |  ______________-
+106 | |         &self,
+107 | |         api: &ApiClient,
+108 | |         access_token: &str,
+109 | |         graph: &mut G,
+110 | |         visited: &mut Vec<Uuid>,
+111 | |     ) -> Result<(), Self::Err>;
+    | |_____- lifetimes in impl do not match this method in trait
+
+warning: unused variable: `guard`
+  --> src/timelines/frontend.rs:54:22
+   |
+54 | async fn create_html(guard: Guard, api: &State<ApiClient>) -> RawHtml<Template> {
+   |                      ^^^^^ help: if this is intentional, prefix it with an underscore: `_guard`
+
+warning: unused variable: `api`
+  --> src/timelines/frontend.rs:54:36
+   |
+54 | async fn create_html(guard: Guard, api: &State<ApiClient>) -> RawHtml<Template> {
+   |                                    ^^^ help: if this is intentional, prefix it with an underscore: `_api`
+
+warning: unused variable: `timeline`
+  --> src/timelines/frontend.rs:68:9
+   |
+68 |     let timeline: Timeline = api
+   |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_timeline`
+
+error: future cannot be sent between threads safely
+   --> src/stories/mod.rs:209:32
+    |
+209 |       ) -> Result<(), Self::Err> {
+    |  ________________________________^
+210 | |         if visited.contains(&self.id) {
+211 | |             return Ok(());
+...   |
+221 | |         unimplemented!();
+222 | |     }
+    | |_____^ future created by async block is not `Send`
+    |
+note: captured value is not `Send` because `&mut` references cannot be sent unless their referent is `Send`
+   --> src/stories/mod.rs:217:85
+    |
+217 |         render_children(&self.id, &self.characters, "character", api, access_token, graph, visited).await?;
+    |                                                                                     ^^^^^ has type `&mut G` which is not `Send`, because `G` is not `Send`
+    = note: required for the cast from `Pin<std::boxed::Box<{async block@src/stories/mod.rs:209:32: 222:6}>>` to `Pin<Box<dyn Future<Output = Result<(), String>> + Send>>`
+    = note: the full name for the type has been written to '/home/cardinal/projects/maverics_respite/storyteller/target/debug/deps/storyteller-8b5756d8d7027ec8.long-type-1571393239310011458.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+help: consider further restricting type parameter `G` with trait `Send`
+    |
+201 | impl<G: CompatGraph + std::marker::Send> Renderable<G> for StoryRender {
+    |                     +++++++++++++++++++
+
+warning: unused variable: `access_token`
+   --> src/characters/api.rs:162:9
+    |
+162 |         access_token: &str,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_access_token`
+
+warning: unused variable: `graph`
+   --> src/characters/api.rs:163:9
+    |
+163 |         graph: &mut G,
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_graph`
+
+warning: unused variable: `visited`
+   --> src/characters/api.rs:164:9
+    |
+164 |         visited: &mut Vec<Uuid>,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_visited`
+
+warning: unused variable: `api`
+   --> src/characters/api.rs:161:9
+    |
+161 |         api: ApiClient,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_api`
+
+warning: unused variable: `access_token`
+   --> src/locations/mod.rs:166:9
+    |
+166 |         access_token: &str,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_access_token`
+
+warning: unused variable: `graph`
+   --> src/locations/mod.rs:167:9
+    |
+167 |         graph: &mut G,
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_graph`
+
+warning: unused variable: `visited`
+   --> src/locations/mod.rs:168:9
+    |
+168 |         visited: &mut Vec<Uuid>,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_visited`
+
+warning: unused variable: `api`
+   --> src/locations/mod.rs:165:9
+    |
+165 |         api: ApiClient,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_api`
+
+warning: unused variable: `tag`
+   --> src/assets/audio/mod.rs:244:19
+    |
+244 | fn parse_chapters(tag: &Tag) -> Vec<Chapter> {
+    |                   ^^^ help: if this is intentional, prefix it with an underscore: `_tag`
+
+warning: unused variable: `idmap`
+  --> src/assets/graphs.rs:52:5
+   |
+52 |     idmap: HashMap<usize, Uuid>,
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_idmap`
+
+warning: unused variable: `content`
+  --> src/fragments/frontend.rs:30:13
+   |
+30 |         let content = crate::normalize_newlines(&self.content);
+   |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_content`
+
+warning: unused variable: `access_token`
+  --> src/fragments/frontend.rs:68:9
+   |
+68 |         access_token: &str,
+   |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_access_token`
+
+warning: unused variable: `graph`
+  --> src/fragments/frontend.rs:69:9
+   |
+69 |         graph: &mut G,
+   |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_graph`
+
+warning: unused variable: `visited`
+  --> src/fragments/frontend.rs:70:9
+   |
+70 |         visited: &mut Vec<Uuid>,
+   |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_visited`
+
+warning: unused variable: `api`
+  --> src/fragments/frontend.rs:67:9
+   |
+67 |         api: ApiClient,
+   |         ^^^ help: if this is intentional, prefix it with an underscore: `_api`
+
+Some errors have detailed explanations: E0186, E0195, E0277, E0308, E0424.
+For more information about an error, try `rustc --explain E0186`.
+warning: `storyteller` (lib) generated 37 warnings
+error: could not compile `storyteller` (lib) due to 9 previous errors; 37 warnings emitted

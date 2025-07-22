@@ -1,14 +1,21 @@
 use crate::ApiClient;
+use crate::assets::graphs::{Renderable, Entity, EntityExt, render_children};
 use crate::assets::images::ImageForm;
 use crate::auth::Guard;
 use crate::model::{Location, Tag};
 use rocket::fs::TempFile;
+use wrappedviz::rgraph::Node;
+use wrappedviz::style::{CommonAttr, NodeAttr, shape::NodeShape};
+use wrappedviz::{CompatGraph, CompatNode};
+use std::collections::HashMap;
+use crate::errors::LazyError;
+
 use crate::assets::images::{ImageBuilder, ImageProcessor};
+use crate::model::Image;
 use rocket::{
     FromForm, Route, State, delete, form::Form, get, post, put, response::Redirect,
     response::content::RawHtml, routes,
 };
-use crate::model::Image;
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
 
@@ -137,6 +144,58 @@ async fn update_place(id: Uuid) {
 async fn delete_place(id: Uuid) {
     unimplemented!();
 }
+
+impl Entity for LocationRender {
+    type Error = LazyError;
+    fn id(&self) -> Uuid {
+        self.id
+    }
+}
+
+impl LocationRender {
+    pub fn build_node(&self) -> Node {
+        let mut node = Node::new(self.id.to_string(), self.name.clone());
+        node.set_attr(NodeAttr::Shape(NodeShape::House));
+        if let Some(description) = &self.description {
+            node.set_attr(CommonAttr::Tooltip(description.clone()));
+        } else {
+            node.set_attr(CommonAttr::Tooltip("see more info".to_string()))
+        }
+        node.set_attr(CommonAttr::Class("location".to_string()));
+        node
+    }
+}
+
+#[rocket::async_trait]
+impl<G: CompatGraph<Node = wrappedviz::rgraph::Node> + Send> Renderable<G> for LocationRender {
+    type Err = LazyError;
+
+    async fn render(
+        &self,
+        api: &ApiClient,
+        access_token: &str,
+        graph: &mut G,
+        visited: &mut Vec<Uuid>,
+    ) -> Result<(), Self::Err> {
+        if visited.contains(&self.id) {
+            return Ok(());
+        }
+
+        visited.push(self.id);
+        graph.add_node(self.build_node());
+
+        let request = self.request(api, access_token);
+
+        let fragments = self.fragments(request.clone()).await?;
+        let locations = self.locations(request.clone()).await?;
+
+        render_children(&self.id, &fragments, "fragment", api, access_token, graph, visited).await?;
+        render_children(&self.id, &locations, "location", api, access_token, graph, visited).await?;
+
+        Ok(())
+    }
+}
+
 
 pub fn get_routes() -> Vec<Route> {
     routes![
