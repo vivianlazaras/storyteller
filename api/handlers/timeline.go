@@ -48,7 +48,7 @@ func RegisterTimelineRoutes(r *gin.Engine) *gin.Engine {
 
 func GetTimeline(c *gin.Context) {
 	// Get the timeline by ID from context (assuming from URL param or similar)
-	timeline, err := db.GetByCtxID[model.Timeline](c, "timelines")
+	timeline, err := GetByCtxID[model.Timeline](db.DB, c, "timelines")
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "timeline not found"})
 		return
@@ -161,13 +161,8 @@ func ListTimelines(c *gin.Context) {
 		return
 	}
 
-	if user.DefaultGroup == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized, default group unset"})
-		return
-	}
-
 	// Fetch timelines accessible by this user
-	timelines, err := ListEntitiesByCategoryForGroup(db.DB, *user.DefaultGroup, "timelines")
+	timelines, err := ListEntitiesByCategoryForGroup(db.DB, user.DefaultGroup, "timelines")
 	
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch timelines: " + err.Error()})
@@ -179,15 +174,10 @@ func ListTimelines(c *gin.Context) {
 
 /// this function either generates from existing story, xor from fragments
 /// not both as the ordering would be much more complex to implement if both were supported
-func CreateNewTimeline(db *gorm.DB, user *model.User, builder TimelineBuilder) (model.Timeline, error) {
+func CreateNewTimeline(tx *gorm.DB, builder TimelineBuilder, userID, groupID uuid.UUID) (model.Timeline, error) {
 	now := time.Now().Unix()
 	var timelineid = uuid.New()
-	
-	if user.DefaultGroup == nil {
-		return model.Timeline{}, fmt.Errorf("missing user's default_group")
-	}
 
-	tx := db.Begin()
 	//var builder_str = builder.Source.String()
 	var timeline = model.Timeline {
 		ID: timelineid,
@@ -201,8 +191,12 @@ func CreateNewTimeline(db *gorm.DB, user *model.User, builder TimelineBuilder) (
 	tlerr := tx.Create(&timeline).Error
 	if tlerr != nil {
 		fmt.Printf("error creating timeline: %s\n", tlerr);
-		tx.Rollback()
 		return model.Timeline{}, tlerr
+	}
+
+	// this will also check to ensure the user has access to the group, so that logic is in one place
+	if err := CreateNewEntity(tx, timelineid, userID, groupID); err != nil {
+		return model.Timeline{}, err
 	}
 
 	var relation = model.Relation {
@@ -215,31 +209,21 @@ func CreateNewTimeline(db *gorm.DB, user *model.User, builder TimelineBuilder) (
 
 	_, result := CreateNewRelation(tx, &relation)
 	if result != nil {
-		tx.Rollback()
 		return model.Timeline{}, result
-	}
-
-	gerr := CreateNewEntity(tx, timelineid, *user.DefaultGroup)
-	if gerr != nil {
-		tx.Rollback()
-		return model.Timeline{}, gerr
 	}
 
 	fragments,serr := selectFragmentsByEntity(tx, builder.Source);
 	if serr != nil {
-		tx.Rollback()
 		return model.Timeline{}, serr
 	}
 
 	for idx, fragment := range fragments {
 		_, merr := CreateMoment(tx, timelineid, fragment.ID, int64(idx))
 		if merr != nil {
-			tx.Rollback()
 			return model.Timeline{}, merr
 		}
 	}
 
-	tx.Commit()
 	return timeline, nil
 }
 
@@ -260,16 +244,31 @@ func CreateTimeline(c *gin.Context) {
 	jsonData, _ := json.Marshal(builder)
 	fmt.Printf("received JSON: %s\n", jsonData)
 
-	timeline, tlerr := CreateNewTimeline(db.DB, user, builder)
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create transaction"})
+		return
+	}
+
+	timeline, tlerr := CreateNewTimeline(tx, builder, user.ID, user.DefaultGroup)
 
 	if tlerr != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create timeline"})
 		return
 	}
 
 	full, err := GetFullTimeline(db.DB, timeline)
 	if err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get full timeline"})
 	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+		return
+	}
+
 	c.JSON(http.StatusOK, full)
 }

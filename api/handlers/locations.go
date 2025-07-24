@@ -40,6 +40,11 @@ type LocationRender struct {
 }
 
 func GetLocations(c *gin.Context) {
+	user, uerr := auth.GetUserFromClaims(db.DB, c)
+	if uerr != nil {
+		c.JSON(http.StatusUnauthorized, uerr)
+		return
+	}
 	// grab all stories where public = true
 	var locations []model.Location
 	var renders []LocationRender
@@ -54,7 +59,7 @@ func GetLocations(c *gin.Context) {
 	}
 
 	for _, location := range locations {
-		render, renderr := RenderLocation(db.DB, location)
+		render, renderr := RenderLocation(db.DB, location, user.ID)
 		if renderr != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": renderr})
 			return
@@ -65,7 +70,8 @@ func GetLocations(c *gin.Context) {
 	c.JSON(http.StatusOK, renders)
 }
 
-func RenderLocation(tx *gorm.DB, location model.Location) (LocationRender, error) {
+func RenderLocation(tx *gorm.DB, location model.Location, userID uuid.UUID) (LocationRender, error) {
+
 	var locid = location.ID
 	var thumbnail *model.Image = nil
 	tags, tagerr := SelectTagsByEntityID(locid)
@@ -74,7 +80,7 @@ func RenderLocation(tx *gorm.DB, location model.Location) (LocationRender, error
 	}
 	
 	if location.Thumbnail != nil {
-		image, thmerr := db.GetByID[model.Image]("images", location.Thumbnail);
+		image, thmerr := GetByID[model.Image](db.DB, "images", *location.Thumbnail, userID);
 		if thmerr != nil {
 			return LocationRender{}, thmerr
 		}
@@ -98,6 +104,12 @@ func RenderLocation(tx *gorm.DB, location model.Location) (LocationRender, error
 }
 
 func GetLocation(c *gin.Context) {
+	user, uerr := auth.GetUserFromClaims(db.DB, c)
+	if uerr != nil {
+		c.JSON(http.StatusUnauthorized, uerr)
+		return
+	}
+
 	idParam := c.Param("id")
 
 	// Validate UUID
@@ -113,7 +125,7 @@ func GetLocation(c *gin.Context) {
 		return
 	}
 
-	render, rendererr := RenderLocation(db.DB, location)
+	render, rendererr := RenderLocation(db.DB, location, user.ID)
 	if rendererr != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": rendererr})
 		return
@@ -122,7 +134,7 @@ func GetLocation(c *gin.Context) {
 	c.JSON(http.StatusOK, render)
 }
 
-func CreateNewLocation(tx *gorm.DB, builder LocationBuilder) (model.Location, error) {
+func CreateNewLocation(tx *gorm.DB, builder LocationBuilder, userID, groupID uuid.UUID) (model.Location, error) {
 	now := time.Now().Unix()
 
 	var location = model.Location {
@@ -140,9 +152,14 @@ func CreateNewLocation(tx *gorm.DB, builder LocationBuilder) (model.Location, er
 		return model.Location{}, err
 	}
 
+	// this will also check to ensure the user has access to the group, so that logic is in one place
+	if err := CreateNewEntity(tx, location.ID, userID, groupID); err != nil {
+		return model.Location{}, err
+	}
+
 	if builder.Thumbnail != nil {
 		builder.Thumbnail.Parent = &location.ID
-		images, imgerr := CreateNewImage(tx, *builder.Thumbnail)
+		images, imgerr := CreateNewImage(tx, *builder.Thumbnail, userID, groupID)
 		if imgerr != nil {
 			fmt.Printf("image error: %s", imgerr)
 			//tx.Rollback()
@@ -192,7 +209,7 @@ func CreateLocation(c *gin.Context) {
 		return
 	}
 
-	location, dberr := CreateNewLocation(tx, builder);
+	location, dberr := CreateNewLocation(tx, builder, user.ID, user.DefaultGroup);
 	if dberr != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": dberr})

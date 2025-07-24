@@ -9,6 +9,7 @@ import (
 	"github.com/vivianlazaras/storyteller/db"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"fmt"
 )
 
 func RegisterStoryRoutes(r *gin.Engine) *gin.Engine {
@@ -26,10 +27,6 @@ func GetStories(c *gin.Context) {
 		return
 	}
 
-	if user.DefaultGroup == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "default group is null"})
-		return
-	}
 	// grab all stories for the user's default group
 	var stories []model.Story
     err := db.DB.
@@ -45,19 +42,21 @@ func GetStories(c *gin.Context) {
 }
 
 func GetStory(c *gin.Context) {
-	story, err := db.GetByCtxID[model.Story](c, "stories");
+	
+	/*user, usererr := auth.GetUserFromClaims(db.DB, c)
+	if usererr != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "could not retrieve user"})
+		return
+	}*/
+	
+	fmt.Println("able to get user info")
+	story, err := GetByCtxID[model.Story](db.DB, c, "stories");
 	if err != nil {
 		return
 	}
 
-	metadata, err := db.GetByID[model.Metadatum]("metadata", story.Metadata)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "failed to fetch metadata"})
-	}
-	if metadata.Public != true || metadata.Active == false {
-		c.JSON(http.StatusNotFound, model.Story{})
-		return
-	}
+	fmt.Println("able to get story info")
+	fmt.Println("able to get metadata")
 
 	// get fragments, characters, places
 	c.JSON(http.StatusOK, story)
@@ -72,11 +71,11 @@ type StoryBuilder struct {
 	Group		*string			`json:"group"`
 }
 
-func CreateNewStory(tx *gorm.DB, fragment *StoryBuilder, creatorID uuid.UUID) (model.Story, error) {
+func CreateNewStory(tx *gorm.DB, fragment *StoryBuilder, userID, groupID uuid.UUID) (model.Story, error) {
 	now := time.Now().Unix()
 	
 
-	metadata, err := createDefaultMetadata(creatorID)
+	metadata, err := createDefaultMetadata(userID)
 	if err != nil {
 		return model.Story{}, err
 	}
@@ -97,6 +96,11 @@ func CreateNewStory(tx *gorm.DB, fragment *StoryBuilder, creatorID uuid.UUID) (m
 	dberr := tx.Create(&story).Error
 	if dberr != nil {
 		return model.Story{}, dberr
+	}
+
+	// this will also check to ensure the user has access to the group, so that logic is in one place
+	if err := CreateNewEntity(tx, storyid, userID, groupID); err != nil {
+		return model.Story{}, err
 	}
 
 	tagerr := InsertTagsForEntity(tx, storyid, fragment.Tags)
@@ -120,7 +124,6 @@ func CreateStory(c *gin.Context) {
 		return
 	}
 
-	parsedUUID := user.ID
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
@@ -134,7 +137,7 @@ func CreateStory(c *gin.Context) {
 	}
 
 	// Create new story
-	story, err := CreateNewStory(tx, &parts, parsedUUID)
+	story, err := CreateNewStory(tx, &parts, user.ID, user.DefaultGroup)
 	if err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error: " + err.Error()})

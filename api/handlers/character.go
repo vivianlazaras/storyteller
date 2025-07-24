@@ -32,14 +32,15 @@ type CharacterRender struct {
 	Images			[]model.Image	`json:"images"`
 }
 
-func renderCharacter(tx *gorm.DB, character model.Character) (CharacterRender, error) {
+func renderCharacter(tx *gorm.DB, character model.Character, userID uuid.UUID) (CharacterRender, error) {
+	
 	var charid = character.ID
 	tags, tagerr := SelectTagsByEntityID(charid)
 	if tagerr != nil {
 		return CharacterRender{}, nil
 	}
 	
-	thumbnail, thmerr := db.GetByID[model.Image]("images", character.Thumbnail);
+	thumbnail, thmerr := GetByID[model.Image](db.DB, "images", *character.Thumbnail, userID);
 	if thmerr != nil {
 		return CharacterRender{}, thmerr
 	}
@@ -62,6 +63,12 @@ func renderCharacter(tx *gorm.DB, character model.Character) (CharacterRender, e
 // for now this route can only fetch public characters
 func ListCharacters(c *gin.Context) {
 	
+	user, uerr := auth.GetUserFromClaims(db.DB, c)
+	if uerr != nil {
+		c.JSON(http.StatusUnauthorized, uerr);
+		return
+	}
+
 	var characters 	[]model.Character
 	var renders		[]CharacterRender
     err := db.DB.
@@ -75,7 +82,7 @@ func ListCharacters(c *gin.Context) {
 	}
 
 	for _, character := range characters {
-		render, renderr := renderCharacter(db.DB, character)
+		render, renderr := renderCharacter(db.DB, character, user.ID)
 		if renderr != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": renderr})
 		}
@@ -93,12 +100,19 @@ type CharacterBuilder struct {
 }
 
 func GetCharacter(c *gin.Context) {
-	character, err := db.GetByCtxID[model.Character](c, "characters")
+	
+	user, uerr := auth.GetUserFromClaims(db.DB, c)
+	if uerr != nil {
+		c.JSON(http.StatusUnauthorized, uerr);
+		return
+	}
+
+	character, err := GetByCtxID[model.Character](db.DB, c, "characters")
 	if err != nil {
 		return
 	}
 
-	render, renderr := renderCharacter(db.DB, *character)
+	render, renderr := renderCharacter(db.DB, *character, user.ID)
 
 	if renderr != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": renderr})
@@ -106,11 +120,11 @@ func GetCharacter(c *gin.Context) {
 	c.JSON(http.StatusOK, render)
 }
 
-func CreateNewCharacter(tx *gorm.DB, builder *CharacterBuilder, creatorID uuid.UUID) (model.Character, error) {
+func CreateNewCharacter(tx *gorm.DB, builder *CharacterBuilder, userID, groupID uuid.UUID) (model.Character, error) {
 	now := time.Now().Unix()
 	
 
-	metadata, err := createDefaultMetadata(creatorID)
+	metadata, err := createDefaultMetadata(userID)
 	if err != nil {
 		return model.Character{}, err
 	}
@@ -126,15 +140,18 @@ func CreateNewCharacter(tx *gorm.DB, builder *CharacterBuilder, creatorID uuid.U
 	
 	dberr := tx.Create(&character).Error
 	if dberr != nil {
-		tx.Rollback()
 		return model.Character{}, dberr
+	}
+
+	// this will also check to ensure the user has access to the group, so that logic is in one place
+	if err := CreateNewEntity(tx, character.ID, userID, groupID); err != nil {
+		return model.Character{}, err
 	}
 
 	if builder.Thumbnail != nil {
 		builder.Thumbnail.Parent = &character.ID
-		images, imgerr := CreateNewImage(tx, *builder.Thumbnail)
+		images, imgerr := CreateNewImage(tx, *builder.Thumbnail, userID, groupID)
 		if imgerr != nil {
-			tx.Rollback()
 			return model.Character{}, imgerr
 		}
 		if len(images) > 0 {
@@ -167,15 +184,13 @@ func CreateCharacter(c *gin.Context) {
 		return
 	}
 
-	parsedUUID := user.ID
-
 	tx := db.DB.Begin()
 	if tx.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create transaction"})
 		return
 	}
 
-	character, err := CreateNewCharacter(tx, &builder, parsedUUID)
+	character, err := CreateNewCharacter(tx, &builder, user.ID, user.DefaultGroup)
 	if err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{ "error": "Internal Server Error: " + err.Error() })

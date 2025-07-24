@@ -38,7 +38,7 @@ type FragmentRender struct {
 
 func RegisterFragmentRoutes(r *gin.Engine) *gin.Engine {
 	
-	r.GET("/fragments", auth.JWTMiddleware(), GetFragmentsByEntity)
+	r.GET("/fragments/filter", auth.JWTMiddleware(), GetFragmentsByEntity)
 	r.GET("/fragments/:id", auth.JWTMiddleware(), GetFragmentById)
 	r.POST("/fragments/", auth.JWTMiddleware(), CreateFragment)
 	r.GET("/fragments/", auth.JWTMiddleware(), GetFragments)
@@ -151,7 +151,8 @@ func selectFragmentsByEntity(db *gorm.DB, parentID uuid.UUID) ([]FragmentRender,
 }
 
 func GetFragmentById(c *gin.Context) {
-	fragment, err := db.GetByCtxID[model.Fragment](c, "fragments");
+
+	fragment, err := GetByCtxID[model.Fragment](db.DB, c, "fragments");
 	if err != nil {
 		return
 	}
@@ -160,12 +161,12 @@ func GetFragmentById(c *gin.Context) {
 	c.JSON(http.StatusOK, fragment)
 }
 
-func CreateNewFragment(tx *gorm.DB, fragment *FragmentBuilder, creatorID uuid.UUID) (model.Fragment, error) {
+func CreateNewFragment(tx *gorm.DB, fragment *FragmentBuilder, userID, groupID uuid.UUID) (model.Fragment, error) {
 	now := time.Now().Unix()
 	fragmentid := uuid.New()
 	
 
-	metadata, err := createDefaultMetadata(creatorID)
+	metadata, err := createDefaultMetadata(userID)
 	if err != nil {
 		return model.Fragment{}, err
 	}
@@ -180,10 +181,15 @@ func CreateNewFragment(tx *gorm.DB, fragment *FragmentBuilder, creatorID uuid.UU
 	}
 
 	if fragment.Name != "" {
-		fragmentdberr := db.DB.Create(&newfragment).Error
+		fragmentdberr := tx.Create(&newfragment).Error
 		if fragmentdberr != nil {
 			return newfragment, fragmentdberr
 		}
+	}
+
+	// this has to be called after tx.Create(fragment) otherwise the entity won't exist in the DB to modify
+	if err := CreateNewEntity(tx, fragmentid, userID, groupID); err != nil {
+		return model.Fragment{}, err
 	}
 
 	tagerr := InsertTagsForEntity(tx, fragmentid, fragment.Tags)
@@ -209,7 +215,6 @@ func CreateFragment(c *gin.Context) {
 		return
 	}
 
-	parsedUUID := user.ID
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{ "error": "Internal Server Error: " + err.Error() })
 		return
@@ -220,7 +225,9 @@ func CreateFragment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create transaction"})
 		return
 	}
-	newfragment, newerr := CreateNewFragment(tx, &fragment, parsedUUID)
+	// this should be changed to take a groupID as part of the requested fragment, 
+	// checking to make sure they have access to the group, but for now this works.
+	newfragment, newerr := CreateNewFragment(tx, &fragment, user.ID, user.DefaultGroup)
 	if newerr != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{ "error": "unkown panic" })
@@ -228,13 +235,13 @@ func CreateFragment(c *gin.Context) {
 	}
 
 	// Update group_id in entities table for the created story
-	if err := tx.Model(&model.Entity{}).
+	/*if err := tx.Model(&model.Entity{}).
 		Where("id = ?", newfragment.ID).
 		Update("group_id", user.DefaultGroup).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update group_id: " + err.Error()})
 		return
-	}
+	}*/
 
 	// Commit transaction
 	if err := tx.Commit().Error; err != nil {

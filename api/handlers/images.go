@@ -174,11 +174,10 @@ type ImageRender struct {
 	Url			string			`json:"url"`
 }
 
-func CreateNewImage(tx *gorm.DB, builder ImageBuilder) ([]model.Image, error) {
+func CreateNewImage(tx *gorm.DB, builder ImageBuilder, userID, groupID uuid.UUID) ([]model.Image, error) {
 
 	var images []model.Image
 	
-
 	for _, entry := range builder.Entries {
 		image := model.Image{
 			ID:          uuid.New(),
@@ -189,6 +188,8 @@ func CreateNewImage(tx *gorm.DB, builder ImageBuilder) ([]model.Image, error) {
 		if err := tx.Create(&image).Error; err != nil {
 			return images, err
 		}
+
+		// I want to create entities in bulk with a special function to avoid potentially costly permissions checks.
 	
 		// Save EXIF tags
 		for _, tag := range entry.ExifTags {
@@ -235,6 +236,11 @@ func CreateNewImage(tx *gorm.DB, builder ImageBuilder) ([]model.Image, error) {
 
 func CreateImage(c *gin.Context) {
 	var builder ImageBuilder
+	user, uerr := auth.GetUserFromClaims(db.DB, c);
+	if uerr != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
 	if err := c.ShouldBindJSON(&builder); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON: " + err.Error()})
 		return
@@ -245,7 +251,7 @@ func CreateImage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create transaction"})
 		return
 	}
-	images, err := CreateNewImage(tx, builder)
+	images, err := CreateNewImage(tx, builder, user.ID, user.DefaultGroup)
 	if err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create image: " + err.Error()})

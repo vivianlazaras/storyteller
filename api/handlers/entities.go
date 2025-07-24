@@ -171,7 +171,15 @@ func ListEntitiesByCategory(c *gin.Context) {
 }
 
 /// utility function to set group_id for entity
-func CreateNewEntity(db *gorm.DB, id uuid.UUID, group uuid.UUID) error {
+func CreateNewEntity(db *gorm.DB, id, user, group uuid.UUID) error {
+	// check to make sure the user is authorized to create an entity within the group
+	access, _, err := CheckUserEntityPermission(db, user, group, "create"); 
+	if err != nil {
+		return err
+	}
+	if access != true {
+		return fmt.Errorf("access denied")
+	}
 	// Perform the update on the entities table
 	result := db.Model(&model.Entity{}).
 		Where("id = ?", id).

@@ -65,7 +65,7 @@ func Login(c *gin.Context) {
 }
 
 func CreateNewAccount(tx *gorm.DB, builder CreateAccount, subject uuid.UUID) (model.User, error) {
-    var description = builder.Email + "'s default group";
+    //var description = builder.Email + "'s default group";
     if builder.Password != builder.VerifyPassword {
         return model.User{}, fmt.Errorf("passwords don't match");
     }
@@ -84,12 +84,12 @@ func CreateNewAccount(tx *gorm.DB, builder CreateAccount, subject uuid.UUID) (mo
         PasswordHash: strPtr(string(hashedPassword)),
     }
 
-    group, err := CreateGroup(tx, user.ID, user.Email + "_default", &description)
+    group, err := CreateDefaultGroup(tx, user.ID, user.Email + "_default")
     if err != nil {
         return model.User{}, err
     }
 
-    user.DefaultGroup = &group.ID
+    user.DefaultGroup = group.ID
     if err := tx.Create(&user).Error; err != nil {
 		return model.User{}, err
 	}

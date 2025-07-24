@@ -28,7 +28,7 @@ type NoteBuilder struct {
 	Category	string		`json:"category"`
 }
 
-func CreateNewNote(tx *gorm.DB, builder NoteBuilder) (model.Note, error) {
+func CreateNewNote(tx *gorm.DB, builder NoteBuilder, userID, groupID uuid.UUID) (model.Note, error) {
 	now := time.Now().Unix()
 
 
@@ -49,6 +49,11 @@ func CreateNewNote(tx *gorm.DB, builder NoteBuilder) (model.Note, error) {
 
 	err := tx.Create(&newnote).Error
 	if err != nil {
+		return model.Note{}, err
+	}
+
+	// this will also check to ensure the user has access to the group, so that logic is in one place
+	if err := CreateNewEntity(tx, newnote.ID, userID, groupID); err != nil {
 		return model.Note{}, err
 	}
 
@@ -81,7 +86,7 @@ func CreateNote(c *gin.Context) {
 		return
 	}
 
-	note, err := CreateNewNote(tx, builder)
+	note, err := CreateNewNote(tx, builder, user.ID, user.DefaultGroup)
 	if err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "inernal server error creating note"})
