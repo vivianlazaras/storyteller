@@ -10,7 +10,11 @@
   <div class="listitem" id="{{ fragment.id }}">
     <div class="created">Created: {{ fragment.created }}</div>
     <p>{{ fragment.content }}</p>
-    {{ images::gallery(images=fragment.images) }}
+    
+    {% if fragment.images is defined and fragment.images and fragment.images | length > 0 %}
+        {{ images::gallery(images=fragment.images) }}
+    {% endif %}
+    
     {{ links::add_entity(name="Character", parentCategory="fragments", childCategory="characters", id=fragment.id ) }}
   </div>
   <a href="/assets/images/upload?category=fragments&parent={{ fragment.id }}">Upload Photos</a>

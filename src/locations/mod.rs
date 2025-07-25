@@ -1,14 +1,14 @@
 use crate::ApiClient;
-use crate::assets::graphs::{Renderable, Entity, EntityExt, render_children};
+use crate::assets::graphs::{Entity, EntityExt, Renderable, render_children};
 use crate::assets::images::ImageForm;
 use crate::auth::Guard;
+use crate::errors::LazyError;
 use crate::model::{Location, Tag};
 use rocket::fs::TempFile;
-use wrappedviz::rgraph::Node;
+use std::collections::HashMap;
+use wrappedviz::rgraph::{Node, Edge};
 use wrappedviz::style::{CommonAttr, NodeAttr, shape::NodeShape};
 use wrappedviz::{CompatGraph, CompatNode};
-use std::collections::HashMap;
-use crate::errors::LazyError;
 
 use crate::assets::images::{ImageBuilder, ImageProcessor};
 use crate::model::Image;
@@ -150,6 +150,9 @@ impl Entity for LocationRender {
     fn id(&self) -> Uuid {
         self.id
     }
+    fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 impl LocationRender {
@@ -167,7 +170,7 @@ impl LocationRender {
 }
 
 #[rocket::async_trait]
-impl<G: CompatGraph<Node = wrappedviz::rgraph::Node> + Send> Renderable<G> for LocationRender {
+impl<G: CompatGraph<Node = Node, Edge = Edge> + Send> Renderable<G> for LocationRender {
     type Err = LazyError;
 
     async fn render(
@@ -189,13 +192,30 @@ impl<G: CompatGraph<Node = wrappedviz::rgraph::Node> + Send> Renderable<G> for L
         let fragments = self.fragments(request.clone()).await?;
         let locations = self.locations(request.clone()).await?;
 
-        render_children(&self.id, &fragments, "fragment", api, access_token, graph, visited).await?;
-        render_children(&self.id, &locations, "location", api, access_token, graph, visited).await?;
+        render_children(
+            &self.id,
+            &fragments,
+            "fragment",
+            api,
+            access_token,
+            graph,
+            visited,
+        )
+        .await?;
+        render_children(
+            &self.id,
+            &locations,
+            "location",
+            api,
+            access_token,
+            graph,
+            visited,
+        )
+        .await?;
 
         Ok(())
     }
 }
-
 
 pub fn get_routes() -> Vec<Route> {
     routes![

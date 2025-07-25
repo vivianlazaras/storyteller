@@ -5,6 +5,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(improper_ctypes)]
+#![allow(unused_variables)]
 #![allow(non_local_impls)]
 
 #[macro_use]
@@ -33,5 +34,7 @@ pub mod render;
 pub mod search;
 pub mod themes;
 pub mod timelines;
+pub mod organizations;
+pub mod groups;
 pub use api::*;
 mod tests;

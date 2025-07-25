@@ -52,6 +52,9 @@ function list_toggle(id) {
         <span class="tag">{{ tag.value }}</span>
       {% endfor %}
     </div>
+
+    <a href="/assets/graphs/generate/{{ story.id }}">Generate Graph</a>
+
     <div id="fragments" class="fragments entitylist">
       {% for fragment in fragments %}
         {{ fragments::fragment(fragment=fragment) }}

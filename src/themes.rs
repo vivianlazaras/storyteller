@@ -1,9 +1,11 @@
 use rocket::{Route, routes};
 
+use wrappedviz::style::{shape::NodeShape, color::Color};
+use uuid::Uuid;
+
 use std::path::{Path, PathBuf};
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
-use wrappedviz::theme::GraphTheme;
 /// for now a structure of having main, desktop, and mobile will work
 /// in future versions I will likely want to clean this up to provide default media
 /// queries and a way to use said media queries
@@ -73,4 +75,21 @@ impl Theme {
 
 pub fn get_routes() -> Vec<Route> {
     routes![]
+}
+
+pub struct EntityTheme {
+    shape: NodeShape,
+    fill_color: Color,
+    
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphTheme {
+    
+}
+
+impl Default for GraphTheme {
+    fn default() -> Self {
+        Self {}
+    }
 }

@@ -1,0 +1,11 @@
+{% import "components/characters/character" as macros %}
+{% include "head" %}
+
+<body>
+    {% include "header" %}
+    <div id="content">
+        
+            {{ svg }}
+        
+    </div>
+</body>

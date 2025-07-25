@@ -1,0 +1,5 @@
+digraph G {
+    "865e098b-aa79-4aff-8948-8c109d40707d" [id="865e098b-aa79-4aff-8948-8c109d40707d", label="Given a gift of connection", shape="square", tooltip="see more info", class="fragment"]
+    "8cf51679-e066-4ea1-9e5e-ca197a560ccc" [id="8cf51679-e066-4ea1-9e5e-ca197a560ccc", label="Evening Pages", tooltip="A journal of what I've recieved today that's made me think, that's challenged me, things I've appreciated, and been annoyed by", class="story"]
+    "8cf51679-e066-4ea1-9e5e-ca197a560ccc" -> "865e098b-aa79-4aff-8948-8c109d40707d" [id="8cf51679-e066-4ea1-9e5e-ca197a560ccc_865e098b-aa79-4aff-8948-8c109d40707d", label="fragment"]
+}

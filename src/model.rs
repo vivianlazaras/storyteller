@@ -80,7 +80,7 @@ pub struct Relationship {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tag {
     id: Uuid,
-    entity: Uuid,
+    entity: Option<Uuid>,
     value: String,
 }
 

@@ -46,3 +46,4 @@ dashmap = "6.1.0"
 [features]
 redis = ["dep:redis"]
 default = [ "redis" ]
+experimental = []

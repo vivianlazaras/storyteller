@@ -1,5 +1,5 @@
 use crate::api::{ApiClient, ApiRequest, get_access_token};
-use crate::assets::graphs::{Renderable, Entity, EntityExt, render_children};
+use crate::assets::graphs::{Entity, EntityExt, Renderable, render_children};
 use crate::auth::Guard;
 use crate::characters::api::CharacterRender;
 use crate::errors::LazyError;
@@ -10,7 +10,7 @@ use rocket::form::Form;
 use rocket::http::CookieJar;
 use rocket::{FromForm, FromFormField};
 use std::collections::HashMap;
-use wrappedviz::rgraph::Node;
+use wrappedviz::rgraph::{Node, Edge};
 use wrappedviz::style::*;
 use wrappedviz::*;
 
@@ -34,9 +34,13 @@ pub struct AccountBtn {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StoryRender {
-    id: Uuid,
-    name: String,
-    description: Option<String>,
+    pub id: Uuid,
+    pub created: i64,
+    pub last_edited: i64,
+    pub name: String,
+    pub description: Option<String>,
+    pub renderer: Option<String>,
+    pub image: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromForm)]
@@ -60,7 +64,7 @@ async fn get_story(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml<Te
     let mut params = HashMap::new();
     let story_str = story.id.to_string();
     params.insert("parent", story_str.as_str());
-    
+
     let request = api
         .empty_request()
         .access_token(&guard.access_token())
@@ -71,7 +75,6 @@ async fn get_story(guard: Guard, id: Uuid, api: &State<ApiClient>) -> RawHtml<Te
     let locations = story.locations(request.clone()).await.unwrap();
     let tags = story.tags(request.clone()).await.unwrap();
     let notes = story.notes(request).await.unwrap();
-
     RawHtml(Template::render(
         "stories/story",
         context! { title: story.name.clone(), notes, story, fragments, characters, tags, locations },
@@ -151,7 +154,9 @@ async fn search(term: Form<>, api: &State<ApiClient>) -> RawHtml<Template> {
 }*/
 
 impl StoryRender {
-
+    pub fn name(&self) -> &str {
+        &self.name
+    }
     pub async fn notes<'a>(&self, mut request: ApiRequest<'a>) -> Result<Vec<Note>, LazyError> {
         let notes: Vec<Note> = match request.route("/notes").send().await? {
             Some(notes) => notes,
@@ -163,7 +168,7 @@ impl StoryRender {
 
     pub async fn tags<'a>(&self, mut request: ApiRequest<'a>) -> Result<Vec<Tag>, LazyError> {
         let tagurl = format!("/tags/{}", self.id);
-        let tags: Vec<Tag> = match request.route("/notes").send().await? {
+        let tags: Vec<Tag> = match request.route(&tagurl).send().await? {
             Some(tags) => tags,
             None => Vec::new(),
         };
@@ -172,7 +177,7 @@ impl StoryRender {
 
     pub fn build_node(&self) -> Node {
         let mut node = Node::new(self.id.to_string(), self.name.clone());
-        node.set_attr(NodeAttr::Shape(NodeShape::Egg));
+        //node.set_attr(NodeAttr::Shape(NodeShape::Egg));
         if let Some(description) = &self.description {
             node.set_attr(CommonAttr::Tooltip(description.clone()));
         } else {
@@ -184,7 +189,7 @@ impl StoryRender {
 }
 
 #[rocket::async_trait]
-impl<G: CompatGraph<Node = Node> + Send> Renderable<G> for StoryRender {
+impl<G: CompatGraph<Node = Node, Edge = Edge> + Send> Renderable<G> for StoryRender {
     type Err = LazyError;
 
     async fn render(
@@ -200,16 +205,21 @@ impl<G: CompatGraph<Node = Node> + Send> Renderable<G> for StoryRender {
         // node has been visited.
         visited.push(self.id);
 
+        graph.set_attr(GraphAttr::Root(self.id.to_string()));
+        graph.set_attr(GraphAttr::Margin(1.0));
         let node = self.build_node();
         graph.add_node(node);
 
         let mut params = HashMap::new();
         let story_str = self.id.to_string();
         params.insert("parent", story_str.as_str());
-        
-        let request = api.empty_request().access_token(access_token).params(params);
 
-        let fragments = self.fragments(request.clone()).await?;
+        let request = api
+            .empty_request()
+            .access_token(access_token)
+            .params(params);
+
+        let fragments: Vec<FragmentRender> = self.fragments(request.clone()).await?;
         let characters = self.characters(request.clone()).await?;
         let locations = self.locations(request.clone()).await?;
 
@@ -248,13 +258,15 @@ impl<G: CompatGraph<Node = Node> + Send> Renderable<G> for StoryRender {
 
         Ok(())
     }
-
 }
 
 impl Entity for StoryRender {
     type Error = LazyError;
     fn id(&self) -> Uuid {
         self.id
+    }
+    fn name(&self) -> &str {
+        &self.name
     }
 }
 

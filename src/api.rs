@@ -164,7 +164,7 @@ impl ApiClient {
     pub fn empty_request<'a>(&'a self) -> ApiRequest<'a> {
         ApiRequest {
             method: Method::GET,
-            route: "",
+            route: String::new(),
             client: &self.client,
             base_url: &self.url,
             params: None,
@@ -175,7 +175,7 @@ impl ApiClient {
     pub fn request<'a>(&'a self, route: &'a str) -> ApiRequest<'a> {
         ApiRequest {
             method: Method::GET,
-            route,
+            route: route.to_string(),
             client: &self.client,
             base_url: &self.url,
             params: None,
@@ -198,10 +198,10 @@ impl ApiClient {
 #[derive(Debug, Clone)]
 pub struct ApiRequest<'a> {
     method: Method,
-    route: &'a str,
+    route: String,
     client: &'a Client,
     base_url: &'a Url,
-    params: Option<Map<'a>>,
+    params: Option<HashMap<String, String>>,
     access_token: Option<&'a str>,
     //body: Option<Box<dyn serde::Serialize + Send + Sync + 'a>>,
 }
@@ -213,13 +213,34 @@ impl<'a> ApiRequest<'a> {
     }
 
     pub fn route(mut self, route: &'a str) -> Self {
-        self.route = route;
+        self.route = route.to_string();
         self
     }
 
     pub fn params(mut self, params: Map<'a>) -> Self {
-        self.params = Some(params);
+        let mut owned = HashMap::new();
+        for (k, v) in params.into_iter() {
+            owned.insert(k.to_string(), v.to_string());
+        }
+        self.params = Some(owned);
         self
+    }
+
+    pub fn set_param<S: AsRef<str>>(mut self, name: S, value: String) -> Self {
+        if let Some(params) = &mut self.params {
+            params.insert(name.as_ref().to_string(), value);
+        } else {
+            let mut params = HashMap::new();
+            params.insert(name.as_ref().to_string(), value);
+            self.params = Some(params);
+        }
+        self
+    }
+
+    /// adds to route
+    pub fn append<S: AsRef<str>>(mut self, subpath: S) -> Result<Self> {
+        self.route = join_url(self.route, subpath.as_ref())?.to_string();
+        Ok(self)
     }
 
     pub fn access_token(mut self, token: &'a str) -> Self {

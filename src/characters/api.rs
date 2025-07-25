@@ -28,9 +28,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
+use crate::assets::graphs::{Entity, EntityExt, Renderable, render_children};
 use crate::errors::LazyError;
-use crate::assets::graphs::{Renderable, Entity, EntityExt, render_children};
-use wrappedviz::rgraph::Node;
+use wrappedviz::rgraph::{Node, Edge};
 use wrappedviz::style::*;
 use wrappedviz::*;
 
@@ -159,10 +159,13 @@ impl Entity for CharacterRender {
     fn id(&self) -> Uuid {
         self.id
     }
+    fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 #[rocket::async_trait]
-impl<G: CompatGraph<Node = wrappedviz::rgraph::Node> + Send> Renderable<G> for CharacterRender {
+impl<G: CompatGraph<Node = Node, Edge = Edge> + Send> Renderable<G> for CharacterRender {
     type Err = crate::errors::LazyError;
 
     async fn render(
@@ -185,13 +188,39 @@ impl<G: CompatGraph<Node = wrappedviz::rgraph::Node> + Send> Renderable<G> for C
         let characters = self.characters(request.clone()).await?;
         let locations = self.locations(request.clone()).await?;
 
-        render_children(&self.id, &fragments, "fragment", api, access_token, graph, visited).await?;
-        render_children(&self.id, &characters, "character", api, access_token, graph, visited).await?;
-        render_children(&self.id, &locations, "location", api, access_token, graph, visited).await?;
+        render_children(
+            &self.id,
+            &fragments,
+            "fragment",
+            api,
+            access_token,
+            graph,
+            visited,
+        )
+        .await?;
+        render_children(
+            &self.id,
+            &characters,
+            "character",
+            api,
+            access_token,
+            graph,
+            visited,
+        )
+        .await?;
+        render_children(
+            &self.id,
+            &locations,
+            "location",
+            api,
+            access_token,
+            graph,
+            visited,
+        )
+        .await?;
 
         Ok(())
     }
-
 }
 
 fn build_family_tree(

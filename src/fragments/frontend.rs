@@ -1,6 +1,7 @@
 use super::api::*;
 use crate::ApiClient;
 use crate::auth::Guard;
+use crate::errors::LazyError;
 use crate::model::*;
 use rocket::fs::TempFile;
 use rocket::http::CookieJar;
@@ -9,10 +10,9 @@ use rocket::response::content::RawHtml;
 use rocket::{FromForm, Route, State, form::Form, get, post, routes};
 use rocket_dyn_templates::{Template, context};
 use uuid::Uuid;
-use crate::errors::LazyError;
 
-use crate::assets::graphs::{Renderable, Entity, EntityExt, render_children};
-use wrappedviz::rgraph::Node;
+use crate::assets::graphs::{Entity, EntityExt, Renderable, render_children};
+use wrappedviz::rgraph::{Node, Edge};
 use wrappedviz::style::*;
 use wrappedviz::*;
 
@@ -53,7 +53,7 @@ pub struct FragmentRender {
 impl FragmentRender {
     pub fn build_node(&self) -> Node {
         let mut node = Node::new(self.id.to_string(), self.name.clone());
-        node.set_attr(NodeAttr::Shape(NodeShape::Square));
+        node.set_attr(NodeAttr::Shape(NodeShape::Box));
         node.set_attr(CommonAttr::Tooltip("see more info".to_string()));
         node.set_attr(CommonAttr::Class("fragment".to_string()));
         node
@@ -65,10 +65,13 @@ impl Entity for FragmentRender {
     fn id(&self) -> Uuid {
         self.id
     }
+    fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 #[rocket::async_trait]
-impl<G: CompatGraph<Node = wrappedviz::rgraph::Node> + Send> Renderable<G> for FragmentRender {
+impl<G: CompatGraph<Node = Node, Edge = Edge> + Send> Renderable<G> for FragmentRender {
     type Err = crate::errors::LazyError;
 
     async fn render(
@@ -91,9 +94,36 @@ impl<G: CompatGraph<Node = wrappedviz::rgraph::Node> + Send> Renderable<G> for F
         let locations = self.locations(request.clone()).await?;
         let fragments = self.fragments(request.clone()).await?;
 
-        render_children(&self.id, &characters, "character", api, access_token, graph, visited).await?;
-        render_children(&self.id, &locations, "location", api, access_token, graph, visited).await?;
-        render_children(&self.id, &fragments, "fragment", api, access_token, graph, visited).await?;
+        render_children(
+            &self.id,
+            &characters,
+            "character",
+            api,
+            access_token,
+            graph,
+            visited,
+        )
+        .await?;
+        render_children(
+            &self.id,
+            &locations,
+            "location",
+            api,
+            access_token,
+            graph,
+            visited,
+        )
+        .await?;
+        render_children(
+            &self.id,
+            &fragments,
+            "fragment",
+            api,
+            access_token,
+            graph,
+            visited,
+        )
+        .await?;
 
         Ok(())
     }
