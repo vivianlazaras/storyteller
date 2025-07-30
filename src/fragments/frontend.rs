@@ -56,6 +56,7 @@ impl FragmentRender {
         node.set_attr(NodeAttr::Shape(NodeShape::Box));
         node.set_attr(CommonAttr::Tooltip("see more info".to_string()));
         node.set_attr(CommonAttr::Class("fragment".to_string()));
+        node.set_attr(CommonAttr::URL(format!("/fragments/{}", self.id)));
         node
     }
 }
@@ -67,6 +68,9 @@ impl Entity for FragmentRender {
     }
     fn name(&self) -> &str {
         &self.name
+    }
+    fn category(&self) -> &str {
+        "fragments"
     }
 }
 

@@ -184,7 +184,7 @@ impl ImageProcessor {
             let mut file = File::create(&save_path).await?;
             file.write_all(&output).await?;
 
-            let url = format!("{}/assets/images/{}", self.hostname, name);
+            let url = format!("/assets/images/{}", name);
             entries.push(ImageEntry { url, exif_tags })
         }
         Ok(Some(ImageBuilder::new(

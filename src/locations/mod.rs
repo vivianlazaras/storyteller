@@ -153,6 +153,10 @@ impl Entity for LocationRender {
     fn name(&self) -> &str {
         &self.name
     }
+
+    fn category(&self) -> &str {
+        "locations"
+    }
 }
 
 impl LocationRender {
@@ -164,6 +168,7 @@ impl LocationRender {
         } else {
             node.set_attr(CommonAttr::Tooltip("see more info".to_string()))
         }
+        node.set_attr(CommonAttr::URL(format!("/locations/{}", self.id)));
         node.set_attr(CommonAttr::Class("location".to_string()));
         node
     }

@@ -7,6 +7,7 @@ use crate::auth::*;
 use bcrypt::BcryptError;
 use bcrypt::DEFAULT_COST;
 use bcrypt::hash;
+use crate::groups::GroupRender;
 use rocket::response::{Redirect, content::RawHtml};
 use rocket::{
     FromForm, Route, State,
@@ -70,10 +71,12 @@ async fn profile(guard: Guard) -> RawHtml<Template> {
         given_name: "vivian".to_string(),
         family_name: "lazaras".to_string(),
     };
+    let groups: Vec<GroupRender> = Vec::new();
+
     println!("guard: {:?}", guard);
     RawHtml(Template::render(
         "profiles/profile",
-        context!( title: "profile", name: guard.claims.email, info, picture: image_url ),
+        context!( title: "profile", groups, name: guard.claims.email, info, picture: image_url ),
     ))
 }
 

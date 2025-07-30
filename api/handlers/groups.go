@@ -21,12 +21,17 @@ type GroupBuilder struct {
 }
 
 // checks if the user is in the group
-func HasAccess(db *gorm.DB, userID, groupID uuid.UUID) (bool, error) {
+func HasAccess(db *gorm.DB, userID uuid.UUID, groupID *uuid.UUID) (bool, error) {
+	
+	if groupID == nil {
+		return false, nil
+	}
+	
 	var count int64
 	err := db.
 		Table("group_rel").
 		Joins("JOIN group_closure ON group_rel.group_id = group_closure.ancestor_id").
-		Where("group_rel.user_id = ? AND group_closure.descendant_id = ?", userID, groupID).
+		Where("group_rel.user_id = ? AND group_closure.descendant_id = ?", userID, *groupID).
 		Count(&count).Error
 
 	return count > 0, err
@@ -195,6 +200,29 @@ func ShareEntityBetweenGroups(db *gorm.DB, entityID, groupAID, groupBID uuid.UUI
 	})
 }
 
+func CheckUserGroupPermission(db *gorm.DB, userID, groupID uuid.UUID, permissionName string) (bool, error) {
+	// 1. Check access via primary group
+    hasAccess, err := HasAccess(db, userID, &groupID)
+    if err != nil {
+        return false, err
+    }
+    if hasAccess {
+        var count int64
+        err := db.
+            Table("group_permissions").
+            Where("group_id = ? AND permission = ?", groupID, permissionName).
+            Count(&count).Error
+        if err != nil {
+            return false, err
+        }
+        if count > 0 {
+			return true, nil
+		}
+    }
+
+	return false, nil
+}
+
 // CheckUserEntityPermission returns whether user has a specific permission on the entity
 // and which groups grant that access (primary or shared).
 func CheckUserEntityPermission(
@@ -224,7 +252,8 @@ func CheckUserEntityPermission(
             return false, nil, err
         }
         if count > 0 {
-            authorizedGroups = append(authorizedGroups, entity.GroupID)
+			// the dereference is safe here because the nullability of entity.GroupID was checked in HasAccess
+            authorizedGroups = append(authorizedGroups, *entity.GroupID)
 			return true, authorizedGroups, nil
 		}
     }

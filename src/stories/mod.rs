@@ -184,6 +184,7 @@ impl StoryRender {
             node.set_attr(CommonAttr::Tooltip("see more info".to_string()))
         }
         node.set_attr(CommonAttr::Class("story".to_string()));
+        node.set_attr(CommonAttr::URL(format!("/stories/{}", self.id)));
         node
     }
 }
@@ -267,6 +268,9 @@ impl Entity for StoryRender {
     }
     fn name(&self) -> &str {
         &self.name
+    }
+    fn category(&self) -> &str {
+        "stories"
     }
 }
 

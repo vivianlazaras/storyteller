@@ -16,7 +16,7 @@ func RegisterCharacterRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/characters", auth.JWTMiddleware(), ListCharacters)
     r.GET("/characters/:id", auth.JWTMiddleware(), GetCharacter)
     r.POST("/characters", auth.JWTMiddleware(), CreateCharacter)
-	r.GET("/characters/filter", auth.JWTMiddleware(), GetCharactersByStory)
+	r.GET("/characters/filter", auth.JWTMiddleware(), GetCharacters)
 	r.GET("/characters/tree", auth.JWTMiddleware(), GetCharacterTree)
     //r.PUT("/characters/:id", middleware.RequireOIDC(), UpdateCharacter)
     r.DELETE("/characters/:id", auth.JWTMiddleware(), DeleteCharacter)
@@ -223,8 +223,12 @@ func DeleteCharacter(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Character{})
 }
 
-func GetCharactersByStory(c *gin.Context) {
+func GetCharacters(c *gin.Context) {
 	IDString := c.Query("parent")
+	var Category = c.Query("category")
+	if Category == "" {
+		Category = "stories"
+	}
 	parentID, iderr := uuid.Parse(IDString)
 	if iderr != nil {
 		fmt.Printf("failed to parse UUID: %s", IDString)
@@ -236,7 +240,7 @@ func GetCharactersByStory(c *gin.Context) {
 	err := db.DB.
 		Model(&model.Character{}).
 		Joins("JOIN relations ON relations.child = characters.id").
-		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", parentID, "stories", "characters").
+		Where("relations.parent = ? AND relations.parent_category = ? AND relations.child_category = ?", parentID, Category, "characters").
 		Find(&characters).Error
 
 	if err != nil {

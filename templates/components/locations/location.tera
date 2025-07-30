@@ -1,7 +1,18 @@
 {% import "components/images/index" as images %}
+{% import "components/entities/menu" as macros %}
+
 {% macro location(location) %}
+
+{% set names = ["Fragment", "Location"] %}
+{% set categories = ["fragments", "locations"] %}
+
 <div class="location">
     <div class="entitylink">
+
+        {# Use the unified menu macro to create links to add fragments, characters, and locations #}
+        {{ macros::menu(parentid=location.id, parentcategory="locations", names=names, categories=categories) }}
+    
+
         <h3>
             {{ location.name }}
         </h3>

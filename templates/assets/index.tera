@@ -1,0 +1,13 @@
+{% include "head" %}
+
+<body>
+    {% include "header" %}
+    <div id="content" class="content">
+        <h1>
+            Assets
+        </h1>
+        <p>
+            are a tool for managing files such as images, audio files, videos, etc.
+        </p>
+    </div>
+</body>

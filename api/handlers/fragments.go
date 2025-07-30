@@ -187,11 +187,12 @@ func CreateNewFragment(tx *gorm.DB, fragment *FragmentBuilder, userID, groupID u
 		}
 	}
 
+	fmt.Println("about to call create new entity");
 	// this has to be called after tx.Create(fragment) otherwise the entity won't exist in the DB to modify
 	if err := CreateNewEntity(tx, fragmentid, userID, groupID); err != nil {
 		return model.Fragment{}, err
 	}
-
+	fmt.Println("after entity creation");
 	tagerr := InsertTagsForEntity(tx, fragmentid, fragment.Tags)
 	linkerr := linkFragment(tx, fragment, fragmentid)
 	
@@ -230,7 +231,7 @@ func CreateFragment(c *gin.Context) {
 	newfragment, newerr := CreateNewFragment(tx, &fragment, user.ID, user.DefaultGroup)
 	if newerr != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{ "error": "unkown panic" })
+		c.JSON(http.StatusInternalServerError, gin.H{ "error": newerr })
 		return
 	}
 

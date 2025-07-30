@@ -18,6 +18,7 @@ type Group struct {
 	Hidden      bool       `gorm:"column:hidden;not null" json:"hidden"`
 	ParentID    *uuid.UUID `gorm:"column:parent_id" json:"parent_id"`
 	Created     int64      `gorm:"column:created;not null;default:unix_now()" json:"created"`
+	Private     *bool      `gorm:"column:private" json:"private"`
 }
 
 // TableName Group's table name

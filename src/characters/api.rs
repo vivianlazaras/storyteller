@@ -149,7 +149,11 @@ impl CharacterRender {
         } else {
             node.set_attr(CommonAttr::Tooltip("see more info".to_string()))
         }
+        node.set_attr(CommonAttr::URL(format!("/characters/{}", self.id)));
         node.set_attr(CommonAttr::Class("character".to_string()));
+        if let Some(image) = &self.thumbnail {
+            node.set_attr(NodeAttr::Image(format!("{}", image.url)));
+        }
         node
     }
 }
@@ -161,6 +165,10 @@ impl Entity for CharacterRender {
     }
     fn name(&self) -> &str {
         &self.name
+    }
+
+    fn category(&self) -> &str {
+        "characters"
     }
 }
 

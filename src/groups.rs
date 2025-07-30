@@ -41,7 +41,7 @@ impl GroupBuilder {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GroupRender {
     pub id: Uuid,
     pub name: String,

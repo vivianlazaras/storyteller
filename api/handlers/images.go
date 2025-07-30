@@ -15,7 +15,7 @@ import (
 func RegisterImageRoutes(r *gin.Engine) *gin.Engine {
 	r.POST("/assets/images/", auth.JWTMiddleware(), CreateImage)
 	r.GET("/assets/images/:id", auth.JWTMiddleware(), GetImage)
-	r.GET("assets/images/", auth.JWTMiddleware(), ListImages)
+	r.GET("/assets/images/", auth.JWTMiddleware(), ListImages)
 	return r
 }
 
@@ -189,9 +189,14 @@ func CreateNewImage(tx *gorm.DB, builder ImageBuilder, userID, groupID uuid.UUID
 			return images, err
 		}
 
+		if err := CreateNewEntity(tx, image.ID, userID, groupID); err != nil {
+			return images, err
+		}
+
 		// I want to create entities in bulk with a special function to avoid potentially costly permissions checks.
 	
 		// Save EXIF tags
+		// exif tags should probably be behind group protections as well.
 		for _, tag := range entry.ExifTags {
 			exif := model.ExifTag{
 				Image: image.ID,
@@ -376,10 +381,11 @@ func ListImages(c *gin.Context) {
 
 	imgerr := db.DB.
 		Table("images").
+		Select("images.id, images.url, images.description").
 		Joins("JOIN relations ON relations.child = images.id AND relations.child_category = ?", "images").
 		Joins("JOIN entities ON relations.parent = entities.id").
-		Joins("JOIN grouprel ON grouprel.group_id = entities.group_id").
-		Joins("JOIN users ON users.id = grouprel.user_id").
+		Joins("JOIN group_rel ON group_rel.group_id = entities.group_id").
+		Joins("JOIN users ON users.id = group_rel.user_id").
 		Where("users.id = ?", user.ID).
 		Scan(&images).Error
 

@@ -73,9 +73,9 @@ func ListEntitiesByCategoryForUser(db *gorm.DB, userID uuid.UUID, category strin
 			table, table,
 		)).
 		Joins("JOIN groups ON groups.id = entities.group_id").
-		Joins("JOIN grouprel ON grouprel.group_id = groups.id").
+		Joins("JOIN group_rel ON group_rel.group_id = groups.id").
 		Joins(fmt.Sprintf("JOIN %s ON %s.id = entities.id", table, table)).
-		Where("grouprel.user_id = ?", userID).
+		Where("group_rel.user_id = ?", userID).
 		Scan(&entities).Error
 
 	if err != nil {
@@ -153,7 +153,7 @@ func ListEntitiesByCategory(c *gin.Context) {
 			SELECT e.id, e.name, e.description
 			FROM %s e
 			JOIN entities ent ON ent.id = e.id
-			JOIN grouprel gr ON gr.group_id = ent.group_id
+			JOIN group_rel gr ON gr.group_id = ent.group_id
 			AND gr.user_id = ?
 		`, category)
 	default:
@@ -173,11 +173,14 @@ func ListEntitiesByCategory(c *gin.Context) {
 /// utility function to set group_id for entity
 func CreateNewEntity(db *gorm.DB, id, user, group uuid.UUID) error {
 	// check to make sure the user is authorized to create an entity within the group
-	access, _, err := CheckUserEntityPermission(db, user, group, "create"); 
+	access, err := CheckUserGroupPermission(db, user, group, "create"); 
 	if err != nil {
+		fmt.Println("access denied with error");
 		return err
 	}
 	if access != true {
+
+		fmt.Println("access denied without err");
 		return fmt.Errorf("access denied")
 	}
 	// Perform the update on the entities table
@@ -231,7 +234,9 @@ func CreateRelation(c *gin.Context) {
 
     _, err := CreateNewRelation(db.DB, &relation)
     if err != nil {
+		fmt.Println("failed to create new relation %s", err);
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
 	}
 
 	c.JSON(http.StatusOK, relation)

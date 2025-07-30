@@ -126,6 +126,7 @@ pub trait Entity {
     type Error: Send + Sync + 'static + From<LazyError>;
     fn id(&self) -> Uuid;
     fn name(&self) -> &str;
+    fn category(&self) -> &str;
 }
 
 /// Extension trait to fetch related renderable entities with default implementations.
@@ -136,7 +137,8 @@ pub trait EntityExt: Entity {
         let request = api
             .empty_request()
             .access_token(access_token)
-            .set_param("parent", self.id().to_string());
+            .set_param("parent", self.id().to_string())
+            .set_param("category", self.category().to_string());
         request
     }
     /// Fetch related fragments.

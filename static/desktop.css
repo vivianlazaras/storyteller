@@ -15,3 +15,14 @@
     position: relative;
     display: inline-block;
 }
+
+.dropbtn {
+    background-color: #3498db;
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
