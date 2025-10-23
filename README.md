@@ -24,7 +24,7 @@ currently this code has only been tested with postgresql but in theory
 any database that is supported by gorm should work.
 
 ## Future Plans
-1. Complete token exchange allowing the API to be exposed to the WAN for homeserver federation.
+1. Complete token exchange allowing the API to be exposed to the WAN for homeserver federation. (in retrospect federation API wil be propriatery for security reasons (there's certain activities I can't abide people using this project for))
 2. import timelines from immich.
 3. Create a wasmtime based plugin system.
 4. Use OpenPose + OpenMVG or similar software to generate 3D models from images of people.
@@ -34,6 +34,8 @@ any database that is supported by gorm should work.
 8. Character Groups / Organizations.
 9. Ability to Merge fragments.
 10. Standardize graph representation to allow user's to use dot format to define custom graphs.
+11. Notes/Task management tool.
+12. Custom Calendaring Systems.
 
 ## Would Be Cool One Day
 1. Have an AI generate tag suggestions based on story content.
