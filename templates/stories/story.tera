@@ -1,0 +1,90 @@
+{% import "components/notes/list" as notes %}
+{% import "components/characters/character" as characters %}
+{% import "components/entities/menu" as macros %}
+{% import "components/fragments/fragment" as fragments %}
+{% import "components/links/add" as links %}
+{% import "components/locations/location" as locations %}
+{% include "head" %}
+
+{% set names = ["Substory", "Fragment", "Character", "Location"] %}
+{% set categories = ["stories", "fragments", "characters", "locations"] %}
+
+<body>
+{% include "header" %}
+
+<style>
+  .listitem {
+    display: none;
+    transition: all 0.3s ease;
+  }
+
+  .listitem.visible {
+    display: block;
+  }
+</style>
+
+<script>
+function list_toggle(id) {
+  const item = document.getElementById(id);
+  if (!item) return;
+
+  const isVisible = window.getComputedStyle(item).display !== "none";
+  if (isVisible) {
+    item.classList.remove("visible");
+  } else {
+    item.classList.add("visible");
+  }
+}
+</script>
+
+<div class="content" id="content">
+  <div class="stories">
+    <div id="actionbtns">
+      
+        <input type="hidden" name="id" value="{{ story.id }}"/>
+        <button type="button" onclick="delete_entity('{{ story.id }}')" class="submitbtn">Delete</button>
+
+    </div>
+    <h1>{{ story.name }}</h1>
+
+    <div class="description" id="description">
+      {{ story.description }}
+    </div>
+
+    <div id="selectedItems" class="tagholder">
+      {% for tag in tags %}
+        <span class="tag">{{ tag.value }}</span>
+      {% endfor %}
+    </div>
+
+    {# Use the unified menu macro to create links to add fragments, characters, and locations #}
+    {{ macros::menu(parentid=story.id, parentcategory="stories", names=names, categories=categories) }}
+
+    <a href="/assets/graphs/generate/{{ story.id }}">Generate Graph</a>
+
+    <div id="fragments" class="fragments entitylist">
+      {% for fragment in fragments %}
+        {{ fragments::fragment(fragment=fragment) }}
+      {% endfor %}
+    </div>
+    
+    <div id="chars" class="chars entitylist">
+      {% for character in characters %}
+        <div class="char entity">
+          {{ characters::character(character=character) }}
+        </div>
+      {% endfor %}
+    </div>
+    
+    <div id="locs" class="locs entitylist">
+      {% for location in locations %}
+        {{ locations::location(location=location) }}
+      {% endfor %}
+    </div>
+    
+    {{ notes::notelist(notes=notes, parent=story.id, category="stories") }}
+    <a href="/notes/create?parent={{ story.id }}&category=stories">Add Note</a>
+  </div>
+</div>
+
+</body>

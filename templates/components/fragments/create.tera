@@ -1,0 +1,20 @@
+<div>
+    <label for="name">Chapter Name: </label><br>
+    {% if current is defined and current.name is defined %}
+        <input type="hidden" name="id" value="{{ current.id }}">
+        <input type="text" id="name" name="name" value="{{ current.name }}" required><br><br>
+    {% else %}
+        <input type="text" id="name" name="name" required><br><br>
+    {% endif %}
+
+    <input type="hidden" id="parent" name="parent" value="{{parent}}"/>
+    <input type="hidden" id="category" name="category" value="{{category}}"/>
+    {% include "components/tagselector" %}
+
+    <label for="storycontent">Content:</label><br>
+    <textarea id="storycontent" class="dynamic-size" name="content" rows="10" cols="60" required>
+        {%- if current is defined and current.content is defined and current.content | length > 0 -%}
+            {{- current.content -}}
+        {%- endif -%}
+    </textarea><br><br>
+</div>

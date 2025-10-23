@@ -1,0 +1,26 @@
+{% import "components/searchbar" as searchbar %}
+{% include "head" %}
+
+<body>
+    {% include "header" %}
+
+    <div id="content" class="content">
+    {{ searchbar::searchbar(category="locations") }}
+    <br/>
+        <div id="list" class="list">
+
+            {% for location in locations %}
+                <a class="brief" href="/locations/{{ location.id }}">
+                    <div class="place-card card">
+                        <h3 class="name">{{ location.name }}</h3>
+                        {% if location.thumbnail.url is defined %}
+                            <img width="200px" src="{{ location.thumbnail.url }}" alt="Image">
+                        {% endif %}
+                        
+                        <p class="description">{{ location.description }}</p>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</body>

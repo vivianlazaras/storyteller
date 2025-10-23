@@ -1,0 +1,10 @@
+{% macro add_entity(name, parentCategory, childCategory, id) %}
+<div class="actionitem">
+    <a class="actionlink" href="/{{ childCategory }}/create?category={{ parentCategory }}&id={{ id }}">
+      Create {{ name }}
+    </a>
+    <a class="actionlink" href="/relations/create?parent={{ parentCategory }}&child={{ childCategory }}&id={{ id }}">
+      Add Existing {{ name }}
+    </a>
+</div>
+{% endmacro add_entity %}

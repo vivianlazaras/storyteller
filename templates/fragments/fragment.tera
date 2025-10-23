@@ -1,0 +1,18 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+<div class="content" id="content">
+    <div class="stories">
+    <a href="/fragments/create?fragment={{ fragment.id }}">Edit</a>
+  
+    <h1>
+        {{ fragment.name }}
+    </h1>
+    <div id="fragmentcontent">
+        {{ fragment.content }}
+    </div>
+    
+    </div>
+</div>
+</body>

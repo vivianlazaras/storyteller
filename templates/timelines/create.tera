@@ -1,0 +1,50 @@
+{% include "head" %}
+<body>
+    {% include "header" %}
+
+    <div id="content" class="content content-form">
+        <h1>Create A New Timeline</h1>
+        
+        <form action="/timelines/" method="post">
+            <label for="name">Name</label>
+            <input type="text" name="name" required/>
+            
+            <label for="source-type">Source Type:</label>
+            <select id="source-type" name="category">
+                <option value="" selected disabled>-- Select a category --</option>
+                <option value="characters">Characters</option>
+                <option value="locations">Locations</option>
+                <option value="stories">Stories</option>
+            </select>
+
+            <label for="source">Source</label>
+            <input type="text" id="source" name="source" list="results" autocomplete="off" />
+            <datalist id="results"></datalist>
+
+            <button type="submit">Create Timeline</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('source-type').addEventListener('change', async function () {
+            const type = this.value;
+
+            try {
+                const response = await fetch(`/links/${type}`);
+                const data = await response.json();
+
+                const datalist = document.getElementById('results');
+                datalist.innerHTML = ''; // Clear previous options
+
+                data.forEach(entity => {
+                    const option = document.createElement('option');
+                    option.value = entity.id;
+                    option.label = entity.name || entity.title || entity.label || 'Unnamed';
+                    datalist.appendChild(option);
+                });
+            } catch (err) {
+                console.error('Error fetching entities:', err);
+            }
+        });
+    </script>
+</body>

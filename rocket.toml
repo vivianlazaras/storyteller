@@ -1,0 +1,5 @@
+[default.limits]
+form = 2147483648     # 2 GiB
+data-form = 2147483648
+file = 2147483648
+data = 2147483648

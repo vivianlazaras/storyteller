@@ -1,0 +1,15 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+<div class="content content-form" id="content">
+    <form action="{% if current is defined and current.id is defined and current.id | length > 0 %}/fragments/edit/{% else %}/fragments{% endif %}" method="POST">
+      <h1 class="create_banner">
+          {% if current is defined and current.id is defined and current.id | length > 0 %}Edit Fragment{% else %}Create A New Fragment{% endif %}
+      </h1>
+      {% include "components/fragments/create" %}
+  <button type="submit">Submit Story</button>
+
+</form>
+</div>
+</body>

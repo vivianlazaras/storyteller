@@ -1,0 +1,48 @@
+{% include "head" %}
+<body>
+{% include "header" %}
+<div id="content" class="content content-form">
+    <form action="/search" method="post">
+        <label for="name">Name:</label>
+        <input class="textfield" id="name" type="text" placeholder="name"/>
+        <br/>
+
+        <label for="universe">Universe:</label>
+        <input class="textfield" id="universe" type="text" placeholder="universe"/>
+
+        <br/>
+        <label for="author">Story Author:</label>
+        <input class="textfield" id="author" type="text" placeholder="author"/>
+        
+        <br/>
+        <label for="category">category:</label><br>
+        <select id="category" name="category">
+            <option value="characters" {% if category == "Character" %}selected{% endif %}>Character</option>
+            <option value="stories" {% if category == "Story" %}selected{% endif %}>Story</option>
+            <option value="locations" {% if category == "Location" %}selected{% endif %}>Location</option>
+            <option value="timelines" {% if category == "Timeline" %}selected{% endif %}>Timeline</option>
+        </select><br><br>
+        
+        {% include "components/tagselector" %}
+
+        <div id="created_range" class="rangeinput">
+            <h5>Created</h5>
+            <label for="start">Start:</label><br>
+            <input type="datetime-local" id="start" name="start"><br><br>
+
+            <label for="end">End:</label><br>
+            <input type="datetime-local" id="end" name="end"><br><br>
+        </div>
+
+        <div id="editted_range" class="rangeinput">
+            <h5>Last Edited</h5>
+            <label for="start">Start:</label><br>
+            <input type="datetime-local" id="start" name="start"><br><br>
+
+            <label for="end">End:</label><br>
+            <input type="datetime-local" id="end" name="end"><br><br>
+        </div>
+        <button type="submit">Search</button>
+    </form>
+</div>
+</body>

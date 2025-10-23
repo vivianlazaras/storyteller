@@ -1,0 +1,10 @@
+{% import "components/locations/location" as locations %}
+
+{% include "head" %}
+
+<body>
+{% include "header" %}
+
+<div id="content">
+    {{ locations::location(location=location) }}
+</div>

@@ -1,0 +1,21 @@
+{% import "components/searchbar" as searchbar %}
+{% include "head" %}
+
+<body>
+    {% include "header" %}
+
+    <div id="content" class="content">
+    {{ searchbar::searchbar(category="stories") }}
+    <br/>
+        <div id="list" class="story-list list">
+            {% for story in stories %}
+                <a class="brief" href="/stories/{{ story.id }}">
+                    <div class="story-card">
+                        <h3 class="story-title">{{ story.name }}</h3>
+                        <p class="description">{{ story.description }}</p>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</body>

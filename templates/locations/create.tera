@@ -1,0 +1,15 @@
+{% include "head" %}
+<body>
+{% include "header" %}
+<div id="content" class="content content-form">
+    <h1>Create A New Setting</h1>
+
+    <form action="/locations/" method="post" enctype="multipart/form-data">
+        <input name="name" placeholder="name"/>
+        {% include "components/tagselector" %}
+        <textarea class="dynamic-size" rows="10" cols="60" name="description"></textarea>
+        {% include "components/imageupload" %}
+        <button type="submit">Create</button>
+    </form>
+</div>
+</body>

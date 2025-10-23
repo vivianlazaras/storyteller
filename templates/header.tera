@@ -1,0 +1,39 @@
+<div id="header">
+    <div class="header_link">
+        <div class="header_item header_category">Stories</div>
+        <div class="dropdown">
+            <a class="header_item header_category" href="/stories">Stories</a>
+            <a class="header_item" href="/characters">Characters</a>
+            <a class="header_item" href="/locations">Locations</a>
+            <a class="header_item" href="/fragments/">Chapters/Fragments</a>
+            <a class="header_item" href="/timelines/">Timelines</a>
+        </div>
+    </div>
+    <div class="header_link">
+        <div class="header_item header_category">Profile</div>
+        <div class="dropdown">
+            <a class="header_item header_category" href="/profiles/profile">Profile</a>
+            <a class="header_item" href="/profiles/settings">Settings</a>
+            <a class="header_item" href="/profiles/login">Login/Logout</a>
+        </div>
+    </div>
+    <div class="header_link">
+        <div class="header_item header_category">Assets</div>
+        <div class="dropdown">
+            <a class="header_item header_category" href="/assets/">Assets</a>
+            <a class="header_item" href="/assets/images">Images</a>
+            <!-- will return when implemented <a class="header_item" href="/assets/models">Models</a> -->
+        </div>
+    </div>
+
+    <img
+        class="profile_image"
+        src="{{ profile | default(value="/static/profile.jpg") }}"
+    />
+    <br/>
+</div>
+{% if error is defined and error %}
+        <div class="error">
+            {{ error }}
+        </div>
+    {% endif %}

@@ -1,0 +1,46 @@
+<h3>Select a Story</h3>
+<select id="storySelect" onchange="updateFragments()">
+  <option value="{{story.id}}">{{story.name}}</option>
+  
+</select>
+
+<h3>Select a Fragment</h3>
+<select id="fragmentSelect">
+<option value="">-- Choose a fragment --</option>
+</select>
+
+<script>
+async function updateFragments() {
+  const storySelect = document.getElementById("storySelect");
+  const fragmentSelect = document.getElementById("fragmentSelect");
+  const selectedStory = storySelect.value;
+
+  // Clear previous fragments
+  fragmentSelect.innerHTML = '<option value="">-- Choose a fragment --</option>';
+
+  if (!selectedStory) return;
+
+  try {
+    const response = await fetch(`/stories/fragments?story=${encodeURIComponent(selectedStory)}`);
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+
+    const fragments = await response.json(); // expecting an array of strings
+    fragments.forEach(fragment => {
+      const option = document.createElement("option");
+      option.value = fragment;
+      option.textContent = fragment;
+      fragmentSelect.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Failed to load fragments:", error);
+    // Optionally show a message to the user
+    const option = document.createElement("option");
+    option.disabled = true;
+    option.textContent = "Failed to load fragments";
+    fragmentSelect.appendChild(option);
+  }
+}
+</script>
+

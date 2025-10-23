@@ -1,0 +1,8 @@
+{% include "head" %}
+<body>
+{% include "header" %}
+<div id="content" class="content">
+    <h1>We're Sorry, Error 404</h1><br/><br/>
+    <h3>The Page You were Looking For: {{ page }} could not be found</h3>
+</div>
+</body>

@@ -1,0 +1,23 @@
+{% import "components/images/index" as images %}
+{% import "components/links/add" as links %}
+{% macro fragment(fragment) %}
+<div class="fragment">
+  <div class="entitylink">
+  <a href="/fragments/create?fragment={{ fragment.id }}">Edit</a>
+  <button onclick="list_toggle('{{ fragment.id }}')" class="entitylink">
+    {{ fragment.name }}
+  </button>
+  </div>
+  <div class="listitem" id="{{ fragment.id }}">
+    <div class="created">Created: {{ fragment.created }}</div>
+    <p>{{ fragment.content }}</p>
+    
+    {% if fragment.images is defined and fragment.images and fragment.images | length > 0 %}
+        {{ images::gallery(images=fragment.images) }}
+    {% endif %}
+    
+    {{ links::add_entity(name="Character", parentCategory="fragments", childCategory="characters", id=fragment.id ) }}
+  </div>
+  <a href="/assets/images/upload?category=fragments&parent={{ fragment.id }}">Upload Photos</a>
+</div>
+{% endmacro fragment %}

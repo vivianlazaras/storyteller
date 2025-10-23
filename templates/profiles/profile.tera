@@ -1,0 +1,22 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+<div id="content">
+    <div id="profile">
+        <img width="300px" src={{picture}}/>
+        <h1>Welcome {{ info.given_name }} {{ info.family_name }}</h1>
+        <div class="profile_groups">
+            <h2>
+                Groups
+            </h2>
+
+            {% for group in groups %}
+                <div class="group_entry">
+                    <a href="/groups/{{ group.id }}" class="group_entry">{{ group.name }}</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+</body>

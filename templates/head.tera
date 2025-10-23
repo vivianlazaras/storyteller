@@ -1,0 +1,10 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/main.css">
+    <link rel="stylesheet" href="/static/mobile.css" media="screen and (max-aspect-ratio: 3/4)">
+    <link rel="stylesheet" href="/static/tablet.css" media="screen and (min-aspect-ratio: 3/4) and (max-aspect-ratio: 4/3)">
+    <link rel="stylesheet" href="/static/desktop.css" media="screen and (min-aspect-ratio: 4/3)">
+    <script src="/static/scripts.js"></script>
+</head>

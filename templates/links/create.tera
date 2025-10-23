@@ -1,0 +1,42 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+
+<div id="content">
+    <form action="/relations/" method="post">
+        <h1>Add {{category}}</h1>
+        <label for="category" value="{{category}}"/>
+        <input list="entities" placeholder="Entity Name" id="entity">
+        <datalist id="entities">
+        {% for item in items %}
+            <option value="{{ item.name }}" data-id="{{item.id}}">{{item.name}}</option>
+        {% endfor %}
+        </datalist>
+        <input type="hidden" id="child" name="child">
+        <input type="hidden" name="parent" value="{{parent}}"/>
+        <input type="hidden" name="child_category" value="{{category}}"/>
+        <input type="hidden" name="parent_category" value="{{parent_category}}"/>
+        
+        <label for="linkdescription">Description</label><br>
+        <textarea id="linkdescription" class="dynamic-size" name="description" rows="10" cols="60" required></textarea><br><br>
+        <button type="submit">Add</button>
+    </form>
+</div>
+<script>
+const entityInput = document.getElementById('entity');
+const hiddenId = document.getElementById('child');
+const options = document.querySelectorAll('#entities option');
+
+entityInput.addEventListener('input', () => {
+  hiddenId.value = ''; // reset if no match
+
+  for (let opt of options) {
+    if (opt.value === entityInput.value) {
+      hiddenId.value = opt.dataset.id; // set UUID
+      break;
+    }
+  }
+});
+</script>
+</body>

@@ -1,0 +1,13 @@
+{% import "components/notes/create" as notes %}
+{% include "head" %}
+<body>
+    {% include "header" %}
+
+    <div id="content" class="content content-form">
+        <div id="noteform" class="noteform form">
+            <form action="/notes?parent={{ parent }}&category={{ category }}" method="post">
+                {{ notes::noteform(parent=parent, category=category) }}
+            </form>
+        </div>
+    </div>
+</body>

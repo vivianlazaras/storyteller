@@ -1,0 +1,15 @@
+{% import "components/characters/character" as macros %}
+{% include "head" %}
+
+<body>
+    {% include "header" %}
+    <div id="content">
+        <form action="/characters/delete" method="post">
+            <input name="id" type="hidden" value="{{ character.id }}"/>
+            <button class="deletebtn" type="submit">Delete</button>
+
+        </form>
+        <a href="/characters/edit/{{ character.id }}">Edit</a>
+        {{ macros::character(character=character) }}
+    </div>
+</body>

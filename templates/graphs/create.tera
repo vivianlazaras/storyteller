@@ -1,0 +1,129 @@
+{% include "head" %}
+<body>
+    {% include "header" %}
+
+    <div id="contextmenu" style="display:none; position:absolute; background:white; border:1px solid #ccc; z-index:1000; padding:5px;">
+        <button onclick="openEntityPopup('fragments')">Add Fragment</button>
+        <button onclick="openEntityPopup('characters')">Add Character</button>
+        <button onclick="openEntityPopup('locations')">Add Location</button>
+        <button onclick="openEntityPopup('images')">Add Image</button>
+        <button onclick="openEntityPopup('albums')">Add Album</button>
+        <button onclick="openEdgePopup()">Add Edge</button>
+        <button onclick="openAddGraphAttr()">Add Graph Attribute</button>
+    </div>
+
+    <h1>Create A New Graph Manually.</h1>
+
+    <form action="/assets/graphs/" method="post">
+        <label for="name">Graph Name</label>
+        <input id="name" type="text" placeholder="Graph Name" name="name"/>
+        <div style="display: flex; gap: 20px;">
+            <textarea id="dot" name="dot" style="width:50%; height:400px;"></textarea>
+            <div style="width:50%;">
+                <h3>Graph Preview</h3>
+                <div id="graphPreview" style="border:1px solid #ccc; min-height:400px; overflow:auto;">
+                    <!-- SVG will appear here -->
+                </div>
+                <button type="button" onclick="updateGraphPreview()">Update Preview</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Popup for selecting and adding entity -->
+    <div id="entityPopup" style="display:none; position:fixed; top:20%; left:40%; background:white; border:1px solid #ccc; padding:10px; z-index:2000;">
+        <h3 id="popupTitle">Select Entity</h3>
+        <select id="entitySelect"></select>
+        <button onclick="addEntityToGraph()">Add</button>
+        <button onclick="closeEntityPopup()">Cancel</button>
+    </div>
+
+    <div id="edgePopup" style="display:none; position:fixed; top:20%; left:40%; background:white; border:1px solid #ccc; padding:10px; z-index:2000;">
+        <h3 id="edgePopupTitle">Create A Link Between Entities/Nodes</h3>
+        <select id="sourceEdgeSelect"></select>
+        <select id="destEdgeSelect"></select>
+        <button onclick="addEdgeToGraph()">Add</button>
+        <button onclick="closeEdgePopup()">Cancel</button>
+    </div>
+
+<script type="module">
+    import init, { RustGraph } from "/static/pkg/graphviz.js"; // adjust path
+
+    let graph; // our RustGraph instance
+
+    async function initGraph() {
+        await init(); // wasm_bindgen init
+        const name = document.getElementById('name').value || "Untitled";
+        graph = new RustGraph(name);
+    }
+
+    await initGraph();
+
+    let currentEntityType = '';
+    let textarea = document.getElementById('dot');
+
+    textarea.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        let menu = document.getElementById('contextmenu');
+        menu.style.display = 'block';
+        menu.style.left = e.pageX + 'px';
+        menu.style.top = e.pageY + 'px';
+    });
+
+    document.addEventListener('click', function() {
+        document.getElementById('contextmenu').style.display = 'none';
+    });
+
+    function openEntityPopup(entityType) {
+        currentEntityType = entityType;
+        document.getElementById('popupTitle').innerText = 'Select ' + entityType.charAt(0).toUpperCase() + entityType.slice(1);
+        fetch('/relations/' + entityType)
+            .then(res => res.json())
+            .then(data => {
+                let select = document.getElementById('entitySelect');
+                select.innerHTML = '';
+                data.forEach(entity => {
+                    let option = document.createElement('option');
+                    option.value = entity.id;
+                    option.text = entity.name;
+                    select.add(option);
+                });
+                document.getElementById('entityPopup').style.display = 'block';
+            });
+    }
+
+    function closeEntityPopup() {
+        document.getElementById('entityPopup').style.display = 'none';
+    }
+
+    function addEntityToGraph() {
+        let select = document.getElementById('entitySelect');
+        let entityId = select.value;
+        let entityName = select.options[select.selectedIndex].text;
+
+        graph.add_node(entityId, entityName);
+
+        updateGraphPreview();
+        closeEntityPopup();
+    }
+
+    function updateGraphPreview() {
+        const dotText = graph.to_dot();
+        textarea.value = dotText;
+
+        // 🧩 Use viz.js to render DOT -> SVG
+        import('https://cdn.jsdelivr.net/npm/viz.js@2.1.2/full.render.js').then(VizModule => {
+            const viz = new VizModule.Viz();
+            viz.renderSVGElement(dotText)
+                .then(svg => {
+                    document.getElementById('graphPreview').innerHTML = '';
+                    document.getElementById('graphPreview').appendChild(svg);
+                })
+                .catch(error => {
+                    console.error('Error rendering graph:', error);
+                    document.getElementById('graphPreview').innerHTML = '<p style="color:red;">Failed to render graph</p>';
+                });
+        });
+    }
+
+</script>
+</body>

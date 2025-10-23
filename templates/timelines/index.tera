@@ -1,0 +1,21 @@
+{% import "components/searchbar" as searchbar %}
+{% include "head" %}
+
+<body>
+    {% include "header" %}
+
+    <div id="content" class="content">
+    {{ searchbar::searchbar(category="timelines") }}
+    <br/>
+        <div id="list" class="timline-list list">
+            {% for timeline in timelines %}
+                <a class="brief" href="/timelines/{{ timeline.id }}">
+                    <div class="timeline-card">
+                        <h3 class="timeline-title title">{{ timeline.name }}</h3>
+                        <p class="description">{{ timeline.description }}</p>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</body>

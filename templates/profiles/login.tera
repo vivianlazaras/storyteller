@@ -1,0 +1,22 @@
+{% include "head" %}
+<body>
+    {% include "header" %}
+    
+<div id="content" class="login-container">
+    
+    <form class="login-form" action="/profiles/login" method="post">
+        {% if redirect is defined and redirect %}
+            <input type="hidden" name="redirect" value="{{redirect}}"/>
+        {% endif %}
+        <h1>
+            Login
+        </h1>
+        <input type="text" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        
+        <button type="submit">Login</button>
+        <a href="{{ oidc_url }}">OIDC Login</a>
+    </form>
+</div>
+</body>
+

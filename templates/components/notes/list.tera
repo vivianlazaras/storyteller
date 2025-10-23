@@ -1,0 +1,18 @@
+{% import "components/notes/create" as notes %}
+{% macro notelist(notes, edit=false, parent, category) %}
+    <div class="notelist">
+        {% for note in notes %}
+            <div class="noteentry"
+                 style="{% if note.completed != 0 %}background-color: lightgreen; color: green;{% endif %}">
+                <h3 class="notename">{{ note.name }}</h3>
+                <p>{{ note.description }}</p>
+                <form action="/notes/complete" method="post">
+                    <input type="hidden" name="parent" value="{{parent}}"/>
+                    <input type="hidden" name="category" value="{{category}}"/>
+                    <button type="submit">Complete</button>
+                </form>
+            </div>
+        {% endfor %}
+
+    </div>
+{% endmacro notelist %}

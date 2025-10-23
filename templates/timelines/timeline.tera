@@ -1,0 +1,38 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+<div class="content" id="content">
+    <h1>{{ timeline.name }}</h1>
+    <button onclick="downloadSVG()">Download SVG</button>
+    <p>
+        {{ timeline.description }}
+    </p>
+    <svg id="svg">
+        {{ timeline.svg }}
+    </svg>
+</div>
+<script>
+function downloadSVG() {
+    const svgElement = document.getElementById("svg");
+    const serializer = new XMLSerializer();
+    const source = serializer.serializeToString(svgElement);
+
+    // Add XML declaration and SVG namespace if missing
+    const svgBlob = new Blob(
+        ['<?xml version="1.0" encoding="UTF-8"?>\n', source],
+        { type: "image/svg+xml;charset=utf-8" }
+    );
+
+    const url = URL.createObjectURL(svgBlob);
+    const downloadLink = document.createElement("a");
+    downloadLink.href = url;
+    downloadLink.download = "timeline.svg";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(url);
+}
+</script>
+
+</body>

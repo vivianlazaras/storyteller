@@ -1,0 +1,32 @@
+{% import "components/searchbar" as searchbar %}
+{% include "head" %}
+
+<body>
+{% include "header" %}
+
+<div id="content" class="content">
+    {{ searchbar::searchbar(category="characters") }}
+    <div id="list" class="list">
+        
+        {% for character in characters %}
+            <a class="brief" href="/characters/{{ character.id }}">
+            
+            <div class="char-card card">
+                <h3>
+                    {{ character.name }}
+                </h3>
+            {% if character.thumbnail.url is defined %}
+              <img width="200px" src="{{ character.thumbnail.url }}" alt="Image">
+            {% endif %}
+            
+            <p class="description">
+                {{ character.description }}
+            </p>
+            </div>
+            
+            </a>
+        {% endfor %}
+    </div>
+</div>
+
+</body>

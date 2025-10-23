@@ -1,0 +1,48 @@
+{% macro noteform(parent, category) %}
+        <label for="name">Name</label>
+        <input
+            id="name"
+            type="text"
+            name="name"
+            placeholder="Task name"
+            required
+        />
+
+        <input type="hidden" name="parent" value="{{ parent }}"/>
+        <input type="hidden" name="category" value="{{ category }}"/>
+
+        <label for="description">Description</label>
+        <textarea
+            id="description"
+            name="description"
+            rows="4"
+            placeholder="Describe the note"
+        ></textarea>
+
+        {# ── Deadline: date picker + hidden Unix-ts field ── #}
+        <label for="deadline_date">Deadline</label>
+        <input
+            id="deadline_date"
+            type="date"
+            aria-describedby="deadline-help"
+        />
+        <small id="deadline-help">Select a date; it will be sent as a Unix timestamp.</small>
+        <input
+            id="deadline"
+            type="hidden"
+            name="deadline"
+            value=""
+        />
+
+        <button type="submit">Create</button>
+</div>
+
+<script>
+/* Convert YYYY-MM-DD → Unix seconds and populate the hidden field */
+document.getElementById('deadline_date').addEventListener('change', (e) => {
+    const hidden = document.getElementById('deadline');
+    const date   = new Date(e.target.value);          // local midnight
+    hidden.value = Math.floor(date.getTime() / 1000); // seconds since epoch
+});
+</script>
+{% endmacro noteform %}

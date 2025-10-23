@@ -1,0 +1,23 @@
+{% macro menu(parentid, parentcategory, names, categories) %}
+<div class="entity_menu">
+    <button class="dropbtn">Add Entity ▼</button>
+    <div class="dropdown-content">
+        {% set len = names | length %}
+        {% for i in range(start=0, end=len) %}
+            {% set name = names[i] %}
+            {% set category = categories[i] %}
+            <div class="entity_menu_item">
+                <a href="/{{ category }}/create?category={{ parentcategory }}&id={{ parentid }}">
+                Create {{ name }}
+            </a>
+            </div>
+            <div class="entity_menu_item">
+                <a href="/relations/create?parent={{ parentcategory }}&child={{ category }}&id={{ parentid }}">
+                Add Existing {{ name }}
+            </a>
+            </div>
+            <hr>
+        {% endfor %}
+    </div>
+</div>
+{% endmacro menu %}

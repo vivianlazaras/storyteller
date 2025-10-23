@@ -1,0 +1,32 @@
+{% import "components/images/index" as images %}
+{% import "components/entities/menu" as macros %}
+{% macro character(character) %}
+
+{% set names = ["Fragment", "Character", "Location"] %}
+{% set categories = ["fragments", "characters", "locations"] %}
+
+<div class="character">
+    
+    {# Use the unified menu macro to create links to add fragments, characters, and locations #}
+    {{ macros::menu(parentid=character.id, parentcategory="characters", names=names, categories=categories) }}
+    
+    <h1>
+        {{ character.name }}
+    </h1>
+    {% if character.thumbnail.url is defined %}
+        <a href="/characters/{{ character.id }}">
+        <img src="{{character.thumbnail.url}}" class="entityimage" width="400"/>
+    </a> 
+    {% endif %}
+    <div class="description" id="description">
+        {{ character.description }}
+    </div>
+    <a href="/assets/images/upload?category=characters&parent={{ character.id }}">Upload Images</a>
+    <div id="images" class="images">
+        {% if character.images is defined and character.images and character.images | length > 0 %}
+            {{ images::gallery(images=character.images) }}
+        {% endif %}
+    </div>
+    
+</div>
+{% endmacro character %}

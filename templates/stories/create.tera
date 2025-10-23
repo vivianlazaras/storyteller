@@ -1,0 +1,25 @@
+{% include "head" %}
+
+<body>
+{% include "header" %}
+<div class="content content-form" id="content">
+    <form action="/stories" method="POST">
+    <h1 class="create_banner">Create A New Story</h1>
+  <label for="name">Title:</label><br>
+  <input type="text" id="title" name="title" required><br><br>
+
+  <label for="description">Description:</label><br>
+  <input type="text" id="description" name="description"><br><br>
+
+  <label for="format">Format:</label><br>
+  <select id="format" name="renderer" required>
+    <option value="Text">Plain Text</option>
+    <option value="Markdown">Markdown</option>
+    <option value="HTML">HTML</option>
+  </select><br><br>
+  {% include "components/tagselector" %}
+  <button type="submit">Submit Story</button>
+
+</form>
+</div>
+</body>

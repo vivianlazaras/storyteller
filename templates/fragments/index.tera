@@ -1,0 +1,21 @@
+{% import "components/searchbar" as searchbar %}
+{% include "head" %}
+
+<body>
+    {% include "header" %}
+
+    <div id="content" class="content">
+    {{ searchbar::searchbar(category="fragments") }}
+    <br/>
+        <div id="list" class="list">
+            {% for fragment in fragments %}
+                <a class="brief" href="/fragments/{{ fragment.id }}">
+                    <div class="fragment-card card">
+                        <h3 class="fragment-title title">{{ fragment.name }}</h3>
+                        
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</body>

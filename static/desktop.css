@@ -1,0 +1,28 @@
+.header_link {
+    width: 24%;
+}
+
+#content {
+    width: 75%;
+}
+
+.brief {
+    flex: 0 1 calc(25% - 40px); /* 4 items per row, accounting for gap */
+}
+
+/* Ensure header links are relative for positioning */
+.header_link {
+    position: relative;
+    display: inline-block;
+}
+
+.dropbtn {
+    background-color: #3498db;
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+

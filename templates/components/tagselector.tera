@@ -1,0 +1,71 @@
+<label for="itemInput">Add Tags:</label>
+<input list="items" id="itemInput" name="itemInput">
+<datalist id="items" class="taglist">
+  {% for option in options %}
+    <option value="{{ option.value }}">
+  {% endfor %}
+</datalist>
+<button type="button" onclick="addItem()">Add</button>
+
+<div id="selectedItems" class="tagselector"></div>
+
+<!-- Hidden container for actual form submission -->
+<div id="hiddenInputs"></div>
+
+<script>
+  const selectedItemsDiv = document.getElementById("selectedItems");
+  const hiddenInputsDiv = document.getElementById("hiddenInputs");
+  const input = document.getElementById("itemInput");
+
+  function appendItem(value) {
+    if (!value) return;
+
+    // Prevent duplicates
+    const exists = Array.from(selectedItemsDiv.children)
+      .some(el => el.dataset.value === value);
+    if (exists) {
+      input.value = '';
+      return;
+    }
+
+    // Create visible tag
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.dataset.value = value;
+    tag.innerHTML = `${value} <span class="remove" onclick="removeItem(this)">×</span>`;
+    selectedItemsDiv.appendChild(tag);
+
+    // Create hidden input
+    const hiddenInput = document.createElement("input");
+    hiddenInput.type = "hidden";
+    hiddenInput.name = "tags";
+    hiddenInput.value = value;
+    hiddenInput.dataset.value = value;
+    hiddenInputsDiv.appendChild(hiddenInput);
+
+    input.value = '';
+  }
+
+  function removeItem(el) {
+    const tagEl = el.parentElement;
+    const value = tagEl.dataset.value;
+
+    // Remove visible tag
+    tagEl.remove();
+
+    // Remove corresponding hidden input
+    const hiddenInput = hiddenInputsDiv.querySelector(`input[data-value="${value}"]`);
+    if (hiddenInput) hiddenInput.remove();
+  }
+
+  function addItem() {
+    appendItem(input.value.trim());
+  }
+
+  // Pre-populate selected items
+  {% if selected is defined %}
+    {% for item in selected %}
+      appendItem("{{ item }}");
+    {% endfor %}
+  {% endif %}
+</script>
